@@ -1,0 +1,57 @@
+{
+    "name": "nubitio/nubit-symfony",
+    "description": "Monorepo for the Nubit Symfony backend packages (nubitio/platform, nubitio/api-platform). Not installable — require the individual packages.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.5",
+        "api-platform/core": "^4.1",
+        "doctrine/orm": "^3.0",
+        "doctrine/persistence": "^4.0",
+        "psr/cache": "^3.0",
+        "psr/log": "^3.0",
+        "symfony/console": "^7.4 || ^8.0",
+        "symfony/dependency-injection": "^7.4 || ^8.0",
+        "symfony/event-dispatcher": "^7.4 || ^8.0",
+        "symfony/framework-bundle": "^7.4 || ^8.0",
+        "symfony/http-foundation": "^7.4 || ^8.0",
+        "symfony/http-kernel": "^7.4 || ^8.0",
+        "symfony/messenger": "^7.4 || ^8.0",
+        "symfony/process": "^7.4 || ^8.0",
+        "symfony/serializer": "^7.4 || ^8.0",
+        "symfony/service-contracts": "^3.0",
+        "symfony/string": "^7.4 || ^8.0",
+        "symfony/translation": "^7.4 || ^8.0",
+        "symfony/translation-contracts": "^3.0",
+        "symfony/validator": "^7.4 || ^8.0"
+    },
+    "require-dev": {
+        "league/flysystem": "^3.0",
+        "monolog/monolog": "^3.0",
+        "open-telemetry/api": "^1.0",
+        "phpoffice/phpspreadsheet": "^5.3",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^12.0",
+        "pontedilana/php-weasyprint": "^2.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nubit\\Platform\\": "packages/platform/src/",
+            "Nubit\\ApiPlatform\\": "packages/api-platform/src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Nubit\\Platform\\Tests\\": "packages/platform/tests/",
+            "Nubit\\ApiPlatform\\Tests\\": "packages/api-platform/tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse"
+    },
+    "minimum-stability": "stable",
+    "config": {
+        "sort-packages": true
+    }
+}

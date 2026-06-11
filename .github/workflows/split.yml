@@ -1,0 +1,48 @@
+name: Split packages
+
+# Mirrors each package to its read-only repo (nubitio/platform,
+# nubitio/api-platform) so Packagist can serve them individually.
+# Requires the SPLIT_TOKEN secret: a fine-grained PAT with content write
+# access to the split repositories.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - { dir: platform, repo: platform }
+          - { dir: api-platform, repo: api-platform }
+    steps:
+      - uses: actions/checkout@v4
+
+      # Split a branch push
+      - if: '!startsWith(github.ref, ''refs/tags/'')'
+        uses: symplify/monorepo-split-github-action@v2.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.SPLIT_TOKEN }}
+        with:
+          package_directory: packages/${{ matrix.package.dir }}
+          repository_organization: nubitio
+          repository_name: ${{ matrix.package.repo }}
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+
+      # Split a tag push (propagates the version tag to the split repo)
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: symplify/monorepo-split-github-action@v2.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.SPLIT_TOKEN }}
+        with:
+          tag: ${{ github.ref_name }}
+          package_directory: packages/${{ matrix.package.dir }}
+          repository_organization: nubitio
+          repository_name: ${{ matrix.package.repo }}
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
