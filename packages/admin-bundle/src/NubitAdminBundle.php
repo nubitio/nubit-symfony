@@ -74,8 +74,8 @@ final class NubitAdminBundle extends AbstractBundle
                             ->defaultTrue()
                         ->end()
                         ->scalarNode('docs_locale')
-                            ->info('Locale used when translating API docs. Defaults to %env(default::APP_API_LOCALE)%.')
-                            ->defaultValue('%env(default::APP_API_LOCALE)%')
+                            ->info('Locale used when translating API docs. Reads APP_API_LOCALE, falling back to "en".')
+                            ->defaultValue('%env(default:nubit_admin.api.default_docs_locale:APP_API_LOCALE)%')
                         ->end()
                     ->end()
                 ->end()
@@ -91,6 +91,8 @@ final class NubitAdminBundle extends AbstractBundle
      */
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
+        $container->parameters()->set('nubit_admin.api.default_docs_locale', 'en');
+
         $services = $container->services()
             ->defaults()
                 ->autowire()
