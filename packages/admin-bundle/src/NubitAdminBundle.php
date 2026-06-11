@@ -162,6 +162,24 @@ final class NubitAdminBundle extends AbstractBundle
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
+        // The Nubit HTTP client (@nubitio/core) sends plain application/json
+        // request bodies. Prepend the formats so consumers get JSON support
+        // out of the box — application-level api_platform.yaml still wins.
+        if ($builder->hasExtension('api_platform')) {
+            $builder->prependExtensionConfig('api_platform', [
+                'formats' => [
+                    'json' => ['application/json'],
+                    'jsonld' => ['application/ld+json'],
+                ],
+                'docs_formats' => [
+                    'jsonld' => ['application/ld+json'],
+                    'jsonopenapi' => ['application/vnd.openapi+json'],
+                    'json' => ['application/json'],
+                    'html' => ['text/html'],
+                ],
+            ]);
+        }
+
         if (!$builder->hasExtension('doctrine')) {
             return;
         }
