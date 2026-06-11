@@ -23,6 +23,10 @@ Until the admin bundle ships, register the services in your `config/services.yam
 
 ```yaml
 services:
+    # Gets the api_platform.filter tag via autoconfiguration; required for
+    # resources declaring filters: [DataGridFilter::class]
+    Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter: ~
+
     Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer:
         decorates: api_platform.hydra.normalizer.documentation
         arguments:
