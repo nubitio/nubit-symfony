@@ -24,6 +24,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *     read CRUD UI hints (filterable, sortable, hidden, order, width) from
  *     the single /api/docs.jsonld endpoint without a second fetch.
  *
+ *  3. ApiProperty openapiContext "enum" lists are forwarded the same way so
+ *     the frontend can render a select control instead of a free-text input.
+ *     (Hydra docs don't carry OpenAPI enums natively.)
+ *
  * Register in services.yaml:
  *
  *   Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer:
@@ -213,8 +217,8 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
     }
 
     /**
-     * If the given property has an openapiContext with an "x-crud" key, inject
-     * it as a top-level key on the hydra:supportedProperty entry.
+     * Forward UI-relevant openapiContext keys ("x-crud" hints and "enum"
+     * value lists) as top-level keys on the hydra:supportedProperty entry.
      *
      * @param array<mixed> $supportedProperty
      */
@@ -228,11 +232,17 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
         }
 
         $openapiContext = $metadata->getOpenapiContext();
-        if (!\is_array($openapiContext) || !isset($openapiContext['x-crud'])) {
+        if (!\is_array($openapiContext)) {
             return;
         }
 
-        $supportedProperty['x-crud'] = $openapiContext['x-crud'];
+        if (isset($openapiContext['x-crud'])) {
+            $supportedProperty['x-crud'] = $openapiContext['x-crud'];
+        }
+
+        if (isset($openapiContext['enum']) && \is_array($openapiContext['enum'])) {
+            $supportedProperty['enum'] = \array_values($openapiContext['enum']);
+        }
     }
 
     /**
