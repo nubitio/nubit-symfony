@@ -8,11 +8,19 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ApiResponse extends JsonResponse
 {
+    /**
+     * The application-level payload. Deliberately NOT named `$data`: JsonResponse
+     * stores its encoded JSON string in the protected `$data` property, and a
+     * redeclared public `$data` here would be overwritten by the encoder.
+     */
+    private mixed $payload;
+
     public function __construct(
         public bool $success,
         public string $message,
-        public mixed $data = null,
+        mixed $payload = null,
     ) {
+        $this->payload = $payload;
         parent::__construct($this->toArray(), $success ? 200 : 400);
     }
 
@@ -26,13 +34,15 @@ class ApiResponse extends JsonResponse
         return new self(false, $message, $data);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [
             'success' => $this->success,
             'message' => $this->message,
-            'data' => $this->data,
+            'data'    => $this->payload,
         ];
     }
 }
