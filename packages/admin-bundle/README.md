@@ -9,7 +9,9 @@ composer require nubitio/admin-bundle
 Registers automatically:
 
 - The **API Platform bridge** from `nubitio/api-platform`: `DataGridFilter`, translated OpenAPI docs with `x-crud` hints, pagination headers, domain-exception mapping.
-- **Dual JWT auth**: `POST /api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`. Web clients get HttpOnly cookies; mobile/API clients get tokens in the body (`response_mode: json` or `X-Client-Type: android|ios`). Refresh tokens are rotated and stored hashed (Doctrine entity `nubit_refresh_token`).
+- **Dual JWT auth**: `POST /api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/change-password`. Web clients get HttpOnly cookies; mobile/API clients get tokens in the body (`response_mode: json` or `X-Client-Type: android|ios`). Refresh tokens are rotated and stored hashed (Doctrine entity `nubit_refresh_token`); changing the password revokes every session and re-issues tokens for the current one. Purge old tokens with `bin/console nubit:auth:purge-refresh-tokens`.
+- **Mercure** (`nubit_admin.mercure.enabled: true`): issues the `mercureAuthorization` subscriber-JWT cookie on login/refresh so the React grids receive live updates. Replace `MercureCookieDecorator` to scope topics per tenant/user.
+- **Soft delete**: mark entities with `#[Nubit\ApiPlatform\Attribute\SoftDeletable]` and the registered Doctrine filter (`nubit_soft_delete`) hides rows whose `deleted_at` is set. Opt-in per entity by design.
 - **Single-tenant defaults** for the `Nubit\Platform` contracts (registry, connection switcher, feature checker, quota enforcer) — multi-tenant apps override the aliases.
 - **Autoconfiguration** for `GridVirtualFieldInterface` and `LoginResponseDecoratorInterface` implementations.
 
@@ -22,7 +24,15 @@ nubit_admin:
     resource: '@NubitAdminBundle/config/routes.php'
 ```
 
-2. Wire the firewall (`config/packages/security.yaml`) — the bundle cannot define firewalls for you:
+2. Wire the firewall (`config/packages/security.yaml`) — the bundle cannot define firewalls for you.
+   **Apps with more than one user provider** (e.g. an extra admin firewall) must also alias the one
+   the API uses, otherwise autowiring is ambiguous:
+
+```yaml
+# config/services.yaml
+Symfony\Component\Security\Core\User\UserProviderInterface: '@App\Security\ApiUserProvider'
+```
+
 
 ```yaml
 security:
@@ -58,6 +68,12 @@ nubit_admin:
     api:
         translated_docs: true
         docs_locale: '%env(default::APP_API_LOCALE)%'
+    mercure:
+        enabled: false                # true → mercureAuthorization cookie on login/refresh
+        secret: '%env(MERCURE_JWT_SECRET)%'
+        topics: ['*']
+        hub_path: /.well-known/mercure
+    soft_delete: true                 # nubit_soft_delete Doctrine filter
     single_tenant_defaults: true
 ```
 

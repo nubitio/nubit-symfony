@@ -11,10 +11,14 @@ use Nubit\AdminBundle\Auth\JWTAuthenticator;
 use Nubit\AdminBundle\Auth\JWTManager;
 use Nubit\AdminBundle\Auth\JWTManagerInterface;
 use Nubit\AdminBundle\Auth\LoginResponseDecoratorInterface;
+use Nubit\AdminBundle\Auth\MercureCookieDecorator;
+use Nubit\AdminBundle\Auth\MercureSubscriberTokenService;
 use Nubit\AdminBundle\Auth\RefreshTokenStoreInterface;
 use Nubit\AdminBundle\Auth\ResponseModeResolver;
 use Nubit\AdminBundle\Auth\TokenClaimsProviderInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
+use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
+use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\RefreshController;
@@ -24,6 +28,7 @@ use Nubit\AdminBundle\Tenant\SingleTenantRegistry;
 use Nubit\AdminBundle\Tenant\UnlimitedQuotaEnforcer;
 use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
 use Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface;
+use Nubit\ApiPlatform\Doctrine\Filter\SoftDeleteFilter;
 use Nubit\ApiPlatform\Http\ApiResponseListener;
 use Nubit\ApiPlatform\Http\ExceptionListener;
 use Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer;
@@ -78,6 +83,29 @@ final class NubitAdminBundle extends AbstractBundle
                             ->defaultValue('%env(default:nubit_admin.api.default_docs_locale:APP_API_LOCALE)%')
                         ->end()
                     ->end()
+                ->end()
+                ->arrayNode('mercure')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')
+                            ->info('Issue a Mercure subscriber JWT cookie on login/refresh.')
+                            ->defaultFalse()
+                        ->end()
+                        ->scalarNode('secret')
+                            ->info('Mercure hub subscriber JWT secret.')
+                            ->defaultValue('%env(MERCURE_JWT_SECRET)%')
+                        ->end()
+                        ->arrayNode('topics')
+                            ->info('Topic selectors the subscriber token grants.')
+                            ->scalarPrototype()->end()
+                            ->defaultValue(['*'])
+                        ->end()
+                        ->scalarNode('hub_path')->defaultValue('/.well-known/mercure')->end()
+                    ->end()
+                ->end()
+                ->booleanNode('soft_delete')
+                    ->info('Register the Doctrine filter hiding #[SoftDeletable] rows.')
+                    ->defaultTrue()
                 ->end()
                 ->booleanNode('single_tenant_defaults')
                     ->info('Bind noop single-tenant implementations of the Nubit\\Platform contracts.')
@@ -138,7 +166,20 @@ final class NubitAdminBundle extends AbstractBundle
 
         $services->set(JWTAuthenticator::class);
 
+        $services->set(PurgeRefreshTokensCommand::class);
+
+        if ($config['mercure']['enabled']) {
+            $services->set(MercureSubscriberTokenService::class)
+                ->arg('$mercureJwtSecret', $config['mercure']['secret'])
+                ->arg('$tokenTtl', $config['auth']['access_token_ttl']);
+            $services->set(MercureCookieDecorator::class)
+                ->arg('$topics', $config['mercure']['topics'])
+                ->arg('$hubPath', $config['mercure']['hub_path'])
+                ->tag('nubit.admin.login_response_decorator');
+        }
+
         $services->set(LoginController::class)->tag('controller.service_arguments');
+        $services->set(ChangePasswordController::class)->tag('controller.service_arguments');
         $services->set(RefreshController::class)->tag('controller.service_arguments');
         $services->set(LogoutController::class)->tag('controller.service_arguments');
 
@@ -183,6 +224,19 @@ final class NubitAdminBundle extends AbstractBundle
         if (!$builder->hasExtension('doctrine')) {
             return;
         }
+
+        // Soft-delete filter for #[SoftDeletable] entities (no-op without the
+        // attribute). Apps can disable via nubit_admin.soft_delete: false.
+        $builder->prependExtensionConfig('doctrine', [
+            'orm' => [
+                'filters' => [
+                    'nubit_soft_delete' => [
+                        'class' => SoftDeleteFilter::class,
+                        'enabled' => true,
+                    ],
+                ],
+            ],
+        ]);
 
         // Map the bundle's RefreshToken entity.
         $builder->prependExtensionConfig('doctrine', [

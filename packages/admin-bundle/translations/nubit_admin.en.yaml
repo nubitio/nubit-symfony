@@ -1,0 +1,6 @@
+change_password.unauthenticated: 'Not authenticated.'
+change_password.missing_fields: 'Current and new password are required.'
+change_password.too_short: 'The new password must be at least %min% characters.'
+change_password.invalid_current: 'The current password is incorrect.'
+change_password.unavailable: 'Password change is not available.'
+change_password.success: 'Password updated successfully.'

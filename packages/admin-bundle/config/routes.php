@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\RefreshController;
@@ -18,5 +19,9 @@ return static function (RoutingConfigurator $routes): void {
 
     $routes->add('nubit_admin_auth_logout', '/api/auth/logout')
         ->controller(LogoutController::class)
+        ->methods(['POST']);
+
+    $routes->add('nubit_admin_auth_change_password', '/api/auth/change-password')
+        ->controller(ChangePasswordController::class)
         ->methods(['POST']);
 };
