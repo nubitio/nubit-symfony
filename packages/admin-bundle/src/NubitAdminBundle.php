@@ -22,6 +22,7 @@ use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\RefreshController;
+use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
 use Nubit\AdminBundle\Tenant\AllowAllFeatureChecker;
 use Nubit\AdminBundle\Tenant\SingleTenantConnectionSwitcher;
 use Nubit\AdminBundle\Tenant\SingleTenantRegistry;
@@ -168,6 +169,10 @@ final class NubitAdminBundle extends AbstractBundle
 
         $services->set(PurgeRefreshTokensCommand::class);
 
+        if ($config['soft_delete']) {
+            $services->set(SoftDeleteFilterListener::class);
+        }
+
         if ($config['mercure']['enabled']) {
             $services->set(MercureSubscriberTokenService::class)
                 ->arg('$mercureJwtSecret', $config['mercure']['secret'])
@@ -232,7 +237,7 @@ final class NubitAdminBundle extends AbstractBundle
                 'filters' => [
                     'nubit_soft_delete' => [
                         'class' => SoftDeleteFilter::class,
-                        'enabled' => true,
+                        'enabled' => false, // enabled per-request by SoftDeleteFilterListener
                     ],
                 ],
             ],
