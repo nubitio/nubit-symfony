@@ -26,6 +26,7 @@ jobs:
           composer validate --strict
           composer validate --strict packages/platform/composer.json
           composer validate --strict packages/api-platform/composer.json
+          composer validate --strict packages/admin-bundle/composer.json
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist

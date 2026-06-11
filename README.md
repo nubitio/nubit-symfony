@@ -6,13 +6,14 @@ Backend packages for the Nubit admin stack — the Symfony / API Platform counte
 | --- | --- | --- |
 | [platform](packages/platform) | `nubitio/platform` | Domain exceptions, tenant contracts, feature gates, quota contracts, messenger middleware, cache/file/export helpers |
 | [api-platform](packages/api-platform) | `nubitio/api-platform` | The frontend contract: grid filter (`sort`/`filter`/`searchValue`), translated OpenAPI docs with `x-crud` hints, pagination headers, entity traits |
+| [admin-bundle](packages/admin-bundle) | `nubitio/admin-bundle` | One-line install: registers the bridge, dual cookie/Bearer JWT auth (login/refresh/logout), single-tenant defaults |
 
-Planned: `nubitio/admin-bundle` (one-line install: auth dual cookie/Bearer, service wiring, single-tenant defaults) and a full-stack skeleton.
+Planned: a full-stack skeleton (Symfony + @nubitio/react-admin + docker compose + example entity).
 
 ## Install
 
 ```bash
-composer require nubitio/api-platform   # pulls nubitio/platform
+composer require nubitio/admin-bundle   # pulls api-platform + platform
 ```
 
 Until Packagist listing, consume via VCS repositories:

@@ -12,11 +12,15 @@
         <testsuite name="api-platform">
             <directory>packages/api-platform/tests</directory>
         </testsuite>
+        <testsuite name="admin-bundle">
+            <directory>packages/admin-bundle/tests</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>packages/platform/src</directory>
             <directory>packages/api-platform/src</directory>
+            <directory>packages/admin-bundle/src</directory>
         </include>
     </source>
 </phpunit>

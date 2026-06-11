@@ -3,4 +3,5 @@ parameters:
     paths:
         - packages/platform/src
         - packages/api-platform/src
+        - packages/admin-bundle/src
     tmpDir: var/phpstan

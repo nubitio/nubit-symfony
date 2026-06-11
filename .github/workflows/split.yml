@@ -19,6 +19,7 @@ jobs:
         package:
           - { dir: platform, repo: platform }
           - { dir: api-platform, repo: api-platform }
+          - { dir: admin-bundle, repo: admin-bundle }
     steps:
       - uses: actions/checkout@v4
 
