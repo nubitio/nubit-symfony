@@ -223,9 +223,12 @@ final class NubitAdminBundle extends AbstractBundle
 
         // Fail-safe hub: independent of mercure.enabled (which only gates the
         // subscriber cookie) — it matters to ANY app with mercure: true
-        // resources. IGNORE_ON_INVALID_REFERENCE skips the decoration when no
-        // default hub exists (apps with custom hub names decorate manually).
-        if ($config['mercure']['fail_safe'] && $builder->hasExtension('mercure')) {
+        // resources. class_exists, NOT hasExtension: loadExtension runs in a
+        // per-extension temporary container that only knows nubit_admin, so
+        // hasExtension is always false here. IGNORE_ON_INVALID_REFERENCE skips
+        // the decoration when MercureBundle is installed but no default hub is
+        // configured (apps with custom hub names decorate manually).
+        if ($config['mercure']['fail_safe'] && class_exists('Symfony\\Bundle\\MercureBundle\\MercureBundle')) {
             $services->set(FailSafeHub::class)
                 ->decorate('mercure.hub.default', null, 0, ContainerInterface::IGNORE_ON_INVALID_REFERENCE)
                 ->arg('$inner', service('.inner'));
