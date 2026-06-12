@@ -11,6 +11,7 @@ Registers automatically:
 - The **API Platform bridge** from `nubitio/api-platform`: `DataGridFilter`, translated OpenAPI docs with `x-crud` hints, pagination headers, domain-exception mapping.
 - **Dual JWT auth**: `POST /api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/change-password`. Web clients get HttpOnly cookies; mobile/API clients get tokens in the body (`response_mode: json` or `X-Client-Type: android|ios`). Refresh tokens are rotated and stored hashed (Doctrine entity `nubit_refresh_token`); changing the password revokes every session and re-issues tokens for the current one. Purge old tokens with `bin/console nubit:auth:purge-refresh-tokens`.
 - **Mercure** (`nubit_admin.mercure.enabled: true`): issues the `mercureAuthorization` subscriber-JWT cookie on login/refresh so the React grids receive live updates. Replace `MercureCookieDecorator` to scope topics per tenant/user.
+- **Fail-safe Mercure publishing** (`mercure.fail_safe`, on by default whenever MercureBundle is installed): API Platform publishes `mercure: true` updates after the flush, so a dead hub used to turn an already-persisted write into a 500 — clients retry and duplicate data. The bundle decorates the default hub: during HTTP requests publish failures are logged and swallowed (response stays 2xx, live refresh degrades to manual); in messenger workers and console commands they are rethrown, so routing `Symfony\Component\Mercure\Update` to an async transport keeps full retry/delivery semantics. Apps with a custom hub name decorate it themselves with `Nubit\AdminBundle\Mercure\FailSafeHub`.
 - **Soft delete**: mark entities with `#[Nubit\ApiPlatform\Attribute\SoftDeletable]` and the registered Doctrine filter (`nubit_soft_delete`) hides rows whose `deleted_at` is set. Opt-in per entity by design.
 - **Single-tenant defaults** for the `Nubit\Platform` contracts (registry, connection switcher, feature checker, quota enforcer) — multi-tenant apps override the aliases.
 - **Autoconfiguration** for `GridVirtualFieldInterface` and `LoginResponseDecoratorInterface` implementations.
@@ -73,6 +74,7 @@ nubit_admin:
         secret: '%env(MERCURE_JWT_SECRET)%'
         topics: ['*']
         hub_path: /.well-known/mercure
+        fail_safe: true               # dead hub never turns a successful write into a 500
     media:
         enabled: false                # true → media library (see below)
         storage:

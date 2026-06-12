@@ -33,6 +33,7 @@ use Nubit\AdminBundle\Media\MediaUrlResolverInterface;
 use Nubit\AdminBundle\Media\RouteMediaUrlResolver;
 use Nubit\AdminBundle\Media\Serializer\MediaNormalizer;
 use Nubit\AdminBundle\Media\State\MediaSoftDeleteProcessor;
+use Nubit\AdminBundle\Mercure\FailSafeHub;
 use Nubit\AdminBundle\Tenant\AllowAllFeatureChecker;
 use Nubit\AdminBundle\Tenant\SingleTenantConnectionSwitcher;
 use Nubit\AdminBundle\Tenant\SingleTenantRegistry;
@@ -51,6 +52,7 @@ use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Contract\TenantRegistryInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
@@ -114,6 +116,10 @@ final class NubitAdminBundle extends AbstractBundle
                             ->defaultValue(['*'])
                         ->end()
                         ->scalarNode('hub_path')->defaultValue('/.well-known/mercure')->end()
+                        ->booleanNode('fail_safe')
+                            ->info('Decorate the default hub so a dead Mercure never turns a successful write into a 500. HTTP requests log-and-continue; workers/console rethrow so async retries still work. Applies whenever MercureBundle is installed, regardless of "enabled".')
+                            ->defaultTrue()
+                        ->end()
                     ->end()
                 ->end()
                 ->arrayNode('media')
@@ -213,6 +219,16 @@ final class NubitAdminBundle extends AbstractBundle
 
         if ($config['soft_delete']) {
             $services->set(SoftDeleteFilterListener::class);
+        }
+
+        // Fail-safe hub: independent of mercure.enabled (which only gates the
+        // subscriber cookie) — it matters to ANY app with mercure: true
+        // resources. IGNORE_ON_INVALID_REFERENCE skips the decoration when no
+        // default hub exists (apps with custom hub names decorate manually).
+        if ($config['mercure']['fail_safe'] && $builder->hasExtension('mercure')) {
+            $services->set(FailSafeHub::class)
+                ->decorate('mercure.hub.default', null, 0, ContainerInterface::IGNORE_ON_INVALID_REFERENCE)
+                ->arg('$inner', service('.inner'));
         }
 
         if ($config['mercure']['enabled']) {

@@ -45,7 +45,8 @@
     },
     "require-dev": {
         "league/flysystem-memory": "^3.0",
-        "phpunit/phpunit": "^12.0"
+        "phpunit/phpunit": "^12.0",
+        "symfony/mercure": "^0.6"
     },
     "autoload": {
         "psr-4": {
@@ -60,5 +61,8 @@
     "minimum-stability": "stable",
     "config": {
         "sort-packages": true
+    },
+    "suggest": {
+        "symfony/mercure-bundle": "Live grid updates; the bundle adds a fail-safe hub decorator and the subscriber cookie"
     }
 }

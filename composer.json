@@ -43,7 +43,8 @@
         "phpoffice/phpspreadsheet": "^5.3",
         "phpstan/phpstan": "^2.0",
         "phpunit/phpunit": "^12.0",
-        "pontedilana/php-weasyprint": "^2.2"
+        "pontedilana/php-weasyprint": "^2.2",
+        "symfony/mercure": "^0.6"
     },
     "autoload": {
         "psr-4": {
