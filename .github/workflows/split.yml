@@ -1,14 +1,23 @@
 name: Split packages
 
 # Mirrors each package to its read-only repo (nubitio/platform,
-# nubitio/api-platform) so Packagist can serve them individually.
-# Requires the SPLIT_TOKEN secret: a fine-grained PAT with content write
-# access to the split repositories.
+# nubitio/api-platform, nubitio/admin-bundle) so Packagist can serve them
+# individually. Uses native `git subtree split` instead of the symplify
+# action: that action interpolated commit messages unquoted into sh (an
+# apostrophe silently skipped the push while the job stayed green) and
+# swallowed push failures. Requires the SPLIT_TOKEN secret: a fine-grained
+# PAT with content write access to every split repository.
 
 on:
   push:
     branches: [main]
     tags: ['v*.*.*']
+
+# Serialize runs: a tag push and its branch push used to race each other
+# into the mirrors and one of them lost.
+concurrency:
+  group: split-packages
+  cancel-in-progress: false
 
 jobs:
   split:
@@ -22,28 +31,33 @@ jobs:
           - { dir: admin-bundle, repo: admin-bundle }
     steps:
       - uses: actions/checkout@v4
-
-      # Split a branch push
-      - if: '!startsWith(github.ref, ''refs/tags/'')'
-        uses: symplify/monorepo-split-github-action@v2.3.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.SPLIT_TOKEN }}
         with:
-          package_directory: packages/${{ matrix.package.dir }}
-          repository_organization: nubitio
-          repository_name: ${{ matrix.package.repo }}
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          fetch-depth: 0 # subtree split walks the full history
 
-      # Split a tag push (propagates the version tag to the split repo)
-      - if: startsWith(github.ref, 'refs/tags/')
-        uses: symplify/monorepo-split-github-action@v2.3.0
+      - name: Split and push
         env:
-          GITHUB_TOKEN: ${{ secrets.SPLIT_TOKEN }}
-        with:
-          tag: ${{ github.ref_name }}
-          package_directory: packages/${{ matrix.package.dir }}
-          repository_organization: nubitio
-          repository_name: ${{ matrix.package.repo }}
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          SPLIT_TOKEN: ${{ secrets.SPLIT_TOKEN }}
+          PACKAGE_DIR: ${{ matrix.package.dir }}
+          MIRROR_REPO: ${{ matrix.package.repo }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          sha=$(git subtree split --prefix="packages/$PACKAGE_DIR" HEAD)
+          echo "split head: $sha"
+
+          remote="https://x-access-token:${SPLIT_TOKEN}@github.com/nubitio/${MIRROR_REPO}.git"
+
+          # First push from subtree-split rewrites the symplify-era history,
+          # hence --force. The mirrors are read-only by convention.
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            tag="${GITHUB_REF#refs/tags/}"
+            # Tags must sit on the mirror history: update main first (the
+            # branch-push run may not have landed yet), then tag the head.
+            git push --force "$remote" "$sha:refs/heads/main"
+            git push --force "$remote" "$sha:refs/tags/$tag"
+          else
+            git push --force "$remote" "$sha:refs/heads/main"
+          fi

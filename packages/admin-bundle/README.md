@@ -177,7 +177,3 @@ Refresh with `{ "refreshToken": "..." }` in the body; send `Authorization: Beare
 ## License
 
 MIT
-
-> Maintainers note: commit messages in this monorepo must avoid apostrophes —
-> the package-split action interpolates them unquoted into `sh` and silently
-> skips the mirror push when one appears.
