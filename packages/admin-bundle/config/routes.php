@@ -7,6 +7,7 @@ use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\RefreshController;
 use Nubit\AdminBundle\Media\Controller\MediaFileController;
+use Nubit\AdminBundle\Media\Controller\MediaUploadController;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 return static function (RoutingConfigurator $routes): void {
@@ -26,7 +27,11 @@ return static function (RoutingConfigurator $routes): void {
         ->controller(ChangePasswordController::class)
         ->methods(['POST']);
 
-    // Media streaming endpoint (only functional with nubit_admin.media.enabled).
+    // Media library (only functional with nubit_admin.media.enabled).
+    $routes->add('nubit_admin_media_upload', '/api/media')
+        ->controller(MediaUploadController::class)
+        ->methods(['POST']);
+
     $routes->add('nubit_admin_media_file', '/api/media/{id}/file')
         ->controller(MediaFileController::class)
         ->methods(['GET']);

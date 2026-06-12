@@ -7,14 +7,9 @@ namespace Nubit\AdminBundle\Media\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\OpenApi\Model\Operation;
-use ApiPlatform\OpenApi\Model\RequestBody;
-use ArrayObject;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Nubit\AdminBundle\Media\Controller\MediaUploadController;
 use Nubit\AdminBundle\Media\State\MediaSoftDeleteProcessor;
 use Nubit\ApiPlatform\Attribute\SoftDeletable;
 use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
@@ -24,6 +19,11 @@ use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
  * field `file`) and referenced from other resources by IRI — the pattern
  * @nubitio/react-admin's fileField()/imageField() implement (instant upload
  * on file selection, the parent form submits only the IRI).
+ *
+ * The upload endpoint is a plain bundle route (config/routes.php), NOT an
+ * ApiResource operation: custom operation controllers only work with
+ * api_platform.use_symfony_listeners=true and the library must not depend on
+ * that. Get/Delete stay standard operations.
  *
  * Serialization is handled by {@see \Nubit\AdminBundle\Media\Serializer\MediaNormalizer},
  * which emits the resolved public URL as `path` regardless of the parent
@@ -35,29 +35,6 @@ use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
 #[ApiResource(
     operations: [
         new Get(uriTemplate: '/media/{id}'),
-        new Post(
-            uriTemplate: '/media',
-            controller: MediaUploadController::class,
-            openapi: new Operation(
-                requestBody: new RequestBody(
-                    content: new ArrayObject([
-                        'multipart/form-data' => [
-                            'schema' => [
-                                'type' => 'object',
-                                'properties' => [
-                                    'file' => [
-                                        'type' => 'string',
-                                        'format' => 'binary',
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ]),
-                    required: true,
-                ),
-            ),
-            deserialize: false,
-        ),
         new Delete(
             uriTemplate: '/media/{id}',
             processor: MediaSoftDeleteProcessor::class,
