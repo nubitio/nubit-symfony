@@ -33,6 +33,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # subtree split walks the full history
+          # checkout persists the workflow token as an extraheader that
+          # overrides URL-embedded credentials — the mirror push must
+          # authenticate with SPLIT_TOKEN instead.
+          persist-credentials: false
 
       - name: Split and push
         env:
