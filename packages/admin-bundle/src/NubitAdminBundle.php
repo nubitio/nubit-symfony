@@ -17,12 +17,22 @@ use Nubit\AdminBundle\Auth\RefreshTokenStoreInterface;
 use Nubit\AdminBundle\Auth\ResponseModeResolver;
 use Nubit\AdminBundle\Auth\TokenClaimsProviderInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Local\LocalFilesystemAdapter;
+use Nubit\AdminBundle\Command\PurgeMediaCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
 use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\RefreshController;
 use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
+use Nubit\AdminBundle\Media\Controller\MediaFileController;
+use Nubit\AdminBundle\Media\Controller\MediaUploadController;
+use Nubit\AdminBundle\Media\MediaStorage;
+use Nubit\AdminBundle\Media\MediaUrlResolverInterface;
+use Nubit\AdminBundle\Media\RouteMediaUrlResolver;
+use Nubit\AdminBundle\Media\Serializer\MediaNormalizer;
+use Nubit\AdminBundle\Media\State\MediaSoftDeleteProcessor;
 use Nubit\AdminBundle\Tenant\AllowAllFeatureChecker;
 use Nubit\AdminBundle\Tenant\SingleTenantConnectionSwitcher;
 use Nubit\AdminBundle\Tenant\SingleTenantRegistry;
@@ -34,6 +44,7 @@ use Nubit\ApiPlatform\Http\ApiResponseListener;
 use Nubit\ApiPlatform\Http\ExceptionListener;
 use Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer;
 use Nubit\Platform\Feature\Contract\FeatureCheckerInterface;
+use Nubit\Platform\Filesystem\FileManager;
 use Nubit\Platform\Quota\Contract\QuotaEnforcerInterface;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
@@ -41,6 +52,7 @@ use Nubit\Platform\Tenant\Contract\TenantRegistryInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -102,6 +114,36 @@ final class NubitAdminBundle extends AbstractBundle
                             ->defaultValue(['*'])
                         ->end()
                         ->scalarNode('hub_path')->defaultValue('/.well-known/mercure')->end()
+                    ->end()
+                ->end()
+                ->arrayNode('media')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')
+                            ->info('Expose the media library: POST /api/media (multipart), Media entity, streaming route, purge command.')
+                            ->defaultFalse()
+                        ->end()
+                        ->arrayNode('storage')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->scalarNode('filesystem')
+                                    ->info('Service id of a League\\Flysystem FilesystemOperator (e.g. an S3 filesystem from oneup/flysystem-bundle). Overrides local_directory.')
+                                    ->defaultNull()
+                                ->end()
+                                ->scalarNode('local_directory')
+                                    ->info('Root directory of the default local storage.')
+                                    ->defaultValue('%kernel.project_dir%/var/uploads')
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->scalarNode('directory')
+                            ->info('Sub-directory inside the storage where uploads land.')
+                            ->defaultValue('media')
+                        ->end()
+                        ->integerNode('purge_retention_days')
+                            ->info('nubit:media:purge removes media soft-deleted longer ago than this.')
+                            ->defaultValue(30)
+                        ->end()
                     ->end()
                 ->end()
                 ->booleanNode('soft_delete')
@@ -183,6 +225,10 @@ final class NubitAdminBundle extends AbstractBundle
                 ->tag('nubit.admin.login_response_decorator');
         }
 
+        if ($config['media']['enabled']) {
+            $this->loadMedia($config['media'], $container, $services);
+        }
+
         $services->set(LoginController::class)->tag('controller.service_arguments');
         $services->set(ChangePasswordController::class)->tag('controller.service_arguments');
         $services->set(RefreshController::class)->tag('controller.service_arguments');
@@ -206,6 +252,48 @@ final class NubitAdminBundle extends AbstractBundle
         }
     }
 
+    /**
+     * @param array{
+     *     storage: array{filesystem: ?string, local_directory: string},
+     *     directory: string,
+     *     purge_retention_days: int,
+     * } $config
+     */
+    private function loadMedia(array $config, ContainerConfigurator $container, DefaultsConfigurator $services): void
+    {
+        $container->parameters()->set('nubit_admin.media.directory', $config['directory']);
+
+        if ($config['storage']['filesystem'] !== null) {
+            $services->alias('nubit_admin.media.filesystem', $config['storage']['filesystem']);
+        } else {
+            $services->set('nubit_admin.media.local_adapter', LocalFilesystemAdapter::class)
+                ->arg('$location', $config['storage']['local_directory']);
+            $services->set('nubit_admin.media.filesystem', Filesystem::class)
+                ->arg('$adapter', service('nubit_admin.media.local_adapter'));
+        }
+
+        // Bundle-scoped FileManager so apps keep their own FileManager (with a
+        // different filesystem) without colliding with the media storage.
+        $services->set('nubit_admin.media.file_manager', FileManager::class)
+            ->arg('$defaultFilesystem', service('nubit_admin.media.filesystem'));
+
+        $services->set(MediaStorage::class)
+            ->arg('$fileManager', service('nubit_admin.media.file_manager'))
+            ->arg('$directory', $config['directory']);
+
+        $services->set(RouteMediaUrlResolver::class);
+        $services->alias(MediaUrlResolverInterface::class, RouteMediaUrlResolver::class);
+
+        $services->set(MediaNormalizer::class);
+        $services->set(MediaSoftDeleteProcessor::class);
+
+        $services->set(MediaUploadController::class)->tag('controller.service_arguments');
+        $services->set(MediaFileController::class)->tag('controller.service_arguments');
+
+        $services->set(PurgeMediaCommand::class)
+            ->arg('$retentionDays', $config['purge_retention_days']);
+    }
+
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         // The Nubit HTTP client (@nubitio/core) sends plain application/json
@@ -224,6 +312,14 @@ final class NubitAdminBundle extends AbstractBundle
                     'html' => ['text/html'],
                 ],
             ]);
+        }
+
+        // Media library (opt-in): map the entity and expose it as an
+        // ApiResource. Conditional on the raw config because an unconditional
+        // mapping would surface the nubit_media table and /api/media routes
+        // in apps that never enabled the feature.
+        if ($this->isMediaEnabled($builder)) {
+            $this->prependMediaMappings($builder);
         }
 
         if (!$builder->hasExtension('doctrine')) {
@@ -257,5 +353,67 @@ final class NubitAdminBundle extends AbstractBundle
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Reads the raw (pre-processing) bundle config: prependExtension runs
+     * before configuration is processed, so this is the only signal available.
+     */
+    private function isMediaEnabled(ContainerBuilder $builder): bool
+    {
+        $enabled = false;
+        foreach ($builder->getExtensionConfig('nubit_admin') as $config) {
+            if (isset($config['media']['enabled'])) {
+                $enabled = (bool) $config['media']['enabled'];
+            }
+        }
+
+        return $enabled;
+    }
+
+    private function prependMediaMappings(ContainerBuilder $builder): void
+    {
+        if ($builder->hasExtension('api_platform')) {
+            $appPaths = [];
+            foreach ($builder->getExtensionConfig('api_platform') as $config) {
+                $appPaths = array_merge($appPaths, (array) ($config['mapping']['paths'] ?? []));
+            }
+
+            $paths = [__DIR__ . '/Media/Entity'];
+
+            // API Platform skips its project-dir defaults (src/Entity,
+            // src/ApiResource, config/api_platform) as soon as mapping.paths
+            // is non-empty — our prepend must not displace the app's own
+            // entities, so re-add those defaults when the app relied on them.
+            if ($appPaths === []) {
+                /** @var string $projectDir */
+                $projectDir = $builder->getParameter('kernel.project_dir');
+                foreach (["$projectDir/config/api_platform", "$projectDir/src/ApiResource", "$projectDir/src/Entity"] as $dir) {
+                    if (is_dir($dir)) {
+                        $paths[] = $dir;
+                    }
+                }
+            }
+
+            $builder->prependExtensionConfig('api_platform', [
+                'mapping' => ['paths' => $paths],
+            ]);
+        }
+
+        if ($builder->hasExtension('doctrine')) {
+            $builder->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminMediaBundle' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Media/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Media\\Entity',
+                            'alias' => 'NubitAdminMedia',
+                        ],
+                    ],
+                ],
+            ]);
+        }
     }
 }

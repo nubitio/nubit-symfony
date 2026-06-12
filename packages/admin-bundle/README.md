@@ -73,9 +73,49 @@ nubit_admin:
         secret: '%env(MERCURE_JWT_SECRET)%'
         topics: ['*']
         hub_path: /.well-known/mercure
+    media:
+        enabled: false                # true → media library (see below)
+        storage:
+            filesystem: null          # FilesystemOperator service id (e.g. S3); null → local
+            local_directory: '%kernel.project_dir%/var/uploads'
+        directory: media              # sub-directory inside the storage
+        purge_retention_days: 30
     soft_delete: true                 # nubit_soft_delete Doctrine filter
     single_tenant_defaults: true
 ```
+
+## Media library (opt-in)
+
+`media.enabled: true` exposes a ready-made upload pipeline matching
+`fileField()` / `imageField()` in `@nubitio/react-admin` (instant upload —
+the form submits only the media IRI):
+
+- `POST /api/media` — traditional `multipart/form-data` upload (field `file`),
+  returns `{ id, path, originalName, mimeType, size }` where `path` is the
+  resolved public URL.
+- `GET /api/media/{id}` / `DELETE /api/media/{id}` — delete is a **soft**
+  delete; files are removed later by `bin/console nubit:media:purge`
+  (schedule it — instant uploads orphan files when forms are abandoned).
+- `GET /api/media/{id}/file` — default streaming endpoint, works for any
+  Flysystem storage behind the same `/api` firewall.
+
+Storage is **local disk by default** (zero config). For S3 (or anything
+Flysystem speaks), point `media.storage.filesystem` at a `FilesystemOperator`
+service — e.g. with [oneup/flysystem-bundle](https://github.com/1up-lab/OneupFlysystemBundle):
+
+```yaml
+nubit_admin:
+    media:
+        enabled: true
+        storage:
+            filesystem: 'oneup_flysystem.default_filesystem_filesystem'
+```
+
+To serve direct S3/CDN URLs instead of streaming through PHP, implement
+`Nubit\AdminBundle\Media\MediaUrlResolverInterface` and alias it in
+`services.yaml`. Create the table with a migration (`doctrine:migrations:diff`
+picks up `nubit_media` once enabled). Reference uploads from your entities as
+a plain `ManyToOne` to `Nubit\AdminBundle\Media\Entity\Media`.
 
 ## Clients
 
@@ -98,6 +138,7 @@ Refresh with `{ "refreshToken": "..." }` in the body; send `Authorization: Beare
 | `TokenClaimsProviderInterface` | Add claims (user id, role, branch, tenant) to JWTs and shape the login response `user` payload — alias your implementation over the default |
 | `LoginResponseDecoratorInterface` | Attach extra cookies to the web login/refresh response (e.g. a Mercure subscriber JWT) — autoconfigured by interface |
 | `RefreshTokenStoreInterface` | Swap the Doctrine store for Redis/other |
+| `MediaUrlResolverInterface` | Emit direct S3/CDN URLs for media instead of the streaming route |
 | `GridVirtualFieldInterface` | Grid fields without ORM mapping — autoconfigured by interface |
 | `Nubit\Platform` tenant/feature/quota aliases | Override for multi-tenant SaaS |
 
