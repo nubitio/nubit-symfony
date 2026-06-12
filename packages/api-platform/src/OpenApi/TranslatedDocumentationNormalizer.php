@@ -28,6 +28,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *     the frontend can render a select control instead of a free-text input.
  *     (Hydra docs don't carry OpenAPI enums natively.)
  *
+ *  4. ApiResource extraProperties['x-crud']['formLayout'] is injected as a
+ *     class-level "x-crud-layout" key so the frontend can build sectioned or
+ *     tabbed forms entirely from the API doc.
+ *
  * Register in services.yaml:
  *
  *   Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer:
@@ -88,6 +92,11 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
                 $fqcn = \is_string($classId)
                     ? ($this->resolveShortNameToClass(\ltrim($classId, '#')) ?? null)
                     : null;
+
+                // ── Class-level x-crud (formLayout etc.) ────────────────────
+                if ($fqcn !== null) {
+                    $this->injectClassCrud($fqcn, $class);
+                }
 
                 $propertiesKey = $prefix . 'supportedProperty';
                 if (!isset($class[$propertiesKey]) || !\is_array($class[$propertiesKey])) {
@@ -242,6 +251,34 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
 
         if (isset($openapiContext['enum']) && \is_array($openapiContext['enum'])) {
             $supportedProperty['enum'] = \array_values($openapiContext['enum']);
+        }
+    }
+
+    /**
+     * Injects the resource-level "x-crud" extra properties (currently the
+     * form layout) as a top-level "x-crud-layout" key on the Hydra class.
+     *
+     * Declared on the entity as:
+     *
+     *   #[ApiResource(extraProperties: ['x-crud' => ['formLayout' => [...]]])]
+     *
+     * @param array<mixed> $class
+     */
+    private function injectClassCrud(string $fqcn, array &$class): void
+    {
+        try {
+            $metadataCollection = $this->resourceMetadataCollectionFactory->create($fqcn);
+        } catch (\Throwable) {
+            return;
+        }
+
+        foreach ($metadataCollection as $metadata) {
+            $extra = $metadata->getExtraProperties()['x-crud'] ?? null;
+            if (\is_array($extra) && isset($extra['formLayout']) && \is_array($extra['formLayout'])) {
+                $class['x-crud-layout'] = $extra['formLayout'];
+
+                return;
+            }
         }
     }
 
