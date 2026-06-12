@@ -4,12 +4,12 @@
     "type": "project",
     "license": "MIT",
     "require": {
+        "php": ">=8.5",
         "api-platform/core": "^4.1",
         "doctrine/orm": "^3.0",
         "doctrine/persistence": "^4.0",
         "firebase/php-jwt": "^7.0",
         "league/flysystem": "^3.0",
-        "php": ">=8.5",
         "psr/cache": "^3.0",
         "psr/log": "^3.0",
         "symfony/config": "^7.4 || ^8.0",
@@ -36,7 +36,6 @@
         "symfony/validator": "^7.4 || ^8.0"
     },
     "require-dev": {
-        "league/flysystem": "^3.0",
         "league/flysystem-memory": "^3.0",
         "monolog/monolog": "^3.0",
         "open-telemetry/api": "^1.0",
