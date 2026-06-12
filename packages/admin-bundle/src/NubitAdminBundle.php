@@ -19,6 +19,9 @@ use Nubit\AdminBundle\Auth\TokenClaimsProviderInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
+use Nubit\AdminBundle\Audit\AuditTrailListener;
+use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
+use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
 use Nubit\AdminBundle\Command\PurgeMediaCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
 use Nubit\AdminBundle\Controller\ChangePasswordController;
@@ -119,6 +122,24 @@ final class NubitAdminBundle extends AbstractBundle
                         ->booleanNode('fail_safe')
                             ->info('Decorate the default hub so a dead Mercure never turns a successful write into a 500. HTTP requests log-and-continue; workers/console rethrow so async retries still work. Applies whenever MercureBundle is installed, regardless of "enabled".')
                             ->defaultTrue()
+                        ->end()
+                    ->end()
+                ->end()
+                ->arrayNode('audit')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')
+                            ->info('Record field-level diffs of #[Auditable] entities and expose GET /api/audit-trail/{resource}/{id}.')
+                            ->defaultFalse()
+                        ->end()
+                        ->arrayNode('ignored_fields')
+                            ->info('Entity fields excluded from the recorded diffs.')
+                            ->scalarPrototype()->end()
+                            ->defaultValue(['createdAt', 'updatedAt', 'password'])
+                        ->end()
+                        ->integerNode('purge_retention_days')
+                            ->info('nubit:audit:purge removes entries older than this.')
+                            ->defaultValue(365)
                         ->end()
                     ->end()
                 ->end()
@@ -248,6 +269,18 @@ final class NubitAdminBundle extends AbstractBundle
             $this->loadMedia($config['media'], $container, $services);
         }
 
+        if ($config['audit']['enabled']) {
+            $services->set(AuditTrailListener::class)
+                ->arg('$ignoredFields', $config['audit']['ignored_fields'])
+                ->tag('doctrine.event_listener', ['event' => 'onFlush'])
+                ->tag('doctrine.event_listener', ['event' => 'postFlush']);
+
+            $services->set(AuditTrailController::class)->tag('controller.service_arguments');
+
+            $services->set(PurgeAuditLogCommand::class)
+                ->arg('$retentionDays', $config['audit']['purge_retention_days']);
+        }
+
         $services->set(LoginController::class)->tag('controller.service_arguments');
         $services->set(ChangePasswordController::class)->tag('controller.service_arguments');
         $services->set(RefreshController::class)->tag('controller.service_arguments');
@@ -337,8 +370,27 @@ final class NubitAdminBundle extends AbstractBundle
         // ApiResource. Conditional on the raw config because an unconditional
         // mapping would surface the nubit_media table and /api/media routes
         // in apps that never enabled the feature.
-        if ($this->isMediaEnabled($builder)) {
+        if ($this->isFeatureEnabled($builder, 'media')) {
             $this->prependMediaMappings($builder);
+        }
+
+        // Audit trail (opt-in): same reasoning — only map nubit_audit_log
+        // when the feature is on. AuditLog is not an ApiResource (the plain
+        // route serves it), so only the Doctrine mapping is needed.
+        if ($this->isFeatureEnabled($builder, 'audit') && $builder->hasExtension('doctrine')) {
+            $builder->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminAuditBundle' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Audit/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Audit\\Entity',
+                            'alias' => 'NubitAdminAudit',
+                        ],
+                    ],
+                ],
+            ]);
         }
 
         if (!$builder->hasExtension('doctrine')) {
@@ -378,12 +430,12 @@ final class NubitAdminBundle extends AbstractBundle
      * Reads the raw (pre-processing) bundle config: prependExtension runs
      * before configuration is processed, so this is the only signal available.
      */
-    private function isMediaEnabled(ContainerBuilder $builder): bool
+    private function isFeatureEnabled(ContainerBuilder $builder, string $feature): bool
     {
         $enabled = false;
         foreach ($builder->getExtensionConfig('nubit_admin') as $config) {
-            if (isset($config['media']['enabled'])) {
-                $enabled = (bool) $config['media']['enabled'];
+            if (isset($config[$feature]['enabled'])) {
+                $enabled = (bool) $config[$feature]['enabled'];
             }
         }
 

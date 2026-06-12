@@ -75,6 +75,10 @@ nubit_admin:
         topics: ['*']
         hub_path: /.well-known/mercure
         fail_safe: true               # dead hub never turns a successful write into a 500
+    audit:
+        enabled: false                # true → audit trail (see below)
+        ignored_fields: [createdAt, updatedAt, password]
+        purge_retention_days: 365
     media:
         enabled: false                # true → media library (see below)
         storage:
@@ -85,6 +89,32 @@ nubit_admin:
     soft_delete: true                 # nubit_soft_delete Doctrine filter
     single_tenant_defaults: true
 ```
+
+## Audit trail (opt-in)
+
+`audit.enabled: true` records field-level before/after diffs for entities
+marked `#[Nubit\ApiPlatform\Attribute\Auditable]` (creates, updates, deletes —
+captured from the Doctrine change set, written to `nubit_audit_log` in the
+same request, attributed to the authenticated user). Serve them to the
+`AuditTrailPanel` in `@nubitio/react-admin`:
+
+```php
+#[Auditable]                       // or #[Auditable(resource: 'products')]
+#[ORM\Entity]
+class Product { ... }
+```
+
+```ts
+defineResource('/api/products', {
+  auditTrail: { enabled: true, apiUrl: (id) => `/api/audit-trail/product/${id}` },
+})
+```
+
+`GET /api/audit-trail/{resource}/{id}` returns newest-first entries in the
+panel shape: `[{ id, timestamp, user, action, changes: { field: { before, after } } }]`.
+Relations collapse to their id; `ignored_fields` are excluded from diffs;
+collection contents are not audited. Create the table with a migration and
+schedule `bin/console nubit:audit:purge`.
 
 ## Media library (opt-in)
 

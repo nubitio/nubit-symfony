@@ -6,6 +6,7 @@ use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\RefreshController;
+use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
 use Nubit\AdminBundle\Media\Controller\MediaFileController;
 use Nubit\AdminBundle\Media\Controller\MediaUploadController;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
@@ -34,5 +35,10 @@ return static function (RoutingConfigurator $routes): void {
 
     $routes->add('nubit_admin_media_file', '/api/media/{id}/file')
         ->controller(MediaFileController::class)
+        ->methods(['GET']);
+
+    // Audit trail (only functional with nubit_admin.audit.enabled).
+    $routes->add('nubit_admin_audit_trail', '/api/audit-trail/{resource}/{id}')
+        ->controller(AuditTrailController::class)
         ->methods(['GET']);
 };
