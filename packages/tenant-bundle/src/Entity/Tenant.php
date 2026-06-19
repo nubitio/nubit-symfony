@@ -35,6 +35,14 @@ class Tenant
     #[ORM\Column(length: 40, nullable: true)]
     private ?string $status = null;
 
+    /** column | database — drives connection strategy in nubit-tenant. */
+    #[ORM\Column(length: 20, options: ['default' => 'column'])]
+    private string $isolationMode = 'column';
+
+    /** Full DSN for database-per-tenant mode (postgresql://…). */
+    #[ORM\Column(length: 512, nullable: true)]
+    private ?string $databaseUrl = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -96,6 +104,30 @@ class Tenant
     public function setStatus(?string $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getIsolationMode(): string
+    {
+        return $this->isolationMode;
+    }
+
+    public function setIsolationMode(string $isolationMode): static
+    {
+        $this->isolationMode = $isolationMode;
+
+        return $this;
+    }
+
+    public function getDatabaseUrl(): ?string
+    {
+        return $this->databaseUrl;
+    }
+
+    public function setDatabaseUrl(?string $databaseUrl): static
+    {
+        $this->databaseUrl = $databaseUrl;
 
         return $this;
     }
