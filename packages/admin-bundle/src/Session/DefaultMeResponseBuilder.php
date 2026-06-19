@@ -76,7 +76,7 @@ final readonly class DefaultMeResponseBuilder implements MeResponseBuilderInterf
             $tenant['domain'] = $domain;
         }
 
-        return $tenant !== [] ? $tenant : null;
+        return $tenant;
     }
 
     /**

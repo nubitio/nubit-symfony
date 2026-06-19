@@ -41,7 +41,9 @@ final readonly class EmbeddedLinesController
             return new JsonResponse([]);
         }
 
-        $repository = $manager->getRepository($definition->entityClass);
+        /** @var class-string $entityClass */
+        $entityClass = $definition->entityClass;
+        $repository = $manager->getRepository($entityClass);
         $rows = $repository->findBy(
             [$definition->parentProperty => $parentId],
             ['id' => 'ASC'],

@@ -57,6 +57,10 @@ final class EmbeddedLinesRegistry
                     continue;
                 }
 
+                if (!$metadata instanceof \Doctrine\ORM\Mapping\ClassMetadata) {
+                    continue;
+                }
+
                 $config = $attributes[0]->newInstance();
                 $entityClass = $metadata->getName();
                 $routePath = $config->route ?? $this->defaultRoutePath($metadata->getTableName());

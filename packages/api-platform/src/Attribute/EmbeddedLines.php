@@ -30,7 +30,7 @@ final readonly class EmbeddedLines
          * ({@code sales_document_line} → {@code /api/sales_document_lines}).
          */
         public ?string $route = null,
-        /** Serializer groups used when building the plain JSON rows. */
+        /** @var list<string> Serializer groups used when building the plain JSON rows. */
         public array $normalizationGroups = [],
     ) {
     }
