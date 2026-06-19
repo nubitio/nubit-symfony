@@ -9,7 +9,7 @@ composer require nubitio/admin-bundle
 Registers automatically:
 
 - The **API Platform bridge** from `nubitio/api-platform`: `DataGridFilter`, translated OpenAPI docs with `x-crud` hints, pagination headers, domain-exception mapping.
-- **Dual JWT auth**: `POST /api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/change-password`. Web clients get HttpOnly cookies; mobile/API clients get tokens in the body (`response_mode: json` or `X-Client-Type: android|ios`). Refresh tokens are rotated and stored hashed (Doctrine entity `nubit_refresh_token`); changing the password revokes every session and re-issues tokens for the current one. Purge old tokens with `bin/console nubit:auth:purge-refresh-tokens`.
+- **Dual JWT auth**: `POST /api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/change-password`, `GET /api/me`. Web clients get HttpOnly cookies; mobile/API clients get tokens in the body (`response_mode: json` or `X-Client-Type: android|ios`). Refresh tokens are rotated and stored hashed (Doctrine entity `nubit_refresh_token`); changing the password revokes every session and re-issues tokens for the current one. Purge old tokens with `bin/console nubit:auth:purge-refresh-tokens`.
 - **Mercure** (`nubit_admin.mercure.enabled: true`): issues the `mercureAuthorization` subscriber-JWT cookie on login/refresh so the React grids receive live updates. Replace `MercureCookieDecorator` to scope topics per tenant/user.
 - **Fail-safe Mercure publishing** (`mercure.fail_safe`, on by default whenever MercureBundle is installed): API Platform publishes `mercure: true` updates after the flush, so a dead hub used to turn an already-persisted write into a 500 — clients retry and duplicate data. The bundle decorates the default hub: during HTTP requests publish failures are logged and swallowed (response stays 2xx, live refresh degrades to manual); in messenger workers and console commands they are rethrown, so routing `Symfony\Component\Mercure\Update` to an async transport keeps full retry/delivery semantics. Apps with a custom hub name decorate it themselves with `Nubit\AdminBundle\Mercure\FailSafeHub`.
 - **Soft delete**: mark entities with `#[Nubit\ApiPlatform\Attribute\SoftDeletable]` and the registered Doctrine filter (`nubit_soft_delete`) hides rows whose `deleted_at` is set. Opt-in per entity by design.
@@ -56,11 +56,95 @@ security:
 
 3. Create the refresh-token table: `bin/console make:migration && bin/console doctrine:migrations:migrate` (the bundle's `RefreshToken` entity is auto-mapped).
 
+## Session profile (`GET /api/me`)
+
+The React `SessionProvider` calls this on boot. Default response:
+
+```json
+{ "username": "admin@example.com", "roles": ["ROLE_ADMIN"], "appProfile": "internal" }
+```
+
+| `app_profile` | Extra blocks |
+| --- | --- |
+| `internal` | none (single-org panel) |
+| `saas` | `tenant` (when `TenantContext` is set), `features` (from `FeatureCheckerInterface::getEntitlements()`) |
+| `hybrid` | same as `saas` — branch/context fields come from a custom `MeResponseBuilderInterface` |
+
+Alias `MeResponseBuilderInterface` to add application-specific fields without forking the route.
+
+## Embedded lines (master-detail forms)
+
+Line entities that belong to a parent document use `#[EmbeddedLines]` on the
+Doctrine class — the bundle registers `GET /api/{lines}` returning a **plain JSON
+array** for SmartCrud `formDetail` reload (no Hydra envelope, no custom controller).
+
+```php
+#[EmbeddedLines(
+    parentProperty: 'document',
+    normalizationGroups: ['document:read'],
+)]
+#[ORM\Entity]
+class SalesDocumentLine { ... }
+```
+
+Import embedded line routes in addition to the bundle routes:
+
+```yaml
+nubit_embedded_lines:
+    resource: '@NubitAdminBundle/config/embedded_lines_routes.yaml'
+```
+
+On the parent processor, extend `AbstractEmbeddedLinesProcessor` to bind lines
+before persist. Frontend:
+
+```ts
+formDetail: {
+  propertyName: 'lines',
+  url: embeddedLinesUrl('/api/sales_document_lines', 'document'),
+  fields: [...],
+}
+```
+
+## Runtime config (`GET /api/runtime-config`, opt-in)
+
+Separate from `/api/me`: UI flags, defaults, capabilities, onboarding state — **free-form JSON**
+defined by the application. Enable the route, implement the provider, alias it:
+
+```yaml
+# config/packages/nubit_admin.yaml
+nubit_admin:
+    runtime_config: true
+```
+
+```php
+// src/Runtime/AppRuntimeConfigProvider.php
+final readonly class AppRuntimeConfigProvider implements RuntimeConfigProviderInterface
+{
+    public function getConfig(): array
+    {
+        return [
+            'ui' => ['showBranchPicker' => false],
+            'defaults' => ['currency' => 'USD'],
+        ];
+    }
+}
+```
+
+```yaml
+# config/services.yaml
+Nubit\AdminBundle\Runtime\RuntimeConfigProviderInterface: '@App\Runtime\AppRuntimeConfigProvider'
+```
+
+On the React side, `useRuntimeConfig()` from `@nubitio/react-admin` fetches the payload
+(`RuntimeConfig` is `Record<string, unknown>` — type it per app). Disabled by default so
+internal skeletons work with zero config.
+
 ## Configuration (defaults shown)
 
 ```yaml
 # config/packages/nubit_admin.yaml
 nubit_admin:
+    app_profile: internal   # internal | saas | hybrid
     auth:
         secret: '%env(APP_SECRET)%'   # >= 32 bytes (HS256)
         access_token_ttl: 3600
@@ -86,6 +170,7 @@ nubit_admin:
             local_directory: '%kernel.project_dir%/var/uploads'
         directory: media              # sub-directory inside the storage
         purge_retention_days: 30
+    runtime_config: false             # true → GET /api/runtime-config
     soft_delete: true                 # nubit_soft_delete Doctrine filter
     single_tenant_defaults: true
 ```
@@ -167,6 +252,8 @@ Refresh with `{ "refreshToken": "..." }` in the body; send `Authorization: Beare
 
 | Hook | Purpose |
 | --- | --- |
+| `MeResponseBuilderInterface` | Shape `GET /api/me` (session profile for `@nubitio/react-admin`) — alias your implementation to add branch, currency, or domain context |
+| `RuntimeConfigProviderInterface` | Shape `GET /api/runtime-config` (UI flags, defaults, capabilities) — alias your implementation; enable with `runtime_config: true` |
 | `TokenClaimsProviderInterface` | Add claims (user id, role, branch, tenant) to JWTs and shape the login response `user` payload — alias your implementation over the default |
 | `LoginResponseDecoratorInterface` | Attach extra cookies to the web login/refresh response (e.g. a Mercure subscriber JWT) — autoconfigured by interface |
 | `RefreshTokenStoreInterface` | Swap the Doctrine store for Redis/other |

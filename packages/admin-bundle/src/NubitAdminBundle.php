@@ -27,7 +27,18 @@ use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
 use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
+use Nubit\AdminBundle\Controller\MeController;
 use Nubit\AdminBundle\Controller\RefreshController;
+use Nubit\AdminBundle\Controller\RuntimeConfigController;
+use Nubit\AdminBundle\EmbeddedLines\Controller\EmbeddedLinesController;
+use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRegistry;
+use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRouteLoader;
+use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRowSerializer;
+use Nubit\AdminBundle\Runtime\NullRuntimeConfigProvider;
+use Nubit\AdminBundle\Runtime\RuntimeConfigProviderInterface;
+use Nubit\AdminBundle\Session\AppProfile;
+use Nubit\AdminBundle\Session\DefaultMeResponseBuilder;
+use Nubit\AdminBundle\Session\MeResponseBuilderInterface;
 use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
 use Nubit\AdminBundle\Media\Controller\MediaFileController;
 use Nubit\AdminBundle\Media\Controller\MediaUploadController;
@@ -77,6 +88,14 @@ final class NubitAdminBundle extends AbstractBundle
     {
         $definition->rootNode()
             ->children()
+                ->scalarNode('app_profile')
+                    ->info('Application profile: internal (single org), saas (B2B multi-tenant), hybrid (one org, multiple spaces).')
+                    ->defaultValue('internal')
+                    ->validate()
+                        ->ifNotInArray(['internal', 'saas', 'hybrid'])
+                        ->thenInvalid('Invalid app_profile %s')
+                    ->end()
+                ->end()
                 ->arrayNode('auth')
                     ->addDefaultsIfNotSet()
                     ->children()
@@ -173,6 +192,10 @@ final class NubitAdminBundle extends AbstractBundle
                         ->end()
                     ->end()
                 ->end()
+                ->booleanNode('runtime_config')
+                    ->info('Expose GET /api/runtime-config (opt-in; payload from RuntimeConfigProviderInterface).')
+                    ->defaultFalse()
+                ->end()
                 ->booleanNode('soft_delete')
                     ->info('Register the Doctrine filter hiding #[SoftDeletable] rows.')
                     ->defaultTrue()
@@ -201,7 +224,6 @@ final class NubitAdminBundle extends AbstractBundle
             ->addTag('nubit.api_platform.grid_virtual_field');
         $builder->registerForAutoconfiguration(LoginResponseDecoratorInterface::class)
             ->addTag('nubit.admin.login_response_decorator');
-
         // ── nubitio/api-platform bridge ──────────────────────────────────────
         $services->set(DataGridFilter::class);
         $services->set(ApiResponseListener::class);
@@ -269,6 +291,8 @@ final class NubitAdminBundle extends AbstractBundle
             $this->loadMedia($config['media'], $container, $services);
         }
 
+        $this->loadRuntimeConfig($config['runtime_config'], $container, $services);
+
         if ($config['audit']['enabled']) {
             $services->set(AuditTrailListener::class)
                 ->arg('$ignoredFields', $config['audit']['ignored_fields'])
@@ -281,10 +305,21 @@ final class NubitAdminBundle extends AbstractBundle
                 ->arg('$retentionDays', $config['audit']['purge_retention_days']);
         }
 
+        $services->set(DefaultMeResponseBuilder::class)
+            ->arg('$appProfile', AppProfile::from($config['app_profile']));
+        $services->alias(MeResponseBuilderInterface::class, DefaultMeResponseBuilder::class);
+
         $services->set(LoginController::class)->tag('controller.service_arguments');
         $services->set(ChangePasswordController::class)->tag('controller.service_arguments');
         $services->set(RefreshController::class)->tag('controller.service_arguments');
         $services->set(LogoutController::class)->tag('controller.service_arguments');
+        $services->set(MeController::class)->tag('controller.service_arguments');
+
+        $services->set(EmbeddedLinesRegistry::class);
+        $services->set(EmbeddedLinesRowSerializer::class);
+        $services->set(EmbeddedLinesController::class)->tag('controller.service_arguments');
+        $services->set(EmbeddedLinesRouteLoader::class)
+            ->tag('routing.loader');
 
         // ── Tenant context + single-tenant defaults ──────────────────────────
         $services->set(TenantContext::class);
@@ -302,6 +337,18 @@ final class NubitAdminBundle extends AbstractBundle
             $services->set(UnlimitedQuotaEnforcer::class);
             $services->alias(QuotaEnforcerInterface::class, UnlimitedQuotaEnforcer::class);
         }
+    }
+
+    private function loadRuntimeConfig(bool $enabled, ContainerConfigurator $container, DefaultsConfigurator $services): void
+    {
+        $container->parameters()->set('nubit_admin.runtime_config.enabled', $enabled);
+
+        $services->set(NullRuntimeConfigProvider::class);
+        $services->alias(RuntimeConfigProviderInterface::class, NullRuntimeConfigProvider::class);
+
+        $services->set(RuntimeConfigController::class)
+            ->arg('$enabled', $enabled)
+            ->tag('controller.service_arguments');
     }
 
     /**

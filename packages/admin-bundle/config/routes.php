@@ -5,7 +5,9 @@ declare(strict_types=1);
 use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
+use Nubit\AdminBundle\Controller\MeController;
 use Nubit\AdminBundle\Controller\RefreshController;
+use Nubit\AdminBundle\Controller\RuntimeConfigController;
 use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
 use Nubit\AdminBundle\Media\Controller\MediaFileController;
 use Nubit\AdminBundle\Media\Controller\MediaUploadController;
@@ -27,6 +29,15 @@ return static function (RoutingConfigurator $routes): void {
     $routes->add('nubit_admin_auth_change_password', '/api/auth/change-password')
         ->controller(ChangePasswordController::class)
         ->methods(['POST']);
+
+    $routes->add('nubit_admin_me', '/api/me')
+        ->controller(MeController::class)
+        ->methods(['GET']);
+
+    // Runtime config (only functional with nubit_admin.runtime_config.enabled).
+    $routes->add('nubit_admin_runtime_config', '/api/runtime-config')
+        ->controller(RuntimeConfigController::class)
+        ->methods(['GET']);
 
     // Media library (only functional with nubit_admin.media.enabled).
     $routes->add('nubit_admin_media_upload', '/api/media')

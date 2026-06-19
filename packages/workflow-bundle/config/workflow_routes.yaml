@@ -1,0 +1,3 @@
+nubit_workflow:
+    resource: .
+    type: nubit_workflow

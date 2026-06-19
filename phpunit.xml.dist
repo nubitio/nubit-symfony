@@ -15,12 +15,16 @@
         <testsuite name="admin-bundle">
             <directory>packages/admin-bundle/tests</directory>
         </testsuite>
+        <testsuite name="tenant-bundle">
+            <directory>packages/tenant-bundle/tests</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>packages/platform/src</directory>
             <directory>packages/api-platform/src</directory>
             <directory>packages/admin-bundle/src</directory>
+            <directory>packages/tenant-bundle/src</directory>
         </include>
     </source>
 </phpunit>

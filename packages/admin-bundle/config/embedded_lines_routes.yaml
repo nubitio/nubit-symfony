@@ -1,0 +1,8 @@
+# Import alongside config/routes/nubit_admin.yaml:
+#
+#   nubit_embedded_lines:
+#       resource: .
+#       type: nubit_embedded_lines
+nubit_embedded_lines:
+    resource: .
+    type: nubit_embedded_lines

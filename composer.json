@@ -50,14 +50,20 @@
         "psr-4": {
             "Nubit\\Platform\\": "packages/platform/src/",
             "Nubit\\ApiPlatform\\": "packages/api-platform/src/",
-            "Nubit\\AdminBundle\\": "packages/admin-bundle/src/"
+            "Nubit\\AdminBundle\\": "packages/admin-bundle/src/",
+            "Nubit\\TenantBundle\\": "packages/tenant-bundle/src/",
+            "Nubit\\WorkflowBundle\\": "packages/workflow-bundle/src/",
+            "Nubit\\SequenceBundle\\": "packages/sequence-bundle/src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
             "Nubit\\Platform\\Tests\\": "packages/platform/tests/",
             "Nubit\\ApiPlatform\\Tests\\": "packages/api-platform/tests/",
-            "Nubit\\AdminBundle\\Tests\\": "packages/admin-bundle/tests/"
+            "Nubit\\AdminBundle\\Tests\\": "packages/admin-bundle/tests/",
+            "Nubit\\TenantBundle\\Tests\\": "packages/tenant-bundle/tests/",
+            "Nubit\\WorkflowBundle\\Tests\\": "packages/workflow-bundle/tests/",
+            "Nubit\\SequenceBundle\\Tests\\": "packages/sequence-bundle/tests/"
         }
     },
     "scripts": {

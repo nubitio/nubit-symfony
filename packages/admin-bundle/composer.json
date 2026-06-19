@@ -63,6 +63,7 @@
         "sort-packages": true
     },
     "suggest": {
-        "symfony/mercure-bundle": "Live grid updates; the bundle adds a fail-safe hub decorator and the subscriber cookie"
+        "symfony/mercure-bundle": "Live grid updates; the bundle adds a fail-safe hub decorator and the subscriber cookie",
+        "nubitio/tenant-bundle": "Column-mode multi-tenancy: TenantScoped attribute, Doctrine filter, registry, and resolvers"
     }
 }

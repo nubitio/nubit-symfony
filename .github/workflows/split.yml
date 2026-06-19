@@ -1,7 +1,8 @@
 name: Split packages
 
 # Mirrors each package to its read-only repo (nubitio/platform,
-# nubitio/api-platform, nubitio/admin-bundle) so Packagist can serve them
+# nubitio/api-platform, nubitio/admin-bundle, nubitio/sequence-bundle,
+# nubitio/workflow-bundle, nubitio/tenant-bundle) so Packagist can serve them
 # individually. Uses native `git subtree split` instead of the symplify
 # action: that action interpolated commit messages unquoted into sh (an
 # apostrophe silently skipped the push while the job stayed green) and
@@ -29,6 +30,9 @@ jobs:
           - { dir: platform, repo: platform }
           - { dir: api-platform, repo: api-platform }
           - { dir: admin-bundle, repo: admin-bundle }
+          - { dir: sequence-bundle, repo: sequence-bundle }
+          - { dir: workflow-bundle, repo: workflow-bundle }
+          - { dir: tenant-bundle, repo: tenant-bundle }
     steps:
       - uses: actions/checkout@v4
         with:

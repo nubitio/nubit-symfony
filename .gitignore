@@ -3,3 +3,6 @@
 composer.lock
 *.cache
 .DS_Store
+
+# Enlace al plan canónico en nubit-skeleton (symlink docs/local/)
+/docs/local
