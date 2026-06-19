@@ -56,6 +56,7 @@ use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
 use Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface;
 use Nubit\ApiPlatform\Doctrine\Filter\SoftDeleteFilter;
 use Nubit\ApiPlatform\Http\ApiResponseListener;
+use Nubit\ApiPlatform\Http\GridSummaryCalculator;
 use Nubit\ApiPlatform\Http\ExceptionListener;
 use Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer;
 use Nubit\Platform\Feature\Contract\FeatureCheckerInterface;
@@ -226,6 +227,7 @@ final class NubitAdminBundle extends AbstractBundle
             ->addTag('nubit.admin.login_response_decorator');
         // ── nubitio/api-platform bridge ──────────────────────────────────────
         $services->set(DataGridFilter::class);
+        $services->set(GridSummaryCalculator::class);
         $services->set(ApiResponseListener::class);
         $services->set(ExceptionListener::class);
 
