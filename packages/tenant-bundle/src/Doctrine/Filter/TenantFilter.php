@@ -28,7 +28,10 @@ final class TenantFilter extends SQLFilter
 
         $field = $metadata->resolveField($targetEntity->getName());
         if (null === $field) {
-            return '';
+            // Fail closed: an unrecognised entity must not bypass isolation.
+            // If this entity legitimately belongs outside the tenant filter,
+            // exclude it from the TenantScoped metadata map instead.
+            return '1=0';
         }
 
         return sprintf('%s.%s = %s', $targetTableAlias, $field, $this->getParameter(self::PARAMETER));

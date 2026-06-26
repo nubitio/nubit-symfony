@@ -191,6 +191,15 @@ final class NubitAdminBundle extends AbstractBundle
                             ->info('nubit:media:purge removes media soft-deleted longer ago than this.')
                             ->defaultValue(30)
                         ->end()
+                        ->integerNode('max_size')
+                            ->info('Maximum upload size in bytes. 0 means no limit.')
+                            ->defaultValue(10 * 1024 * 1024)
+                        ->end()
+                        ->arrayNode('allowed_mimes')
+                            ->info('Allowlist of server-detected MIME types. Empty array allows all types.')
+                            ->scalarPrototype()->end()
+                            ->defaultValue(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'])
+                        ->end()
                     ->end()
                 ->end()
                 ->booleanNode('runtime_config')
@@ -358,6 +367,8 @@ final class NubitAdminBundle extends AbstractBundle
      *     storage: array{filesystem: ?string, local_directory: string},
      *     directory: string,
      *     purge_retention_days: int,
+     *     max_size: int,
+     *     allowed_mimes: list<string>,
      * } $config
      */
     private function loadMedia(array $config, ContainerConfigurator $container, DefaultsConfigurator $services): void
@@ -380,7 +391,9 @@ final class NubitAdminBundle extends AbstractBundle
 
         $services->set(MediaStorage::class)
             ->arg('$fileManager', service('nubit_admin.media.file_manager'))
-            ->arg('$directory', $config['directory']);
+            ->arg('$directory', $config['directory'])
+            ->arg('$allowedMimes', $config['allowed_mimes'])
+            ->arg('$maxSize', $config['max_size']);
 
         $services->set(RouteMediaUrlResolver::class);
         $services->alias(MediaUrlResolverInterface::class, RouteMediaUrlResolver::class);

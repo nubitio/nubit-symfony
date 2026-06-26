@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Nubit\AdminBundle\Audit\Entity\AuditLog;
+use Nubit\ApiPlatform\Attribute\AuditMasked;
 use Nubit\ApiPlatform\Attribute\Auditable;
 use ReflectionClass;
 use Stringable;
@@ -30,6 +31,9 @@ class AuditTrailListener
 
     /** @var array<class-string, ?string> */
     private array $resourceCache = [];
+
+    /** @var array<class-string, array<string, bool>> field → is masked */
+    private array $maskedCache = [];
 
     /**
      * @param list<string> $ignoredFields
@@ -55,7 +59,7 @@ class AuditTrailListener
             foreach ($uow->getEntityChangeSet($entity) as $field => $change) {
                 // Collection-valued entries are PersistentCollections, not
                 // [before, after] pairs — relation contents are not audited.
-                if (!\is_array($change) || $this->isIgnored($field)) {
+                if (!\is_array($change) || $this->isIgnored($field, $entity)) {
                     continue;
                 }
                 $changes[$field] = ['before' => null, 'after' => $this->normalizeValue($change[1], $em)];
@@ -72,7 +76,7 @@ class AuditTrailListener
 
             $changes = [];
             foreach ($uow->getEntityChangeSet($entity) as $field => $change) {
-                if (!\is_array($change) || $this->isIgnored($field)) {
+                if (!\is_array($change) || $this->isIgnored($field, $entity)) {
                     continue;
                 }
                 $changes[$field] = [
@@ -96,7 +100,7 @@ class AuditTrailListener
 
             $changes = [];
             foreach ($uow->getOriginalEntityData($entity) as $field => $before) {
-                if ($this->isIgnored($field)) {
+                if ($this->isIgnored($field, $entity)) {
                     continue;
                 }
                 $changes[$field] = ['before' => $this->normalizeValue($before, $em), 'after' => null];
@@ -158,9 +162,33 @@ class AuditTrailListener
         return $this->resourceCache[$class];
     }
 
-    private function isIgnored(string $field): bool
+    private function isIgnored(string $field, ?object $entity = null): bool
     {
-        return \in_array($field, $this->ignoredFields, true);
+        if (\in_array($field, $this->ignoredFields, true)) {
+            return true;
+        }
+
+        if ($entity !== null && $this->isMasked($entity::class, $field)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /** @param class-string $class */
+    private function isMasked(string $class, string $field): bool
+    {
+        if (!isset($this->maskedCache[$class])) {
+            $this->maskedCache[$class] = [];
+            $reflection = new ReflectionClass($class);
+            foreach ($reflection->getProperties() as $property) {
+                if ($property->getAttributes(AuditMasked::class) !== []) {
+                    $this->maskedCache[$class][$property->getName()] = true;
+                }
+            }
+        }
+
+        return $this->maskedCache[$class][$field] ?? false;
     }
 
     private function entityId(object $entity, EntityManagerInterface $em): ?string
