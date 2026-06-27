@@ -1,0 +1,28 @@
+#:schema https://mago.carthage.software/1.40.2/schema.json
+version = "1"
+php-version = "8.5"
+
+[source]
+paths = [
+    "packages/platform/src",
+    "packages/platform/tests",
+    "packages/api-platform/src",
+    "packages/api-platform/tests",
+    "packages/admin-bundle/src",
+    "packages/admin-bundle/tests",
+    "packages/tenant-bundle/src",
+    "packages/tenant-bundle/tests",
+    "packages/workflow-bundle/src",
+    "packages/workflow-bundle/tests",
+    "packages/sequence-bundle/src",
+    "packages/sequence-bundle/tests",
+]
+includes = ["vendor"]
+excludes = ["var/**"]
+
+[linter]
+integrations = ["symfony", "phpunit"]
+
+[linter.rules]
+# Enforce strict types (equivalente a declare_strict_types en php-cs-fixer)
+missing-strict-types = { level = "error" }

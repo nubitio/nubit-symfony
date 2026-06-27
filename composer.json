@@ -37,12 +37,11 @@
         "symfony/validator": "^7.4 || ^8.0"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.0",
+        "carthage-software/mago": "^1.40",
         "league/flysystem-memory": "^3.0",
         "monolog/monolog": "^3.0",
         "open-telemetry/api": "^1.0",
         "phpoffice/phpspreadsheet": "^5.3",
-        "phpstan/phpstan": "^2.0",
         "phpunit/phpunit": "^12.0",
         "pontedilana/php-weasyprint": "^2.2",
         "symfony/mercure": "^0.6"
@@ -69,9 +68,9 @@
     },
     "scripts": {
         "test": "phpunit",
-        "stan": "phpstan analyse",
-        "cs": "php-cs-fixer check --diff",
-        "cs-fix": "php-cs-fixer fix"
+        "stan": "mago analyze",
+        "cs": "mago lint && mago fmt --dry-run",
+        "cs-fix": "mago lint --fix && mago fmt"
     },
     "minimum-stability": "stable",
     "config": {
