@@ -64,8 +64,20 @@ final class EmbeddedLinesRegistry
                 $config = $attributes[0]->newInstance();
                 $entityClass = $metadata->getName();
                 $routePath = $config->route ?? $this->defaultRoutePath($metadata->getTableName());
+
+                if ($config->route === null) {
+                    trigger_deprecation(
+                        'nubitio/admin-bundle',
+                        '0.6.0',
+                        'Omitting the route on #[EmbeddedLines] for "%s" is deprecated; set route: "%s" explicitly.',
+                        $entityClass,
+                        $routePath,
+                    );
+                }
                 $key = $this->routeKey($routePath);
                 $parentQueryParam = $config->parentQueryParam ?? $config->parentProperty;
+
+                $parentBinding = $this->resolveParentBinding($metadata, $config->parentProperty);
 
                 $definitions[$key] = new EmbeddedLinesDefinition(
                     key: $key,
@@ -75,6 +87,8 @@ final class EmbeddedLinesRegistry
                     parentProperty: $config->parentProperty,
                     parentQueryParam: $parentQueryParam,
                     normalizationGroups: $config->normalizationGroups,
+                    parentEntityClass: $parentBinding['parentEntityClass'],
+                    collectionProperty: $parentBinding['collectionProperty'],
                 );
             }
         }
@@ -95,6 +109,25 @@ final class EmbeddedLinesRegistry
         }
 
         return '/api/' . $plural;
+    }
+
+    /**
+     * @return array{parentEntityClass: string, collectionProperty: string}
+     */
+    private function resolveParentBinding(\Doctrine\ORM\Mapping\ClassMetadata $lineMetadata, string $parentProperty): array
+    {
+        if (!$lineMetadata->hasAssociation($parentProperty)) {
+            return ['parentEntityClass' => '', 'collectionProperty' => $parentProperty];
+        }
+
+        $mapping = $lineMetadata->getAssociationMapping($parentProperty);
+        $parentEntityClass = $mapping['targetEntity'] ?? '';
+        $collectionProperty = $mapping['inversedBy'] ?? $parentProperty;
+
+        return [
+            'parentEntityClass' => \is_string($parentEntityClass) ? $parentEntityClass : '',
+            'collectionProperty' => \is_string($collectionProperty) ? $collectionProperty : $parentProperty,
+        ];
     }
 
     private function routeKey(string $routePath): string

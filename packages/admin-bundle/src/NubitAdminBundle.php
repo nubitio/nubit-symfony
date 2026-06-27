@@ -21,6 +21,7 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use Nubit\AdminBundle\Audit\AuditTrailListener;
 use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
+use Nubit\AdminBundle\Command\DiscoverCommand;
 use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
 use Nubit\AdminBundle\Command\PurgeMediaCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
@@ -32,6 +33,7 @@ use Nubit\AdminBundle\Controller\RefreshController;
 use Nubit\AdminBundle\Controller\RuntimeConfigController;
 use Nubit\AdminBundle\EmbeddedLines\Controller\EmbeddedLinesController;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRegistry;
+use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRouteLoader;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRowSerializer;
 use Nubit\AdminBundle\Runtime\NullRuntimeConfigProvider;
@@ -245,6 +247,12 @@ final class NubitAdminBundle extends AbstractBundle
                 ->decorate('api_platform.hydra.normalizer.documentation')
                 ->arg('$inner', service('.inner'))
                 ->arg('$apiLocale', $config['api']['docs_locale']);
+
+            $services->set(EmbeddedLinesDocumentationNormalizer::class)
+                ->decorate(TranslatedDocumentationNormalizer::class)
+                ->args([
+                    '$inner' => service('.inner'),
+                ]);
         }
 
         // ── Auth ─────────────────────────────────────────────────────────────
@@ -270,6 +278,7 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(JWTAuthenticator::class);
 
         $services->set(PurgeRefreshTokensCommand::class);
+        $services->set(DiscoverCommand::class);
 
         if ($config['soft_delete']) {
             $services->set(SoftDeleteFilterListener::class);

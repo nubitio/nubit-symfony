@@ -8,9 +8,8 @@ use Nubit\ApiPlatform\Attribute\EmbeddedLines;
 
 #[EmbeddedLines(
     parentProperty: 'document',
-    route: '/api/sales_document_lines',
     normalizationGroups: ['document:read'],
 )]
-final class EmbeddedLineFixture
+final class ImplicitRouteEmbeddedLineFixture
 {
 }

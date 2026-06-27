@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nubit.io/schemas/x-grid-protocol/v1",
+  "title": "Nubit Grid Query Protocol",
+  "description": "Query parameters exchanged between @nubitio/crud (HydraRemoteDataSource) and Nubit\\ApiPlatform\\Doctrine\\Filter\\DataGridFilter. Attach as x-grid-protocol on the API root or document in OpenAPI.",
+  "type": "object",
+  "properties": {
+    "sort": {
+      "description": "JSON-encoded sort descriptors. Each item: { selector: string, desc?: boolean }.",
+      "type": "string",
+      "examples": ["[{\"selector\":\"name\",\"desc\":false}]"]
+    },
+    "filter": {
+      "description": "JSON-encoded filter expression tree (DevExtreme-style). Leaf nodes: [field, operator, value].",
+      "type": "string",
+      "examples": ["[\"name\",\"contains\",\"acme\"]"]
+    },
+    "searchValue": {
+      "description": "Global search string applied across filterable columns.",
+      "type": "string"
+    },
+    "page": {
+      "description": "1-based page number (API Platform pagination).",
+      "type": "integer",
+      "minimum": 1
+    },
+    "itemsPerPage": {
+      "description": "Page size (API Platform pagination).",
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "x-response-headers": {
+    "X-Total-Count": "Total items matching the filter",
+    "X-Total-Pages": "ceil(total / page size)",
+    "X-Current-Page": "Active page number",
+    "X-Grid-Summary": "JSON map of field → aggregate for columns with x-crud.summable"
+  }
+}

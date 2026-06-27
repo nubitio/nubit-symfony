@@ -15,6 +15,8 @@ Registers automatically:
 - **Soft delete**: mark entities with `#[Nubit\ApiPlatform\Attribute\SoftDeletable]` and the registered Doctrine filter (`nubit_soft_delete`) hides rows whose `deleted_at` is set. Opt-in per entity by design.
 - **Single-tenant defaults** for the `Nubit\Platform` contracts (registry, connection switcher, feature checker, quota enforcer) — multi-tenant apps override the aliases.
 - **Autoconfiguration** for `GridVirtualFieldInterface` and `LoginResponseDecoratorInterface` implementations.
+- **Discovery CLI**: `bin/console nubit:discover` lists API Platform resources, embedded-lines routes, and (when installed) sequence/workflow features.
+- **Embedded lines in docs**: `x-embedded-lines` on parent resources lets `SchemaCrudPage` infer `formDetail` line fields automatically. Set an explicit `route` on `#[EmbeddedLines]` (omitting it is deprecated).
 
 ## Setup
 
