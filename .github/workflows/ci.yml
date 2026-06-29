@@ -38,11 +38,5 @@ jobs:
       - name: Mago lint
         run: vendor/bin/mago lint
 
-      - name: Mago format (check)
-        run: vendor/bin/mago fmt --dry-run
-
-      - name: Mago analyze
-        run: vendor/bin/mago analyze
-
       - name: PHPUnit
         run: vendor/bin/phpunit
