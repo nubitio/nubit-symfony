@@ -54,11 +54,24 @@ final class EmbeddedLinesRegistryTest extends TestCase
         $managerRegistry = $this->createMock(ManagerRegistry::class);
         $managerRegistry->method('getManagers')->willReturn(['default' => $manager]);
 
-        $this->expectDeprecation();
-        $this->expectDeprecationMessage('Omitting the route on #[EmbeddedLines]');
+        $deprecation = null;
+        set_error_handler(static function (int $type, string $message) use (&$deprecation): bool {
+            if ($type !== E_USER_DEPRECATED) {
+                return false;
+            }
 
-        $definitions = (new EmbeddedLinesRegistry($managerRegistry))->all();
+            $deprecation = $message;
 
+            return true;
+        });
+
+        try {
+            $definitions = (new EmbeddedLinesRegistry($managerRegistry))->all();
+        } finally {
+            restore_error_handler();
+        }
+
+        self::assertStringContainsString('Omitting the route on #[EmbeddedLines]', (string) $deprecation);
         self::assertSame('/api/implicit_route_lines', $definitions[array_key_first($definitions)]->routePath);
     }
 }

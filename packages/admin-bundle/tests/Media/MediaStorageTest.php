@@ -46,11 +46,14 @@ final class MediaStorageTest extends TestCase
 
     public function testStoreCapturesUploadMetadata(): void
     {
-        $media = $this->storage->store($this->makeUpload('photo.png', 'some bytes'));
+        $contents = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', true);
+        self::assertNotFalse($contents);
+
+        $media = $this->storage->store($this->makeUpload('photo.png', $contents));
 
         self::assertSame('photo.png', $media->getOriginalName());
         self::assertSame('image/png', $media->getMimeType());
-        self::assertSame(\strlen('some bytes'), $media->getSize());
+        self::assertSame(\strlen($contents), $media->getSize());
     }
 
     public function testStoreRespectsTheTenantPrefix(): void
