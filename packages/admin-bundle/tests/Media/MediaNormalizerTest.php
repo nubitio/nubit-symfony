@@ -27,7 +27,7 @@ final class MediaNormalizerTest extends TestCase
 
     public function testNormalizeEmitsTheResolvedUrlAsPath(): void
     {
-        $media = new Media()
+        $media = (new Media())
             ->setPath('logo-abc123.png')
             ->setOriginalName('logo.png')
             ->setMimeType('image/png')

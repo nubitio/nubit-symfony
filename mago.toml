@@ -28,3 +28,6 @@ integrations = ["symfony", "phpunit"]
 strict-types = { level = "error" }
 sensitive-parameter = { level = "help" }
 excessive-parameter-list = { level = "help" }
+cyclomatic-complexity = { level = "help" }
+kan-defect = { level = "help" }
+too-many-methods = { level = "help" }
