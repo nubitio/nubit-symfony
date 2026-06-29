@@ -26,5 +26,5 @@ integrations = ["symfony", "phpunit"]
 [linter.rules]
 # Enforce strict types (equivalente a declare_strict_types en php-cs-fixer)
 strict-types = { level = "error" }
-sensitive-parameter = { level = "off" }
-excessive-parameter-list = { level = "off" }
+sensitive-parameter = { level = "help" }
+excessive-parameter-list = { level = "help" }
