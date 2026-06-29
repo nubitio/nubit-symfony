@@ -63,7 +63,7 @@ Fields without ORM mapping (computed columns, joins) plug in via `GridVirtualFie
 ```bash
 composer install
 vendor/bin/phpunit
-vendor/bin/phpstan analyse
+vendor/bin/mago analyze
 ```
 
 Monorepo: packages are mirrored to read-only repos ([nubitio/platform](https://github.com/nubitio/platform), [nubitio/api-platform](https://github.com/nubitio/api-platform)) by the split workflow on every push/tag. Release = tag `vX.Y.Z` (lockstep; release notes in GitHub Releases, no changelog files).

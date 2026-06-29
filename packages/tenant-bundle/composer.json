@@ -16,7 +16,7 @@
         "source": "https://github.com/nubitio/nubit-symfony"
     },
     "require": {
-        "php": ">=8.5",
+        "php": ">=8.2",
         "doctrine/orm": "^3.0",
         "firebase/php-jwt": "^7.0",
         "nubitio/platform": "0.*",
@@ -30,7 +30,7 @@
         "symfony/security-core": "^7.4 || ^8.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^12.0"
+        "phpunit/phpunit": "^11.5 || ^12.0"
     },
     "autoload": {
         "psr-4": {

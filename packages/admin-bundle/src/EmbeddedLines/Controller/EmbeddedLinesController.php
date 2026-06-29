@@ -31,8 +31,8 @@ final readonly class EmbeddedLinesController
             throw new NotFoundHttpException('Unknown embedded lines route.');
         }
 
-        $parentId = $request->query->getInt($definition->parentQueryParam);
-        if ($parentId <= 0) {
+        $parentId = $request->query->get($definition->parentQueryParam);
+        if ($parentId === null || $parentId === '' || $parentId === '0') {
             return new JsonResponse([]);
         }
 

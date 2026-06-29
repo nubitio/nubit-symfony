@@ -16,7 +16,7 @@
         "source": "https://github.com/nubitio/nubit-symfony"
     },
     "require": {
-        "php": ">=8.5",
+        "php": ">=8.2",
         "psr/cache": "^3.0",
         "psr/log": "^3.0",
         "symfony/console": "^7.4 || ^8.0",
@@ -34,7 +34,7 @@
         "monolog/monolog": "^3.0",
         "open-telemetry/api": "^1.0",
         "phpoffice/phpspreadsheet": "^5.3",
-        "phpunit/phpunit": "^12.0",
+        "phpunit/phpunit": "^11.5 || ^12.0",
         "pontedilana/php-weasyprint": "^2.2"
     },
     "suggest": {

@@ -18,7 +18,7 @@
         "source": "https://github.com/nubitio/nubit-symfony"
     },
     "require": {
-        "php": ">=8.5",
+        "php": ">=8.2",
         "api-platform/core": "^4.1",
         "doctrine/orm": "^3.0",
         "firebase/php-jwt": "^7.0",
@@ -45,7 +45,7 @@
     },
     "require-dev": {
         "league/flysystem-memory": "^3.0",
-        "phpunit/phpunit": "^12.0",
+        "phpunit/phpunit": "^11.5 || ^12.0",
         "symfony/mercure": "^0.6"
     },
     "autoload": {
