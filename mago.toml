@@ -31,3 +31,4 @@ excessive-parameter-list = { level = "help" }
 cyclomatic-complexity = { level = "help" }
 kan-defect = { level = "help" }
 too-many-methods = { level = "help" }
+no-literal-password = { level = "help" }
