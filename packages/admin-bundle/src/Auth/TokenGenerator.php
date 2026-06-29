@@ -56,7 +56,7 @@ final readonly class TokenGenerator
             $refreshTokenJti,
             hash('sha256', $refreshToken),
             $user->getUserIdentifier(),
-            new DateTimeImmutable()->setTimestamp($refreshTokenExpiresAt),
+            (new DateTimeImmutable())->setTimestamp($refreshTokenExpiresAt),
         );
 
         return new TokenPair(

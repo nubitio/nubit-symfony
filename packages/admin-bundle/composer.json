@@ -18,7 +18,7 @@
         "source": "https://github.com/nubitio/nubit-symfony"
     },
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.3",
         "api-platform/core": "^4.1",
         "doctrine/orm": "^3.0",
         "firebase/php-jwt": "^7.0",

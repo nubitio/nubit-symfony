@@ -33,7 +33,7 @@ final class AuditTrailListenerTest extends TestCase
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $config);
         $this->em = new EntityManager($connection, $config);
 
-        new SchemaTool($this->em)->createSchema([
+        (new SchemaTool($this->em))->createSchema([
             $this->em->getClassMetadata(AuditedThing::class),
             $this->em->getClassMetadata(PlainThing::class),
             $this->em->getClassMetadata(AuditLog::class),

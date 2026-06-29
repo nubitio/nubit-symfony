@@ -114,7 +114,7 @@ final class WorkflowRegistry
 
         $short = (new \ReflectionClass($entityClass))->getShortName();
 
-        return $this->apiRoutePrefix . '/' . (new UnicodeString($short))->snake()->toString() . 's';
+        return $this->apiRoutePrefix . '/' . ((new UnicodeString($short))->snake())->toString() . 's';
     }
 
     private function routeKey(string $routePrefix): string

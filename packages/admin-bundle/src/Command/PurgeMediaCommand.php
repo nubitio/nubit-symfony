@@ -52,7 +52,7 @@ final class PurgeMediaCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $days = $input->getOption('days') !== null ? (int) $input->getOption('days') : $this->retentionDays;
-        $cutoff = new DateTimeImmutable()->sub(new DateInterval(sprintf('P%dD', max(0, $days))));
+        $cutoff = (new DateTimeImmutable())->sub(new DateInterval(sprintf('P%dD', max(0, $days))));
 
         /** @var list<Media> $expired */
         $expired = $this->entityManager->createQueryBuilder()

@@ -16,7 +16,7 @@
         "source": "https://github.com/nubitio/nubit-symfony"
     },
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.3",
         "psr/cache": "^3.0",
         "psr/log": "^3.0",
         "symfony/console": "^7.4 || ^8.0",

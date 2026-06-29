@@ -82,7 +82,7 @@ final class MediaStorageTest extends TestCase
 
     public function testDeleteToleratesAMissingFile(): void
     {
-        $media = new Media()->setPath('never-stored.txt');
+        $media = (new Media())->setPath('never-stored.txt');
 
         $this->storage->delete($media);
 

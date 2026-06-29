@@ -35,7 +35,7 @@ final class PurgeRefreshTokensCommand extends Command
     {
         $count = $this->refreshTokenStore->purgeExpired();
 
-        new SymfonyStyle($input, $output)->success(sprintf('%d refresh token(s) purged.', $count));
+        (new SymfonyStyle($input, $output))->success(sprintf('%d refresh token(s) purged.', $count));
 
         return Command::SUCCESS;
     }

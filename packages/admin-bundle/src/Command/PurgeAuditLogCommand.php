@@ -47,7 +47,7 @@ final class PurgeAuditLogCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $days = $input->getOption('days') !== null ? (int) $input->getOption('days') : $this->retentionDays;
-        $cutoff = new DateTimeImmutable()->sub(new DateInterval(sprintf('P%dD', max(0, $days))));
+        $cutoff = (new DateTimeImmutable())->sub(new DateInterval(sprintf('P%dD', max(0, $days))));
 
         $removed = $this->entityManager->createQueryBuilder()
             ->delete(AuditLog::class, 'a')

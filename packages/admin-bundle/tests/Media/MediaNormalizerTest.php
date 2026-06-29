@@ -43,7 +43,7 @@ final class MediaNormalizerTest extends TestCase
 
     public function testNormalizeBuildsTheIriFromTheFixedUriTemplate(): void
     {
-        $media = new Media()->setPath('x.png');
+        $media = (new Media())->setPath('x.png');
         \Closure::bind(function (Media $m): void {
             $m->id = 'uuid-1';
         }, null, Media::class)($media);

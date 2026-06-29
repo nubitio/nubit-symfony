@@ -4,7 +4,7 @@
     "type": "project",
     "license": "MIT",
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.3",
         "api-platform/core": "^4.1",
         "doctrine/orm": "^3.0",
         "doctrine/persistence": "^4.0",

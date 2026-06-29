@@ -1,6 +1,6 @@
 #:schema https://mago.carthage.software/1.40.2/schema.json
 version = "1"
-php-version = "8.2"
+php-version = "8.3"
 
 [source]
 paths = [
@@ -26,3 +26,5 @@ integrations = ["symfony", "phpunit"]
 [linter.rules]
 # Enforce strict types (equivalente a declare_strict_types en php-cs-fixer)
 strict-types = { level = "error" }
+sensitive-parameter = { level = "off" }
+excessive-parameter-list = { level = "off" }

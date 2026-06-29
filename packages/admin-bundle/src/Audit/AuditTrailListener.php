@@ -149,12 +149,12 @@ class AuditTrailListener
         $class = $entity::class;
 
         if (!\array_key_exists($class, $this->resourceCache)) {
-            $attributes = new ReflectionClass($class)->getAttributes(Auditable::class);
+            $attributes = (new ReflectionClass($class))->getAttributes(Auditable::class);
             if ($attributes === []) {
                 $this->resourceCache[$class] = null;
             } else {
                 $attribute = $attributes[0]->newInstance();
-                $short = strtolower(new ReflectionClass($class)->getShortName());
+                $short = strtolower((new ReflectionClass($class))->getShortName());
                 $this->resourceCache[$class] = $attribute->resource ?? $short;
             }
         }

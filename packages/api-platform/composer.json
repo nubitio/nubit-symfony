@@ -21,7 +21,7 @@
         "doctrine/orm": "^3.0",
         "doctrine/persistence": "^4.0",
         "nubitio/platform": "0.*",
-        "php": ">=8.2",
+        "php": ">=8.3",
         "psr/log": "^3.0",
         "symfony/dependency-injection": "^7.4 || ^8.0",
         "symfony/event-dispatcher": "^7.4 || ^8.0",
