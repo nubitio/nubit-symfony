@@ -29,6 +29,10 @@ final class AuditTrailListenerTest extends TestCase
             [__DIR__ . '/Fixture', \dirname(__DIR__, 2) . '/src/Audit/Entity'],
             true,
         );
+        if (PHP_VERSION_ID >= 80400) {
+            $config->enableNativeLazyObjects(true);
+        }
+
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $config);
         $this->em = new EntityManager($connection, $config);
 
