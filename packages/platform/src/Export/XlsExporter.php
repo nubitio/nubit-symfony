@@ -6,42 +6,41 @@ namespace Nubit\Platform\Export;
 
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Conditional;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class XlsExporter
 {
+    public function __construct(
+        private readonly XlsWorksheetWriter $worksheetWriter = new XlsWorksheetWriter(),
+        private readonly XlsWriterFactory $writerFactory = new XlsWriterFactory(),
+        private readonly XlsResponseFactory $responseFactory = new XlsResponseFactory(),
+    ) {}
+
+    public static function withCache(CacheInterface $cache, bool $preCalculateFormulas = false): self
+    {
+        return new self(writerFactory: new XlsWriterFactory($cache, $preCalculateFormulas));
+    }
+
     /**
      * Stream an XLSX file to the browser.
      *
      * @param array<int, array<string, mixed>> $data
-     * @param array<string, string>|null        $headers  SQL alias → display label
+     * @param array<string, string|array<string, mixed>|XlsColumnSpec>|null $headers SQL alias → display label or column options:
+     *        label?: string, type?: string, format?: string, summary?: string
      *
      * @throws Exception
      */
     public function export(array $data, string $filename, ?array $headers = null): StreamedResponse
     {
-        $spreadsheet = $this->makeSpreadsheet($data, $headers);
-
-        $writer   = new Xlsx($spreadsheet);
-        $response = new StreamedResponse(function () use ($writer): void {
-            $writer->save('php://output');
-        });
-        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s.xlsx"', $filename));
-
-        return $response;
+        return $this->response($this->makeSpreadsheet($data, $headers), $filename);
     }
 
     /**
      * Save an XLSX file to disk.
      *
      * @param array<int, array<string, mixed>> $data
-     * @param array<string, string>|null        $headers
+     * @param array<string, string|array<string, mixed>|XlsColumnSpec>|null $headers
      *
      * @throws Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
@@ -50,103 +49,90 @@ class XlsExporter
     {
         $spreadsheet = $this->makeSpreadsheet($data, $headers);
 
-        $writer = new Xlsx($spreadsheet);
+        $writer = $this->writerFactory->writer($spreadsheet);
         $writer->save($filename . '.xlsx');
     }
 
     /**
      * @param array<int, array<string, mixed>> $data
-     * @param array<string, string>|null        $headers
+     * @param array<string, string|array<string, mixed>|XlsColumnSpec>|null $headers
      *
      * @throws Exception
      */
-    private function makeSpreadsheet(array $data, ?array $headers = null): Spreadsheet
+    public function makeSpreadsheet(array $data, ?array $headers = null): Spreadsheet
     {
-        $headerFillColor = 'FFF2F2F2';
-        $headerFontColor = 'FF000000';
-        $borderColor     = 'FFBFBFBF';
-        $zebraFillColor  = 'FFF9F9F9';
+        return $this->makeSpreadsheetFromIterable($data, $headers);
+    }
 
-        $headerRow = [];
-        if (isset($data[0])) {
-            $properties = array_keys($data[0]);
-            foreach ($properties as $property) {
-                $headerRow[$property] = $headers[$property] ?? ucfirst(str_replace('_', ' ', $property));
-            }
-            array_unshift($data, $headerRow);
+    /**
+     * @param iterable<array<string, mixed>> $rows
+     * @param array<string, string|array<string, mixed>|XlsColumnSpec>|null $headers
+     * @param list<string>|null $fields
+     *
+     * @throws Exception
+     */
+    public function makeSpreadsheetFromIterable(
+        iterable $rows,
+        ?array $headers = null,
+        ?array $fields = null,
+        XlsSheetOptions $options = new XlsSheetOptions(),
+    ): Spreadsheet {
+        return $this->makeWorkbook(new XlsWorkbookSpec([
+            new XlsSheetSpec(rows: $rows, columns: $headers ?? [], fields: $fields, options: $options),
+        ]));
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function makeWorkbook(XlsWorkbookSpec|XlsWorkbookBuilder $workbook): Spreadsheet
+    {
+        if ($workbook instanceof XlsWorkbookBuilder) {
+            $workbook = $workbook->build();
         }
 
-        $columnLetters = range('A', 'Z');
-        $headerStyle   = [
-            'font'      => [
-                'bold'  => true,
-                'color' => ['argb' => $headerFontColor],
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_LEFT,
-                'vertical'   => Alignment::VERTICAL_CENTER,
-            ],
-            'fill'    => [
-                'fillType'   => Fill::FILL_SOLID,
-                'startColor' => ['argb' => $headerFillColor],
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['argb' => $borderColor],
-                ],
-            ],
-        ];
+        $spreadsheet = $this->writerFactory->newSpreadsheet($workbook->creator, $workbook->title);
 
-        $borderStyle = [
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['argb' => $borderColor],
-                ],
-            ],
-        ];
+        if ($workbook->sheets === []) {
+            $spreadsheet->getActiveSheet()->setCellValue('A1', 'No data');
 
-        $zebraStyle = new Conditional();
-        $zebraStyle->setConditionType(Conditional::CONDITION_EXPRESSION);
-        $zebraStyle->setOperatorType(Conditional::OPERATOR_EQUAL);
-        $zebraStyle->addCondition('MOD(ROW(),2)=0');
-        $zebraStyle->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
-        $zebraStyle->getStyle()->getFill()->getStartColor()->setARGB($zebraFillColor);
-        $zebraBorders = $zebraStyle->getStyle()->getBorders();
-        $zebraBorders->getTop()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB($borderColor);
-        $zebraBorders->getBottom()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB($borderColor);
-        $zebraBorders->getLeft()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB($borderColor);
-        $zebraBorders->getRight()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB($borderColor);
+            return $spreadsheet;
+        }
 
-        $spreadsheet = new Spreadsheet();
-        $spreadsheet->getProperties()
-            ->setCreator('Nubit')
-            ->setTitle('Nubit export');
+        foreach ($workbook->sheets as $index => $sheetSpec) {
+            $sheet = $index === 0
+                ? $spreadsheet->getActiveSheet()
+                : $spreadsheet->createSheet($index);
+
+            $this->worksheetWriter->write($sheet, $sheetSpec);
+        }
 
         $spreadsheet->setActiveSheetIndex(0);
-        if ($data !== []) {
-            $spreadsheet->getActiveSheet()->fromArray($data);
-        } else {
-            $spreadsheet->getActiveSheet()->setCellValue('A1', 'No data');
-        }
-
-        $lastColumn = [] === $headerRow ? 'A' : $columnLetters[count($headerRow) - 1];
-        foreach (range('A', $lastColumn) as $columnID) {
-            $spreadsheet->getActiveSheet()->getColumnDimension($columnID)->setAutoSize(true);
-        }
-
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->freezePane('A2');
-        $sheet->setAutoFilter('A1:' . $lastColumn . '1');
-        $sheet->getStyle('A1:' . $lastColumn . '1')->applyFromArray($headerStyle);
-
-        if (count($data) > 1) {
-            $range = 'A2:' . $lastColumn . count($data);
-            $sheet->getStyle($range)->setConditionalStyles([$zebraStyle]);
-            $sheet->getStyle($range)->applyFromArray($borderStyle);
-        }
 
         return $spreadsheet;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function exportWorkbook(XlsWorkbookSpec|XlsWorkbookBuilder $workbook, string $filename): StreamedResponse
+    {
+        return $this->response($this->makeWorkbook($workbook), $filename);
+    }
+
+    /**
+     * @throws Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     */
+    public function saveWorkbook(XlsWorkbookSpec|XlsWorkbookBuilder $workbook, string $filename): void
+    {
+        $spreadsheet = $this->makeWorkbook($workbook);
+        $writer = $this->writerFactory->writer($spreadsheet);
+        $writer->save($filename . '.xlsx');
+    }
+
+    private function response(Spreadsheet $spreadsheet, string $filename): StreamedResponse
+    {
+        return $this->responseFactory->response($this->writerFactory->writer($spreadsheet), $filename);
     }
 }
