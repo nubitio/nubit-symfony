@@ -8,6 +8,9 @@ use Nubit\Platform\Exception\ServiceException;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Contract\TenantRegistryInterface;
+use Nubit\Platform\Tenant\Model\TenantDescriptor;
+use Nubit\Platform\Tenant\Runtime\TenantRuntime;
+use Nubit\Platform\Tenant\Runtime\TenantRuntimeActor;
 use Exception;
 use Override;
 use Psr\Log\LoggerInterface;
@@ -25,8 +28,7 @@ abstract class PerTenantCommand extends Command
     use LockableTrait;
 
     private TenantRegistryInterface $tenantManager;
-    private TenantConnectionSwitcherInterface $tenantConnectionSwitcher;
-    private TenantContext $tenantContext;
+    private TenantRuntime $tenantRuntime;
     protected LoggerInterface $logger;
 
     /** @var array<int, array<string, mixed>> */
@@ -39,10 +41,10 @@ abstract class PerTenantCommand extends Command
         TenantConnectionSwitcherInterface $tenantConnectionSwitcher,
         TenantContext $tenantContext,
         LoggerInterface $logger,
+        ?TenantRuntime $tenantRuntime = null,
     ): void {
         $this->tenantManager = $tenantManager;
-        $this->tenantConnectionSwitcher = $tenantConnectionSwitcher;
-        $this->tenantContext = $tenantContext;
+        $this->tenantRuntime = $tenantRuntime ?? new TenantRuntime($tenantConnectionSwitcher, $tenantContext);
         $this->logger = $logger;
     }
 
@@ -84,9 +86,9 @@ abstract class PerTenantCommand extends Command
                     return Command::FAILURE;
                 }
 
-                $this->switchToTenant($tenant);
-                $io->title('Tenant: ' . $tenantName);
-                $result = $this->executeTenantCommand($input, $output);
+                $result = $this->executeForTenant($tenant, $input, $output, static function (TenantDescriptor $descriptor) use ($io): void {
+                    $io->title('Tenant: ' . $descriptor->name);
+                });
                 if ($result === Command::SUCCESS) {
                     $io->success('Done!');
                 }
@@ -117,10 +119,9 @@ abstract class PerTenantCommand extends Command
 
         foreach ($this->tenants as $tenant) {
             try {
-                $this->switchToTenant($tenant);
-                $io->title('Tenant: ' . $tenant['name']);
-
-                $result = $this->executeTenantCommand($input, $output);
+                $result = $this->executeForTenant($tenant, $input, $output, static function (TenantDescriptor $descriptor) use ($io): void {
+                    $io->title('Tenant: ' . $descriptor->name);
+                });
                 if ($result !== Command::SUCCESS) {
                     $failedTenants[] = (string)$tenant['name'];
                 }
@@ -267,22 +268,29 @@ abstract class PerTenantCommand extends Command
 
     /**
      * @param array<string, mixed> $tenant
-     *
-     * @throws \Doctrine\DBAL\Driver\Exception
-     * @throws \Doctrine\DBAL\Exception
+     * @param callable(TenantDescriptor): void $beforeExecute
      */
-    private function switchToTenant(array $tenant): void
+    private function executeForTenant(
+        array $tenant,
+        InputInterface $input,
+        OutputInterface $output,
+        callable $beforeExecute,
+    ): int
     {
-        $tenantName = (string)$tenant['name'];
+        return $this->tenantRuntime->run(
+            $tenant,
+            function (TenantDescriptor $descriptor) use ($input, $output, $beforeExecute): int {
+                $this->currentTenantName = $descriptor->name;
+                $beforeExecute($descriptor);
 
-        $this->tenantConnectionSwitcher->switchConnection($tenantName);
-        $this->tenantContext->setTenant(
-            isset($tenant['id']) ? (int)$tenant['id'] : null,
-            $tenantName,
-            isset($tenant['primary_domain']) ? (string)$tenant['primary_domain'] : null,
-            null,
+                return $this->executeTenantCommand($input, $output);
+            },
+            new TenantRuntimeActor(
+                actorIdentifier: $this->getName() !== null ? 'cli:' . $this->getName() : 'cli',
+                channel: 'cli',
+                commandName: $this->getName(),
+            ),
         );
-        $this->currentTenantName = $tenantName;
     }
 
     abstract protected function executeTenantCommand(InputInterface $input, OutputInterface $output): int;

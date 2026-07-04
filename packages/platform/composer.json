@@ -24,6 +24,7 @@
         "symfony/dependency-injection": "^7.4 || ^8.0",
         "symfony/http-foundation": "^7.4 || ^8.0",
         "symfony/http-kernel": "^7.4 || ^8.0",
+        "symfony/lock": "^7.4 || ^8.0",
         "symfony/messenger": "^7.4 || ^8.0",
         "symfony/process": "^7.4 || ^8.0",
         "symfony/service-contracts": "^3.0",
@@ -36,7 +37,8 @@
         "open-telemetry/api": "^1.0",
         "phpoffice/phpspreadsheet": "^5.3",
         "phpunit/phpunit": "^11.5 || ^12.0",
-        "pontedilana/php-weasyprint": "^2.2"
+        "pontedilana/php-weasyprint": "^2.2",
+        "symfony/cache": "^7.4 || ^8.0"
     },
     "suggest": {
         "league/flysystem": "Required by Nubit\\Platform\\Filesystem\\FileManager",
