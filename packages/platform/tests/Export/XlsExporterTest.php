@@ -100,6 +100,7 @@ final class XlsExporterTest extends TestCase
         static::assertSame(DataType::TYPE_STRING, $sheet->getCell('A2')->getDataType());
         static::assertSame(DataType::TYPE_STRING, $sheet->getCell('B2')->getDataType());
         static::assertSame('118.00', $sheet->getCell('B2')->getValue());
+        static::assertNull($sheet->getCell('A3')->getValue());
         static::assertNull($sheet->getCell('B3')->getValue());
     }
 

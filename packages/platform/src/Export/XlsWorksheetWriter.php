@@ -43,11 +43,12 @@ final class XlsWorksheetWriter
         $this->writeHeaders($sheet, $fields, $columns);
         $this->writeRows($sheet, $data, $fields, $columns);
 
-        if ($sheetSpec->options->showTotals) {
+        $showTotals = $sheetSpec->options->showTotals && $this->hasTotals($fields, $columns);
+        if ($showTotals) {
             $this->totalsWriter->write($sheet, $layout, $columns);
         }
 
-        $this->styler->apply($sheet, $layout, $columns, $sheetSpec->options);
+        $this->styler->apply($sheet, $layout, $columns, $sheetSpec->options->withTotals($showTotals));
     }
 
     /**
@@ -100,5 +101,21 @@ final class XlsWorksheetWriter
         if ($title !== null && $title !== '') {
             $sheet->setTitle(mb_substr(string: $title, start: 0, length: 31));
         }
+    }
+
+    /**
+     * @param list<string> $fields
+     * @param array<string, XlsColumn> $columns
+     */
+    private function hasTotals(array $fields, array $columns): bool
+    {
+        foreach ($fields as $index => $field) {
+            $columnLetter = Coordinate::stringFromColumnIndex($index + 1);
+            if ($columns[$field]->summaryFormula($columnLetter, 2, 2) !== null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

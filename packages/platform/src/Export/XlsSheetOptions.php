@@ -13,4 +13,15 @@ final readonly class XlsSheetOptions
         public bool $showTotals = true,
         public ?XlsTableOptions $table = null,
     ) {}
+
+    public function withTotals(bool $showTotals): self
+    {
+        return new self(
+            title: $this->title,
+            freezeHeader: $this->freezeHeader,
+            autoFilter: $this->autoFilter,
+            showTotals: $showTotals,
+            table: $this->table,
+        );
+    }
 }
