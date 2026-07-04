@@ -192,6 +192,20 @@ final class CacheManagerTest extends TestCase
         self::assertSame('value-a', (new CacheManager($cache, $tenantA))->get('shared-key'));
         self::assertSame('value-b', (new CacheManager($cache, $tenantB))->get('shared-key'));
     }
+
+    public function testCacheKeysUseTenantScopeSanitization(): void
+    {
+        $cache = new ArrayAdapter();
+        $context = new TenantContext();
+        $context->setTenant(1, 'tenant/slash', null, null);
+        $manager = new CacheManager($cache, $context);
+
+        $manager->set('shared-key', 'value');
+
+        self::assertTrue($cache->hasItem('t.tenant_slash.shared-key'));
+        self::assertSame('value', $manager->get('shared-key'));
+    }
+
     public function testCacheUsesUnscopedKeyWhenTenantIsMissing(): void
     {
         $cache = new ArrayAdapter();

@@ -50,6 +50,20 @@ final class FileManagerTest extends TestCase
             ['fileExists', 'documents/invoice.txt'],
         ], $filesystem->calls);
     }
+
+    public function testTenantPathUsesTenantScopeSanitization(): void
+    {
+        $filesystem = new RecordingFilesystemOperator();
+        $context = new TenantContext();
+        $context->setTenant(1, 'tenant/slash', null, null);
+        $manager = new FileManager($filesystem, $context, new AsciiSlugger());
+
+        $manager->write('/documents/invoice.txt', 'contents');
+
+        self::assertSame([
+            ['write', 'tenant_slash/documents/invoice.txt', 'contents'],
+        ], $filesystem->calls);
+    }
 }
 
 /** @internal */

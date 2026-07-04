@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Nubit\Platform\Tests\RateLimit;
 
 use Nubit\Platform\RateLimit\RateLimitResult;
+use Nubit\Platform\RateLimit\RateLimitPolicy;
 use Nubit\Platform\RateLimit\TenantRateLimiter;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Clock\MockClock;
 
 final class TenantRateLimiterTest extends TestCase
 {
@@ -23,7 +25,7 @@ final class TenantRateLimiterTest extends TestCase
 
     public function testTenantRateLimiterAllowsUntilLimitThenBlocks(): void
     {
-        $limiter = new TenantRateLimiter(new ArrayAdapter(), '2', '60');
+        $limiter = new TenantRateLimiter(new ArrayAdapter(), '2', '60', new MockClock(new \DateTimeImmutable('@70')));
 
         $first = $limiter->check('acme');
         $second = $limiter->check('acme');
@@ -35,8 +37,7 @@ final class TenantRateLimiterTest extends TestCase
         self::assertSame(0, $second->remaining);
         self::assertFalse($third->allowed);
         self::assertSame(0, $third->remaining);
-        self::assertGreaterThanOrEqual(1, $third->retryAfter);
-        self::assertLessThanOrEqual(60, $third->retryAfter);
+        self::assertSame(50, $third->retryAfter);
     }
 
     public function testTenantRateLimiterSanitizesTenantNamesIntoDistinctCacheKeys(): void
@@ -59,5 +60,14 @@ final class TenantRateLimiterTest extends TestCase
         self::assertSame(0, $result->limit);
         self::assertSame(0, $result->remaining);
         self::assertSame(0, $result->retryAfter);
+    }
+
+    public function testRateLimitPolicyCalculatesWindowsAndRetryAfter(): void
+    {
+        $policy = new RateLimitPolicy(limitPerWindow: 10, windowSeconds: 60);
+
+        self::assertSame('1', $policy->windowKey(70));
+        self::assertSame(50, $policy->retryAfter(70));
+        self::assertFalse($policy->disabled());
     }
 }

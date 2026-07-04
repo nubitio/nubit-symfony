@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\Platform\Filesystem;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
+use Nubit\Platform\Tenant\Scope\TenantScope;
 use League\Flysystem\DirectoryListing;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
@@ -18,8 +19,8 @@ readonly class FileManager
         private FilesystemOperator $defaultFilesystem,
         private TenantContext $tenantContext,
         private SluggerInterface $slugger,
-    ) {
-    }
+        private ?TenantScope $tenantScope = null,
+    ) {}
 
     /** @throws FilesystemException */
     public function write(string $location, string $content): void
@@ -79,11 +80,11 @@ readonly class FileManager
 
     private function prefixPath(string $path): string
     {
-        $tenantName = $this->tenantContext->getTenantName();
-        if ($tenantName === null) {
-            return $path;
-        }
+        return $this->scope()->path($path);
+    }
 
-        return $tenantName . '/' . $path;
+    private function scope(): TenantScope
+    {
+        return $this->tenantScope ?? new TenantScope($this->tenantContext);
     }
 }

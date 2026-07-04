@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Report;
 
+use Nubit\Platform\Export\XlsColumnSpec;
+
 /**
  * Contract for a single grid-filterable, XLSX-exportable report.
  *
@@ -33,9 +35,9 @@ interface ExportableReportInterface
     public function sql(string $gridFilter): string;
 
     /**
-     * Column header map for the XLSX export: SQL alias → display label.
+     * Column header map for the XLSX export: SQL alias → display label or column metadata.
      *
-     * @return array<string, string>
+     * @return array<string, string|array<string, mixed>|XlsColumnSpec>
      */
     public function columns(): array;
 

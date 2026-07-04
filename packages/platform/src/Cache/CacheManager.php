@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\Platform\Cache;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
+use Nubit\Platform\Tenant\Scope\TenantScope;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 
@@ -13,8 +14,8 @@ readonly class CacheManager
     public function __construct(
         private CacheItemPoolInterface $cache,
         private TenantContext $tenantContext,
-    ) {
-    }
+        private ?TenantScope $tenantScope = null,
+    ) {}
 
     /** @throws InvalidArgumentException */
     public function get(string $key): mixed
@@ -82,12 +83,11 @@ readonly class CacheManager
 
     private function scopedKey(string $key): string
     {
-        $tenantName = $this->tenantContext->getTenantName();
+        return $this->scope()->cacheKey($key);
+    }
 
-        if ($tenantName === null) {
-            return $key;
-        }
-
-        return "t.{$tenantName}.{$key}";
+    private function scope(): TenantScope
+    {
+        return $this->tenantScope ?? new TenantScope($this->tenantContext);
     }
 }
