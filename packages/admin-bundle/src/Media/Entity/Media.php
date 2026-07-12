@@ -12,6 +12,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Nubit\AdminBundle\Media\State\MediaSoftDeleteProcessor;
 use Nubit\ApiPlatform\Attribute\SoftDeletable;
+use Nubit\TenantBundle\Contract\TenantOwnedInterface;
+use Nubit\TenantBundle\Entity\TenantOwnedTrait;
 use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
 
 /**
@@ -42,8 +44,9 @@ use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
         ),
     ],
 )]
-class Media
+class Media implements TenantOwnedInterface
 {
+    use TenantOwnedTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]

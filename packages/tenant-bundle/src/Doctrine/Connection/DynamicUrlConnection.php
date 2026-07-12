@@ -14,9 +14,12 @@ use ReflectionClass;
  */
 final class DynamicUrlConnection extends Connection implements SwitchableDatabaseConnectionInterface
 {
+    /** @var array<string, mixed>|null */
+    private ?array $baseParams = null;
+
     public function switchToUrl(string $databaseUrl): void
     {
-        $this->close();
+        $this->baseParams ??= $this->getParams();
 
         $parser = new DsnParser([
             'postgresql' => 'pdo_pgsql',
@@ -25,7 +28,22 @@ final class DynamicUrlConnection extends Connection implements SwitchableDatabas
             'mysql' => 'pdo_mysql',
         ]);
 
-        $params = array_replace($this->getParams(), $parser->parse($databaseUrl));
+        $this->replaceParams(array_replace($this->getParams(), $parser->parse($databaseUrl)));
+    }
+
+    public function resetToBaseUrl(): void
+    {
+        if (null === $this->baseParams) {
+            return;
+        }
+
+        $this->replaceParams($this->baseParams);
+    }
+
+    /** @param array<string, mixed> $params */
+    private function replaceParams(array $params): void
+    {
+        $this->close();
 
         $reflection = new ReflectionClass(Connection::class);
         $paramsProperty = $reflection->getProperty('params');

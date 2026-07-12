@@ -7,6 +7,8 @@ namespace Nubit\AdminBundle\Audit\Entity;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Nubit\TenantBundle\Contract\TenantOwnedInterface;
+use Nubit\TenantBundle\Entity\TenantOwnedTrait;
 
 /**
  * One audited write: a create/update/delete of an #[Auditable] entity with
@@ -17,8 +19,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'nubit_audit_log')]
 #[ORM\Index(name: 'IDX_NUBIT_AUDIT_RESOURCE', columns: ['resource', 'resource_id', 'created_at'])]
-class AuditLog
+class AuditLog implements TenantOwnedInterface
 {
+    use TenantOwnedTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

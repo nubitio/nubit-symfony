@@ -12,7 +12,14 @@ final readonly class TenantScopedMetadata
 {
     public function __construct(
         private ?string $tenantEntityClass,
+        /** @var list<class-string> */
+        private array $unscopedEntityClasses = [],
     ) {
+    }
+
+    public function isGloballyUnscoped(string $entityClass): bool
+    {
+        return in_array($entityClass, $this->unscopedEntityClasses, true);
     }
 
     public function isTenantRoot(string $entityClass): bool

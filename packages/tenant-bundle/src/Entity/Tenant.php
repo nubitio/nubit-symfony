@@ -35,11 +35,16 @@ class Tenant
     #[ORM\Column(length: 40, nullable: true)]
     private ?string $status = null;
 
-    /** column | database — drives connection strategy in nubit-tenant. */
+    /** column | database — schema hybrid targets require an application-owned target provider. */
     #[ORM\Column(length: 20, options: ['default' => 'column'])]
     private string $isolationMode = 'column';
 
-    /** Full DSN for database-per-tenant mode (postgresql://…). */
+    /**
+     * Full DSN for legacy database-per-tenant deployments.
+     *
+     * New production applications should keep credentials in a dedicated
+     * control-plane secret store and expose them through a custom tenant entity.
+     */
     #[ORM\Column(length: 512, nullable: true)]
     private ?string $databaseUrl = null;
 
@@ -131,4 +136,5 @@ class Tenant
 
         return $this;
     }
+
 }

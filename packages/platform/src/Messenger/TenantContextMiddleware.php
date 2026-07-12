@@ -6,6 +6,7 @@ namespace Nubit\Platform\Messenger;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
+use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Model\TenantDescriptor;
 use Nubit\Platform\Tenant\Runtime\TenantRuntime;
 use Nubit\Platform\Tenant\Runtime\TenantRuntimeActor;
@@ -69,7 +70,13 @@ final readonly class TenantContextMiddleware implements MiddlewareInterface
         try {
             return $stack->next()->handle($envelope, $stack);
         } finally {
-            $this->tenantContext->clear();
+            try {
+                if ($this->tenantConnectionSwitcher instanceof ResettableTenantConnectionSwitcherInterface) {
+                    $this->tenantConnectionSwitcher->resetConnection();
+                }
+            } finally {
+                $this->tenantContext->clear();
+            }
         }
     }
 

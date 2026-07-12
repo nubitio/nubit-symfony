@@ -11,6 +11,9 @@ use Nubit\Platform\Quota\Contract\QuotaEnforcerInterface;
 use Nubit\TenantBundle\Command\TenantListCommand;
 use Nubit\TenantBundle\Contract\QuotaUsageProviderInterface;
 use Nubit\TenantBundle\Contract\TenantDatabaseUrlProviderInterface;
+use Nubit\TenantBundle\Contract\TenantDatabaseConnectionSwitcherInterface;
+use Nubit\TenantBundle\Contract\TenantIsolationTargetProviderInterface;
+use Nubit\TenantBundle\Contract\TenantSchemaConnectionSwitcherInterface;
 use Nubit\TenantBundle\Doctrine\Filter\TenantFilter;
 use Nubit\TenantBundle\Entity\Tenant;
 use Nubit\TenantBundle\EventListener\QuotaEnforcementListener;
@@ -29,9 +32,10 @@ use Nubit\TenantBundle\Resolver\TenantResolverInterface;
 use Nubit\TenantBundle\Resolver\UserTenantResolver;
 use Nubit\TenantBundle\Switcher\ColumnTenantConnectionSwitcher;
 use Nubit\TenantBundle\Switcher\DatabaseTenantConnectionSwitcher;
+use Nubit\TenantBundle\Switcher\PostgresSchemaTenantConnectionSwitcher;
+use Nubit\TenantBundle\Switcher\TenantRoutingConnectionSwitcher;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
@@ -54,7 +58,7 @@ final class NubitTenantBundle extends AbstractBundle
                     ->defaultFalse()
                 ->end()
                 ->enumNode('isolation')
-                    ->values(['column', 'database'])
+                    ->values(['column', 'database', 'schema', 'hybrid'])
                     ->defaultValue('column')
                 ->end()
                 ->scalarNode('tenant_connection')
@@ -64,6 +68,15 @@ final class NubitTenantBundle extends AbstractBundle
                 ->scalarNode('control_plane_connection')
                     ->info('Doctrine connection for tenant registry lookups in database isolation mode.')
                     ->defaultValue('default')
+                ->end()
+                ->scalarNode('schema_prefix')
+                    ->info('Lowercase PostgreSQL identifier prefix used with the resolved positive tenant ID.')
+                    ->defaultValue('tenant_')
+                ->end()
+                ->arrayNode('base_schemas')
+                    ->info('Explicit base PostgreSQL search_path after the tenant schema.')
+                    ->scalarPrototype()->end()
+                    ->defaultValue(['public'])
                 ->end()
                 ->booleanNode('quotas_enabled')
                     ->info('Enforce plan limits via FeatureChecker entitlements and QuotaUsageProvider implementations.')
@@ -77,6 +90,11 @@ final class NubitTenantBundle extends AbstractBundle
                 ->scalarNode('tenant_entity')
                     ->info('FQCN of the tenant root entity used by the registry and self-filter.')
                     ->defaultValue(Tenant::class)
+                ->end()
+                ->arrayNode('unscoped_entities')
+                    ->info('Explicit allowlist of infrastructure entity FQCNs that remain globally visible in column isolation. All other unscoped entities fail closed.')
+                    ->scalarPrototype()->end()
+                    ->defaultValue([])
                 ->end()
                 ->scalarNode('jwt_secret')
                     ->info('Secret for jwt_claim resolution. Defaults to %env(APP_SECRET)%.')
@@ -153,9 +171,12 @@ final class NubitTenantBundle extends AbstractBundle
      *     isolation: string,
      *     tenant_connection: string,
      *     control_plane_connection: string,
+     *     schema_prefix: string,
+     *     base_schemas: list<string>,
      *     quotas_enabled: bool,
      *     resolution: list<string>,
      *     tenant_entity: string,
+     *     unscoped_entities: list<string>,
      *     jwt_secret: string,
      *     jwt_id_claim: string,
      *     jwt_name_claim: string,
@@ -198,9 +219,12 @@ final class NubitTenantBundle extends AbstractBundle
      *     isolation: string,
      *     tenant_connection: string,
      *     control_plane_connection: string,
+     *     schema_prefix: string,
+     *     base_schemas: list<string>,
      *     quotas_enabled: bool,
      *     resolution: list<string>,
      *     tenant_entity: string,
+     *     unscoped_entities: list<string>,
      *     jwt_secret: string,
      *     jwt_id_claim: string,
      *     jwt_name_claim: string,
@@ -214,7 +238,8 @@ final class NubitTenantBundle extends AbstractBundle
         $services->set(TenantRequestListener::class)
             ->arg('$isolation', $config['isolation'])
             ->arg('$rlsEnabled', $config['rls_enabled'])
-            ->arg('$tenantEntityClass', $config['tenant_entity']);
+            ->arg('$tenantEntityClass', $config['tenant_entity'])
+            ->arg('$unscopedEntityClasses', $config['unscoped_entities']);
 
         $services->set(TenantStampListener::class)
             ->arg('$tenantEntityClass', $config['tenant_entity']);
@@ -226,17 +251,45 @@ final class NubitTenantBundle extends AbstractBundle
 
         $services->set(ColumnTenantConnectionSwitcher::class);
 
-        if ('database' === $config['isolation']) {
+        if (in_array($config['isolation'], ['database', 'hybrid'], strict: true)) {
             $services->set(RegistryTenantDatabaseUrlProvider::class)
                 ->arg('$controlPlaneEntityManager', service('doctrine.orm.' . $config['control_plane_connection'] . '_entity_manager'))
                 ->arg('$tenantEntityClass', $config['tenant_entity']);
             $services->alias(TenantDatabaseUrlProviderInterface::class, RegistryTenantDatabaseUrlProvider::class);
+            $services->alias(TenantIsolationTargetProviderInterface::class, RegistryTenantDatabaseUrlProvider::class);
 
             $services->set(DatabaseTenantConnectionSwitcher::class)
                 ->arg('$tenantConnectionName', $config['tenant_connection']);
-            $services->alias(TenantConnectionSwitcherInterface::class, DatabaseTenantConnectionSwitcher::class);
+            $services->alias(TenantDatabaseConnectionSwitcherInterface::class, DatabaseTenantConnectionSwitcher::class);
+        }
+
+        if (in_array($config['isolation'], ['schema', 'hybrid'], strict: true)) {
+            $services->set(PostgresSchemaTenantConnectionSwitcher::class)
+                ->arg('$tenantConnectionName', $config['tenant_connection'])
+                ->arg('$schemaPrefix', $config['schema_prefix'])
+                ->arg('$baseSchemas', $config['base_schemas']);
+            $services->alias(TenantSchemaConnectionSwitcherInterface::class, PostgresSchemaTenantConnectionSwitcher::class);
+        }
+
+        if (in_array($config['isolation'], ['schema', 'hybrid'], strict: true)) {
+            $tenantRouter = $services->set(TenantRoutingConnectionSwitcher::class)
+                ->arg('$isolation', $config['isolation'])
+                ->arg('$tenantRegistry', service(TenantDescriptorRegistryInterface::class))
+                ->arg('$schemaSwitcher', service(TenantSchemaConnectionSwitcherInterface::class));
+
+            if ('hybrid' === $config['isolation']) {
+                $tenantRouter
+                    ->arg('$targetProvider', service(TenantIsolationTargetProviderInterface::class))
+                    ->arg('$databaseSwitcher', service(TenantDatabaseConnectionSwitcherInterface::class))
+                    ->arg('$columnSwitcher', service(ColumnTenantConnectionSwitcher::class));
+            }
+
+            $services->alias(TenantConnectionSwitcherInterface::class, TenantRoutingConnectionSwitcher::class);
         } else {
-            $services->alias(TenantConnectionSwitcherInterface::class, ColumnTenantConnectionSwitcher::class);
+            $services->alias(
+                TenantConnectionSwitcherInterface::class,
+                'database' === $config['isolation'] ? DatabaseTenantConnectionSwitcher::class : ColumnTenantConnectionSwitcher::class,
+            );
         }
 
         if ($config['quotas_enabled']) {

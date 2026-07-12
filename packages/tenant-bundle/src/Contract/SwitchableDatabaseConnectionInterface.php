@@ -13,4 +13,7 @@ namespace Nubit\TenantBundle\Contract;
 interface SwitchableDatabaseConnectionInterface
 {
     public function switchToUrl(string $databaseUrl): void;
+
+    /** Return to the connection's configured control/base database. */
+    public function resetToBaseUrl(): void;
 }

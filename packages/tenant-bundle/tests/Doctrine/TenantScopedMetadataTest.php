@@ -33,6 +33,15 @@ final class TenantScopedMetadataTest extends TestCase
         self::assertSame('tenant_id', $metadata->resolveField(OwnedFixture::class));
         self::assertTrue($metadata->shouldStamp(OwnedFixture::class));
     }
+
+    public function testOnlyExplicitlyAllowedEntityIsGloballyUnscoped(): void
+    {
+        $metadata = new TenantScopedMetadata(null, [GlobalInfrastructureFixture::class]);
+
+        self::assertTrue($metadata->isGloballyUnscoped(GlobalInfrastructureFixture::class));
+        self::assertFalse($metadata->isGloballyUnscoped(OwnedFixture::class));
+        self::assertNull($metadata->resolveField(GlobalInfrastructureFixture::class));
+    }
 }
 
 #[TenantScoped(field: 'restaurant_id', stampOnPersist: false)]
@@ -58,5 +67,9 @@ final class OwnedFixture implements TenantOwnedInterface
 }
 
 final class TenantRootFixture
+{
+}
+
+final class GlobalInfrastructureFixture
 {
 }

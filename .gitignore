@@ -6,3 +6,4 @@ composer.lock
 
 # Enlace al plan canónico en nubit-skeleton (symlink docs/local/)
 /docs/local
+/graphify-out/

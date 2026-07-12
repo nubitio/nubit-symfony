@@ -6,6 +6,7 @@ namespace Nubit\Platform\Tests\Tenant\Runtime;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
+use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Model\TenantDescriptor;
 use Nubit\Platform\Tenant\Runtime\TenantRuntime;
 use Nubit\Platform\Tenant\Runtime\TenantRuntimeActor;
@@ -76,10 +77,18 @@ final class TenantRuntimeTest extends TestCase
         self::assertNull($context->getTenantName());
         self::assertNull($context->getActorIdentifier());
     }
+
+    public function testRunResetsResettableConnectionAfterCallback(): void
+    {
+        $switcher = new ResettableRecordingTenantConnectionSwitcher();
+        (new TenantRuntime($switcher, new TenantContext()))->run(new TenantDescriptor(9, 'acme'), static fn (): null => null);
+
+        self::assertSame(1, $switcher->resets);
+    }
 }
 
 /** @internal */
-final class RecordingTenantConnectionSwitcher implements TenantConnectionSwitcherInterface
+class RecordingTenantConnectionSwitcher implements TenantConnectionSwitcherInterface
 {
     /** @var list<string> */
     public array $tenants = [];
@@ -87,5 +96,16 @@ final class RecordingTenantConnectionSwitcher implements TenantConnectionSwitche
     public function switchConnection(string $tenant): void
     {
         $this->tenants[] = $tenant;
+    }
+}
+
+/** @internal */
+final class ResettableRecordingTenantConnectionSwitcher extends RecordingTenantConnectionSwitcher implements ResettableTenantConnectionSwitcherInterface
+{
+    public int $resets = 0;
+
+    public function resetConnection(): void
+    {
+        ++$this->resets;
     }
 }

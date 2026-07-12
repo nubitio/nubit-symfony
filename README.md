@@ -7,6 +7,7 @@ Backend packages for the Nubit admin stack — the Symfony / API Platform counte
 | [platform](packages/platform) | `nubitio/platform` | Domain exceptions, tenant contracts, feature gates, quota contracts, messenger middleware, cache/file/export helpers |
 | [api-platform](packages/api-platform) | `nubitio/api-platform` | The frontend contract: grid filter (`sort`/`filter`/`searchValue`), translated OpenAPI docs with `x-crud` hints, pagination headers, entity traits |
 | [admin-bundle](packages/admin-bundle) | `nubitio/admin-bundle` | One-line install: registers the bridge, dual cookie/Bearer JWT auth (login/refresh/logout), single-tenant defaults |
+| [tenant-bundle](packages/tenant-bundle) | `nubitio/tenant-bundle` | Opt-in column, database, PostgreSQL schema, and hybrid tenant isolation |
 
 Starter template: [`nubit-skeleton`](https://github.com/nubitio/nubit-skeleton) — Symfony + `@nubitio/react-admin` + Docker Compose + auth, Mercure, media, audit, and master-detail examples.
 

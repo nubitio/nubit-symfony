@@ -13,6 +13,7 @@ final class TenantFilter extends SQLFilter
     public const string NAME = 'nubit_tenant';
     public const string PARAMETER = 'tenant_id';
     public const string TENANT_ENTITY_PARAMETER = 'tenant_entity_class';
+    public const string UNSCOPED_ENTITIES_PARAMETER = 'unscoped_entity_classes';
 
     public function addFilterConstraint(ClassMetadata $targetEntity, string $targetTableAlias): string
     {
@@ -20,7 +21,12 @@ final class TenantFilter extends SQLFilter
             $this->hasParameter(self::TENANT_ENTITY_PARAMETER)
                 ? trim($this->getParameter(self::TENANT_ENTITY_PARAMETER), "'")
                 : null,
+            $this->unscopedEntityClasses(),
         );
+
+        if ($metadata->isGloballyUnscoped($targetEntity->getName())) {
+            return '';
+        }
 
         if ($metadata->isTenantRoot($targetEntity->getName())) {
             return sprintf('%s.id = %s', $targetTableAlias, $this->getParameter(self::PARAMETER));
@@ -35,5 +41,17 @@ final class TenantFilter extends SQLFilter
         }
 
         return sprintf('%s.%s = %s', $targetTableAlias, $field, $this->getParameter(self::PARAMETER));
+    }
+
+    /** @return list<class-string> */
+    private function unscopedEntityClasses(): array
+    {
+        if (!$this->hasParameter(self::UNSCOPED_ENTITIES_PARAMETER)) {
+            return [];
+        }
+
+        $classes = trim($this->getParameter(self::UNSCOPED_ENTITIES_PARAMETER), "'");
+
+        return '' === $classes ? [] : explode(',', $classes);
     }
 }

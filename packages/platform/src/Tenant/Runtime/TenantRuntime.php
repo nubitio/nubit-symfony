@@ -6,6 +6,7 @@ namespace Nubit\Platform\Tenant\Runtime;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
+use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Model\TenantDescriptor;
 
 final readonly class TenantRuntime
@@ -62,6 +63,12 @@ final readonly class TenantRuntime
 
     public function clear(): void
     {
-        $this->tenantContext->clear();
+        try {
+            if ($this->connectionSwitcher instanceof ResettableTenantConnectionSwitcherInterface) {
+                $this->connectionSwitcher->resetConnection();
+            }
+        } finally {
+            $this->tenantContext->clear();
+        }
     }
 }
