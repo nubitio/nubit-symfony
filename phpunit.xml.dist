@@ -18,6 +18,9 @@
         <testsuite name="tenant-bundle">
             <directory>packages/tenant-bundle/tests</directory>
         </testsuite>
+        <testsuite name="sequence-bundle">
+            <directory>packages/sequence-bundle/tests</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
@@ -25,6 +28,7 @@
             <directory>packages/api-platform/src</directory>
             <directory>packages/admin-bundle/src</directory>
             <directory>packages/tenant-bundle/src</directory>
+            <directory>packages/sequence-bundle/src</directory>
         </include>
     </source>
 </phpunit>
