@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\ApiPlatform\Http;
 
 use Throwable;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Nubit\Platform\Exception\DomainProblemException;
 use Nubit\Platform\Exception\NotFoundException;
 use Nubit\Platform\Exception\QuotaExceededException;
@@ -30,6 +31,12 @@ final readonly class ExceptionListener
     public function __invoke(ExceptionEvent $event): void
     {
         $exception = $event->getThrowable();
+
+        if ($exception instanceof ForeignKeyConstraintViolationException) {
+            $this->handleForeignKeyConstraintViolation($event, $exception);
+
+            return;
+        }
 
         if (!$exception instanceof ServiceException) {
             return;
@@ -92,5 +99,40 @@ final readonly class ExceptionListener
         $code = $exception->getCode();
 
         return ($code >= 400 && $code < 600) ? $code : Response::HTTP_BAD_REQUEST;
+    }
+
+    /**
+     * Doctrine's default handling surfaces a raw SQLSTATE message ("update or
+     * delete on table X violates foreign key constraint...") as a bare 500 —
+     * technically correct (the delete/update was rightly blocked) but useless
+     * to an end user and leaks schema details. This translates it to a 409
+     * with a message a client can display, still logging the original
+     * exception (and, in dev, still exposing its detail) for diagnosis.
+     */
+    private function handleForeignKeyConstraintViolation(ExceptionEvent $event, ForeignKeyConstraintViolationException $exception): void
+    {
+        $this->logger->warning('Rejected a write that would have violated a foreign key constraint.', [
+            'exception' => $exception,
+        ]);
+
+        $isDev = 'dev' === $this->environment;
+
+        $data = [
+            'type' => '/errors/foreign-key-constraint',
+            'title' => 'Referenced by another record',
+            'status' => Response::HTTP_CONFLICT,
+            'detail' => 'No se puede completar la operación: el registro está siendo referenciado por otro registro.',
+        ];
+
+        if ($isDev) {
+            $data['sqlMessage'] = $exception->getMessage();
+            $data['trace'] = $exception->getTrace();
+            $data['file'] = $exception->getFile();
+            $data['line'] = $exception->getLine();
+        }
+
+        $response = new JsonResponse($data, Response::HTTP_CONFLICT);
+        $response->headers->set('Content-Type', 'application/problem+json');
+        $event->setResponse($response);
     }
 }
