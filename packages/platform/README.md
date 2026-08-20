@@ -15,9 +15,59 @@ composer require nubitio/platform
 - **Messenger** — `TenantStampMiddleware` / `TenantContextMiddleware` propagate tenant + actor through async messages.
 - **Infra helpers** — `CacheManager`, `FileManager` (Flysystem), `TenantRateLimiter`, `XlsExporter` (PhpSpreadsheet), `PdfExporter` (WeasyPrint), `PerTenantCommand` console base class, `TenantLogProcessor` (Monolog) and tenant-aware OpenTelemetry spans via `TenantTracer`.
 - **Feature flags** — vendor-neutral, typed evaluation through `TenantFeatureFlags`; distinct from plan entitlements exposed by `FeatureCheckerInterface`. `StaticFeatureFlagProvider` provides deterministic local defaults and the provider port can be adapted to OpenFeature.
+- **Privacy** — `#[SensitiveData]`, `DataRedactor` and sink-specific policies protect structured logs, traces, analytics and integrations.
 - **HTTP** — `ApiResponse` JSON envelope (`success`/`message`/`data`).
 
 Heavy integrations (Flysystem, PhpSpreadsheet, WeasyPrint, Monolog, OpenTelemetry) are `suggest`-ed — install them only if you use the corresponding helper.
+
+## Sensitive data
+
+Classify the canonical DTO/entity property once:
+
+```php
+use Nubit\Platform\Privacy\Attribute\SensitiveData;
+use Nubit\Platform\Privacy\DataClassification;
+
+final readonly class LoginContext
+{
+    public function __construct(
+        public string $username,
+        #[SensitiveData(DataClassification::Confidential)]
+        public string $email,
+        #[SensitiveData(DataClassification::Restricted)]
+        public string $accessToken,
+    ) {
+    }
+}
+```
+
+For values inserted into an untyped array, classify them explicitly:
+
+```php
+$context = [
+    'email' => new SensitiveValue($email, DataClassification::Confidential),
+    'token' => new SensitiveValue($token, DataClassification::Restricted),
+];
+```
+
+`SensitiveDataProcessor` sanitizes structured Monolog `context` and `extra` fields.
+`TraceAttributeSanitizer` applies the same kernel to OpenTelemetry attributes. Restricted
+data is dropped by default. Confidential data is masked in logs and HMACed in traces or
+analytics when a key is configured; without the key it is dropped.
+
+The processor intentionally does not rewrite arbitrary log or exception messages. Never
+interpolate secrets or complete request payloads into text:
+
+```php
+// Safe: the structured value passes through the redactor.
+$logger->info('Authentication failed', ['email' => new SensitiveValue(
+    $email,
+    DataClassification::Confidential,
+)]);
+```
+
+See the [ERP SaaS platform roadmap](../../docs/platform/saas-platform-roadmap.md) for the
+classification matrix, threat model and phased rollout.
 
 ## License
 
