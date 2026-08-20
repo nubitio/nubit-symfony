@@ -41,14 +41,11 @@ final readonly class TenantDescriptor
      */
     public static function fromArray(array $tenant): self
     {
-        $primaryDomain = $tenant['primary_domain'] ?? $tenant['domain'] ?? null;
-        $connectionName = $tenant['connection'] ?? $tenant['connection_name'] ?? null;
-
         return new self(
-            id: (int)($tenant['id'] ?? 0),
-            name: (string)($tenant['name'] ?? ''),
-            connectionName: self::nullableString($connectionName),
-            primaryDomain: self::nullableString($primaryDomain),
+            id: self::positiveId($tenant['id'] ?? null),
+            name: self::requiredString($tenant['name'] ?? null, 'name'),
+            connectionName: self::nullableString(self::firstPresent($tenant, 'connection', 'connection_name')),
+            primaryDomain: self::nullableString(self::firstPresent($tenant, 'primary_domain', 'domain')),
             plan: self::nullableString($tenant['plan'] ?? null),
             status: self::nullableString($tenant['status'] ?? null),
             attributes: $tenant,
@@ -76,8 +73,41 @@ final readonly class TenantDescriptor
             return null;
         }
 
-        $stringValue = trim((string)$value);
+        if (!is_scalar($value)) {
+            throw new InvalidArgumentException('Tenant string attributes must be scalar values or null.');
+        }
+
+        $stringValue = trim((string) $value);
 
         return $stringValue === '' ? null : $stringValue;
+    }
+
+    private static function positiveId(mixed $value): int
+    {
+        if (!is_int($value) && !(is_string($value) && ctype_digit($value))) {
+            throw new InvalidArgumentException('Tenant id must be a positive integer.');
+        }
+
+        $id = (int) $value;
+        if ($id <= 0) {
+            throw new InvalidArgumentException('Tenant id must be a positive integer.');
+        }
+
+        return $id;
+    }
+
+    private static function requiredString(mixed $value, string $attribute): string
+    {
+        if (!is_string($value) || '' === trim($value)) {
+            throw new InvalidArgumentException(sprintf('Tenant %s must be a non-empty string.', $attribute));
+        }
+
+        return $value;
+    }
+
+    /** @param array<string, mixed> $values */
+    private static function firstPresent(array $values, string $primary, string $legacy): mixed
+    {
+        return array_key_exists($primary, $values) ? $values[$primary] : ($values[$legacy] ?? null);
     }
 }

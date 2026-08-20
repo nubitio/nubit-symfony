@@ -847,12 +847,6 @@ message = "Possibly null right operand used in string concatenation (type `null|
 count = 1
 
 [[issues]]
-file = "packages/platform/src/Tenant/Model/TenantDescriptor.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 2
-
-[[issues]]
 file = "packages/platform/src/Validation/Validator.php"
 code = "invalid-return-statement"
 message = 'Invalid return type for function `Nubit\Platform\Validation\Validator::getViolations`: expected `array<string, array<array-key, string>>`, but found `array<string, non-empty-list<Stringable|string>>`.'

@@ -129,6 +129,27 @@ final class TenantDescriptorTest extends TestCase
         self::assertSame('tenant_legacy', $descriptor->connectionName);
     }
 
+    public function testFromArrayAcceptsLegacyNumericStringId(): void
+    {
+        $descriptor = TenantDescriptor::fromArray(['id' => '12', 'name' => 'acme']);
+
+        self::assertSame(12, $descriptor->id);
+    }
+
+    public function testFromArrayRejectsCompoundNameValue(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        TenantDescriptor::fromArray(['id' => 1, 'name' => ['acme']]);
+    }
+
+    public function testFromArrayRejectsCompoundOptionalValue(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        TenantDescriptor::fromArray(['id' => 1, 'name' => 'acme', 'plan' => ['pro']]);
+    }
+
     // -------------------------------------------------------------------------
     // fromArray – empty string → null coercion
     // -------------------------------------------------------------------------
