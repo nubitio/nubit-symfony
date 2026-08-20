@@ -28,4 +28,14 @@ final class JwtClaimTenantResolverTest extends TestCase
         self::assertSame(99, $tenant->id);
         self::assertSame('acme', $tenant->name);
     }
+
+    public function testRejectsNonScalarTenantIdClaim(): void
+    {
+        $secret = 'test-secret-test-secret-test-secret!!';
+        $token = JWT::encode(['tenantId' => ['value' => 99]], $secret, 'HS256');
+        $resolver = new JwtClaimTenantResolver($secret);
+        $request = Request::create('/', 'GET', server: ['HTTP_AUTHORIZATION' => 'Bearer '.$token]);
+
+        self::assertNull($resolver->resolve($request, null));
+    }
 }

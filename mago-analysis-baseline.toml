@@ -25,6 +25,12 @@ message = "Reference created from a previously undefined variable `$matches`."
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/Auth/JWTManager.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/src/Auth/ResponseModeResolver.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
@@ -1171,39 +1177,9 @@ message = "Casting `mixed` to `bool`."
 count = 1
 
 [[issues]]
-file = "packages/tenant-bundle/src/Provider/RegistryTenantDatabaseUrlProvider.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 3
-
-[[issues]]
 file = "packages/tenant-bundle/src/Quota/FeatureQuotaEnforcer.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 1
-
-[[issues]]
-file = "packages/tenant-bundle/src/Registry/DoctrineTenantRegistry.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 6
-
-[[issues]]
-file = "packages/tenant-bundle/src/Resolver/JwtClaimTenantResolver.php"
-code = "invalid-type-cast"
-message = "Object of type `object` cast to `array`. Property visibility (public, protected, private) affects the resulting array."
-count = 1
-
-[[issues]]
-file = "packages/tenant-bundle/src/Resolver/JwtClaimTenantResolver.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 2
-
-[[issues]]
-file = "packages/tenant-bundle/src/Resolver/JwtClaimTenantResolver.php"
-code = "reference-to-undefined-variable"
-message = "Reference created from a previously undefined variable `$matches`."
 count = 1
 
 [[issues]]

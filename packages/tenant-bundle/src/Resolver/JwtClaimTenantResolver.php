@@ -29,19 +29,18 @@ final readonly class JwtClaimTenantResolver implements TenantResolverInterface
         }
 
         try {
-            /** @var object $payload */
             $payload = JWT::decode($token, new Key($this->jwtSecret, 'HS256'));
-            $claims = (array) $payload;
+            $claims = get_object_vars($payload);
         } catch (Throwable) {
             return null;
         }
 
-        $tenantId = $claims[$this->idClaim] ?? null;
+        $tenantId = self::claim($claims, $this->idClaim);
         if (!is_int($tenantId) && !(is_string($tenantId) && ctype_digit($tenantId))) {
             return null;
         }
 
-        $name = $claims[$this->nameClaim] ?? null;
+        $name = self::claim($claims, $this->nameClaim);
 
         return new ResolvedTenant(
             (int) $tenantId,
@@ -52,6 +51,7 @@ final readonly class JwtClaimTenantResolver implements TenantResolverInterface
     private function extractToken(Request $request): ?string
     {
         $header = $request->headers->get($this->authHeader);
+        $matches = [];
         if (is_string($header) && 1 === preg_match('/^\s*Bearer\s+(.+)$/i', $header, $matches)) {
             $token = trim($matches[1]);
 
@@ -61,5 +61,21 @@ final readonly class JwtClaimTenantResolver implements TenantResolverInterface
         $cookie = $request->cookies->get($this->authCookie);
 
         return is_string($cookie) && '' !== $cookie ? $cookie : null;
+    }
+
+    /**
+     * @param array<array-key, mixed> $claims
+     */
+    private static function claim(array $claims, string $name): int|string|null
+    {
+        if (is_int($claims[$name] ?? null)) {
+            return $claims[$name];
+        }
+
+        if (is_string($claims[$name] ?? null)) {
+            return $claims[$name];
+        }
+
+        return null;
     }
 }

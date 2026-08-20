@@ -36,6 +36,7 @@ final readonly class RegistryTenantDatabaseUrlProvider implements TenantDatabase
             ));
         }
 
+        /** @var mixed $url */
         $url = $tenant->getDatabaseUrl();
 
         return is_string($url) && '' !== $url ? $url : null;
@@ -55,6 +56,7 @@ final readonly class RegistryTenantDatabaseUrlProvider implements TenantDatabase
             ));
         }
 
+        /** @var mixed $mode */
         $mode = $tenant->getIsolationMode();
         if (!is_string($mode)) {
             throw new ServiceException(sprintf('Tenant entity "%s" returned an invalid isolation mode.', $this->tenantEntityClass));
@@ -98,6 +100,7 @@ final readonly class RegistryTenantDatabaseUrlProvider implements TenantDatabase
             ));
         }
 
+        /** @var mixed $url */
         $url = $tenant->getDatabaseUrl();
 
         return is_string($url) && '' !== $url ? $url : null;

@@ -76,11 +76,17 @@ final readonly class DoctrineTenantRegistry implements TenantRegistryInterface, 
 
     private function mapEntity(object $entity): TenantDescriptor
     {
+        /** @var mixed $id */
         $id = method_exists($entity, 'getId') ? $entity->getId() : null;
+        /** @var mixed $name */
         $name = method_exists($entity, 'getName') ? $entity->getName() : null;
+        /** @var mixed $slug */
         $slug = method_exists($entity, 'getSlug') ? $entity->getSlug() : null;
+        /** @var mixed $domain */
         $domain = method_exists($entity, 'getPrimaryDomain') ? $entity->getPrimaryDomain() : null;
+        /** @var mixed $plan */
         $plan = method_exists($entity, 'getPlan') ? $entity->getPlan() : null;
+        /** @var mixed $status */
         $status = method_exists($entity, 'getStatus') ? $entity->getStatus() : null;
 
         return TenantDescriptor::fromArray([
