@@ -27,6 +27,7 @@ use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\MeController;
 use Nubit\AdminBundle\Controller\RefreshController;
+use Nubit\AdminBundle\DependencyInjection\AnalyticsModule;
 use Nubit\AdminBundle\DependencyInjection\MediaModule;
 use Nubit\AdminBundle\DependencyInjection\ObservabilityModule;
 use Nubit\AdminBundle\DependencyInjection\RuntimeConfigModule;
@@ -179,6 +180,23 @@ final class NubitAdminBundle extends AbstractBundle
             ->scalarNode('redaction_hmac_key')
             ->info('HMAC key for stable confidential-value correlation. Empty means confidential hashes are dropped.')
             ->defaultValue('')
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('analytics')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info('Persist privacy-safe typed analytics events to the transactional Doctrine outbox.')
+            ->defaultFalse()
+            ->end()
+            ->scalarNode('redaction_hmac_key')
+            ->info('HMAC key for confidential analytics properties. Empty drops properties requiring a hash.')
+            ->defaultValue('')
+            ->end()
+            ->integerNode('deduplication_capacity')
+            ->min(1)
+            ->defaultValue(10000)
             ->end()
             ->end()
             ->end()
@@ -344,6 +362,12 @@ final class NubitAdminBundle extends AbstractBundle
             ObservabilityModule::load($observabilityConfig, $services);
         }
 
+        /** @var array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int} $analyticsConfig */
+        $analyticsConfig = $config['analytics'];
+        if ($analyticsConfig['enabled']) {
+            AnalyticsModule::load($analyticsConfig, $services);
+        }
+
         if ($config['audit']['enabled']) {
             $services->set(AuditTrailListener::class)->arg(
                 '$ignoredFields',
@@ -433,6 +457,22 @@ final class NubitAdminBundle extends AbstractBundle
                             'dir' => __DIR__ . '/Audit/Entity',
                             'prefix' => 'Nubit\\AdminBundle\\Audit\\Entity',
                             'alias' => 'NubitAdminAudit',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+
+        if ($this->isFeatureEnabled($builder, 'analytics') && $builder->hasExtension('doctrine')) {
+            $builder->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminAnalyticsBundle' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Analytics/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Analytics\\Entity',
+                            'alias' => 'NubitAdminAnalytics',
                         ],
                     ],
                 ],

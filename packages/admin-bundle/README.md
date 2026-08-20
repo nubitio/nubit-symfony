@@ -165,6 +165,10 @@ nubit_admin:
         enabled: false                # true → audit trail (see below)
         ignored_fields: [createdAt, updatedAt, password]
         purge_retention_days: 365
+    analytics:
+        enabled: false                # typed events → transactional Doctrine outbox
+        redaction_hmac_key: ''        # use an env secret; empty drops confidential hashes
+        deduplication_capacity: 10000 # bounded per-process fast-path
     media:
         enabled: false                # true → media library (see below)
         storage:
@@ -176,6 +180,23 @@ nubit_admin:
     soft_delete: true                 # nubit_soft_delete Doctrine filter
     single_tenant_defaults: true
 ```
+
+## Analytics outbox (opt-in)
+
+Enable `nubit_admin.analytics.enabled`, generate a Doctrine migration, and publish typed
+events through `AnalyticsPublisher`. The bundle maps `nubit_analytics_outbox`; its provider
+calls `persist()` but deliberately does not call `flush()`, so the event commits atomically
+with the business change:
+
+```bash
+php bin/console doctrine:migrations:diff
+php bin/console doctrine:migrations:migrate
+```
+
+Call the publisher before the application's normal flush. Use a stable event ID. The table
+has a unique constraint as the durable idempotency boundary. Payloads are sanitized before
+persistence; exception text and original DTOs are never stored. Product/marketing consent
+and the final delivery provider remain application extension points.
 
 ## Audit trail (opt-in)
 
