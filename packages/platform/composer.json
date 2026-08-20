@@ -33,6 +33,7 @@
         "symfony/validator": "^7.4 || ^8.0"
     },
     "require-dev": {
+        "doctrine/dbal": "^4.0",
         "league/flysystem": "^3.0",
         "monolog/monolog": "^3.0",
         "open-telemetry/api": "^1.0",
@@ -42,6 +43,7 @@
         "symfony/cache": "^7.4 || ^8.0"
     },
     "suggest": {
+        "doctrine/dbal": "Required by Nubit\\Platform\\Observability\\Doctrine tracing middleware",
         "league/flysystem": "Required by Nubit\\Platform\\Filesystem\\FileManager",
         "monolog/monolog": "Required by Nubit\\Platform\\Observability\\Logging\\TenantLogProcessor",
         "open-telemetry/api": "Trace correlation in TenantLogProcessor",

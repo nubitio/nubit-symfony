@@ -56,8 +56,6 @@ final readonly class TenantTracer
     {
         return [
             'nubit.tenant.id' => $this->tenantContext->getTenantId(),
-            'nubit.tenant.name' => $this->tenantContext->getTenantName(),
-            'nubit.tenant.domain' => $this->tenantContext->getTenantDomain(),
             'nubit.request.id' => $this->tenantContext->getRequestId(),
         ];
     }

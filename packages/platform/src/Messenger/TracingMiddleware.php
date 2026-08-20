@@ -94,8 +94,6 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             'messaging.operation.type' => $operation,
             'messaging.message.type' => $messageType,
             'nubit.tenant.id' => $tenantStamp?->tenantId,
-            'nubit.tenant.name' => $tenantStamp?->tenantName,
-            'nubit.tenant.domain' => $tenantStamp?->tenantDomain,
             'nubit.request.id' => $tenantStamp?->requestId,
         ];
     }
