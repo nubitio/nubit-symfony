@@ -169,6 +169,9 @@ nubit_admin:
         enabled: false                # typed events → transactional Doctrine outbox
         redaction_hmac_key: ''        # use an env secret; empty drops confidential hashes
         deduplication_capacity: 10000 # bounded per-process fast-path
+        batch_size: 100
+        maximum_retry_delay: 3600
+        retention_days: 30
     media:
         enabled: false                # true → media library (see below)
         storage:
@@ -197,6 +200,24 @@ Call the publisher before the application's normal flush. Use a stable event ID.
 has a unique constraint as the durable idempotency boundary. Payloads are sanitized before
 persistence; exception text and original DTOs are never stored. Product/marketing consent
 and the final delivery provider remain application extension points.
+
+Alias `AnalyticsDeliveryProviderInterface` to the vendor adapter and route the ID-only
+message asynchronously:
+
+```yaml
+# config/packages/messenger.yaml
+framework:
+    messenger:
+        routing:
+            Nubit\AdminBundle\Analytics\Message\DeliverAnalyticsOutbox: async
+```
+
+Run `nubit:analytics:dispatch-outbox` on a short schedule. Concurrent workers lock each row;
+duplicate messages become no-ops after delivery. Provider failures are committed with an
+exponential next-attempt time before being rethrown to Messenger. The built-in unavailable
+provider fails closed until the application replaces the interface alias.
+Schedule `nubit:analytics:purge-outbox` daily to remove delivered rows past retention;
+undelivered rows are never purged by this command.
 
 ## Audit trail (opt-in)
 

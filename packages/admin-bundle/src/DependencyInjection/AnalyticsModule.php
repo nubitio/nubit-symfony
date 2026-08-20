@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\DependencyInjection;
 
+use Nubit\AdminBundle\Analytics\DeliverAnalyticsOutboxHandler;
 use Nubit\AdminBundle\Analytics\DoctrineOutboxAnalyticsProvider;
+use Nubit\AdminBundle\Analytics\UnavailableAnalyticsDeliveryProvider;
+use Nubit\AdminBundle\Command\DispatchAnalyticsOutboxCommand;
+use Nubit\AdminBundle\Command\PurgeAnalyticsOutboxCommand;
 use Nubit\Platform\Analytics\AnalyticsPublisher;
 use Nubit\Platform\Analytics\Contract\AnalyticsConsentCheckerInterface;
 use Nubit\Platform\Analytics\Contract\AnalyticsDeduplicatorInterface;
+use Nubit\Platform\Analytics\Contract\AnalyticsDeliveryProviderInterface;
 use Nubit\Platform\Analytics\Contract\AnalyticsProviderInterface;
 use Nubit\Platform\Analytics\InMemoryAnalyticsDeduplicator;
 use Nubit\Platform\Analytics\OperationalOnlyConsentChecker;
@@ -21,7 +26,7 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 final class AnalyticsModule
 {
-    /** @param array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int} $config */
+    /** @param array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int, batch_size: int, maximum_retry_delay: int, retention_days: int} $config */
     public static function load(array $config, DefaultsConfigurator $services): void
     {
         $services->set(SensitiveDataMetadataReader::class);
@@ -39,5 +44,14 @@ final class AnalyticsModule
         $services->set(DoctrineOutboxAnalyticsProvider::class);
         $services->alias(AnalyticsProviderInterface::class, DoctrineOutboxAnalyticsProvider::class);
         $services->set(AnalyticsPublisher::class)->arg('$redactor', service('nubit.analytics.redactor'));
+
+        $services->set(UnavailableAnalyticsDeliveryProvider::class);
+        $services->alias(AnalyticsDeliveryProviderInterface::class, UnavailableAnalyticsDeliveryProvider::class);
+        $services->set(DeliverAnalyticsOutboxHandler::class)->arg(
+            '$maximumDelaySeconds',
+            $config['maximum_retry_delay'],
+        );
+        $services->set(DispatchAnalyticsOutboxCommand::class)->arg('$batchSize', $config['batch_size']);
+        $services->set(PurgeAnalyticsOutboxCommand::class)->arg('$retentionDays', $config['retention_days']);
     }
 }

@@ -198,6 +198,19 @@ final class NubitAdminBundle extends AbstractBundle
             ->min(1)
             ->defaultValue(10000)
             ->end()
+            ->integerNode('batch_size')
+            ->min(1)
+            ->max(1000)
+            ->defaultValue(100)
+            ->end()
+            ->integerNode('maximum_retry_delay')
+            ->min(1)
+            ->defaultValue(3600)
+            ->end()
+            ->integerNode('retention_days')
+            ->min(1)
+            ->defaultValue(30)
+            ->end()
             ->end()
             ->end()
             ->arrayNode('media')
@@ -362,7 +375,7 @@ final class NubitAdminBundle extends AbstractBundle
             ObservabilityModule::load($observabilityConfig, $services);
         }
 
-        /** @var array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int} $analyticsConfig */
+        /** @var array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int, batch_size: int, maximum_retry_delay: int, retention_days: int} $analyticsConfig */
         $analyticsConfig = $config['analytics'];
         if ($analyticsConfig['enabled']) {
             AnalyticsModule::load($analyticsConfig, $services);
