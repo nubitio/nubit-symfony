@@ -13,7 +13,8 @@ composer require nubitio/platform
 - **Feature gates** — `#[RequiresFeature]` attribute + `FeatureCheckerInterface`.
 - **Quota contracts** — `QuotaEnforcerInterface`, `QuotaResourceResolverInterface`.
 - **Messenger** — `TenantStampMiddleware` / `TenantContextMiddleware` propagate tenant + actor through async messages.
-- **Infra helpers** — `CacheManager`, `FileManager` (Flysystem), `TenantRateLimiter`, `XlsExporter` (PhpSpreadsheet), `PdfExporter` (WeasyPrint), `PerTenantCommand` console base class, `TenantLogProcessor` (Monolog).
+- **Infra helpers** — `CacheManager`, `FileManager` (Flysystem), `TenantRateLimiter`, `XlsExporter` (PhpSpreadsheet), `PdfExporter` (WeasyPrint), `PerTenantCommand` console base class, `TenantLogProcessor` (Monolog) and tenant-aware OpenTelemetry spans via `TenantTracer`.
+- **Feature flags** — vendor-neutral, typed evaluation through `TenantFeatureFlags`; distinct from plan entitlements exposed by `FeatureCheckerInterface`. `StaticFeatureFlagProvider` provides deterministic local defaults and the provider port can be adapted to OpenFeature.
 - **HTTP** — `ApiResponse` JSON envelope (`success`/`message`/`data`).
 
 Heavy integrations (Flysystem, PhpSpreadsheet, WeasyPrint, Monolog, OpenTelemetry) are `suggest`-ed — install them only if you use the corresponding helper.
