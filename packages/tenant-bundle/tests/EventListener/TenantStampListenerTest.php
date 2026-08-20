@@ -19,8 +19,8 @@ final class TenantStampListenerTest extends TestCase
         $context->setTenant(12, 'acme', null, null);
 
         $entity = new OwnedEntity();
-        $listener = new TenantStampListener($context, $this->createMock(EntityManagerInterface::class), null);
-        $listener->prePersist(new PrePersistEventArgs($entity, $this->createMock(EntityManagerInterface::class)));
+        $listener = new TenantStampListener($context, $this->createStub(EntityManagerInterface::class), null);
+        $listener->prePersist(new PrePersistEventArgs($entity, $this->createStub(EntityManagerInterface::class)));
 
         self::assertSame(12, $entity->getTenantId());
     }
@@ -33,8 +33,8 @@ final class TenantStampListenerTest extends TestCase
         $entity = new OwnedEntity();
         $entity->setTenantId(5);
 
-        $listener = new TenantStampListener($context, $this->createMock(EntityManagerInterface::class), null);
-        $listener->prePersist(new PrePersistEventArgs($entity, $this->createMock(EntityManagerInterface::class)));
+        $listener = new TenantStampListener($context, $this->createStub(EntityManagerInterface::class), null);
+        $listener->prePersist(new PrePersistEventArgs($entity, $this->createStub(EntityManagerInterface::class)));
 
         self::assertSame(5, $entity->getTenantId());
     }

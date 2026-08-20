@@ -68,6 +68,10 @@ final class TenantRequestListener
             : null;
 
         if ('database' === $this->isolation) {
+            if (null === $resolved->name || '' === trim($resolved->name)) {
+                throw new \LogicException('Database isolation requires a non-empty tenant name.');
+            }
+
             $this->connectionSwitcher->switchConnection($resolved->name);
             $this->activeConnectionTarget = TenantIsolationTarget::DATABASE;
 
@@ -80,18 +84,23 @@ final class TenantRequestListener
             return;
         }
 
-        if (TenantIsolationTarget::DATABASE === $target?->mode) {
+        if (null !== $target && TenantIsolationTarget::DATABASE === $target->mode) {
             if (null === $this->databaseConnectionSwitcher) {
                 throw new \LogicException('Hybrid database isolation requires a database connection switcher.');
             }
 
-            $this->databaseConnectionSwitcher->switchToDatabaseUrl($target->databaseUrl);
+            $databaseUrl = $target->databaseUrl;
+            if (null === $databaseUrl || '' === trim($databaseUrl)) {
+                throw new \LogicException('Hybrid database isolation requires a non-empty database URL.');
+            }
+
+            $this->databaseConnectionSwitcher->switchToDatabaseUrl($databaseUrl);
             $this->activeConnectionTarget = TenantIsolationTarget::DATABASE;
 
             return;
         }
 
-        if (TenantIsolationTarget::SCHEMA === $target?->mode) {
+        if (null !== $target && TenantIsolationTarget::SCHEMA === $target->mode) {
             $this->switchToSchema($resolved->id);
 
             return;

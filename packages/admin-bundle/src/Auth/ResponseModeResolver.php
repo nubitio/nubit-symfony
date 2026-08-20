@@ -27,7 +27,8 @@ final readonly class ResponseModeResolver
             return 'json' === $body['response_mode'];
         }
 
-        $clientType = strtolower($request->headers->get(self::CLIENT_TYPE_HEADER, ''));
+        $clientTypeHeader = $request->headers->get(self::CLIENT_TYPE_HEADER);
+        $clientType = strtolower(is_string($clientTypeHeader) ? $clientTypeHeader : '');
 
         return '' !== $clientType && in_array($clientType, self::MOBILE_CLIENT_TYPES, true);
     }

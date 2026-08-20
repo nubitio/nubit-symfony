@@ -42,8 +42,8 @@ final class WorkflowEngineTest extends TestCase
         $engine = new WorkflowEngine(
             $this->createEntityManagerStub($entity),
             new PropertyAccessor(),
-            $this->createMock(AuthorizationCheckerInterface::class),
-            $this->createMock(ContainerInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(ContainerInterface::class),
             new EventDispatcher(),
         );
 
@@ -72,8 +72,8 @@ final class WorkflowEngineTest extends TestCase
         $engine = new WorkflowEngine(
             $this->createEntityManagerStub($entity, willPersist: false),
             new PropertyAccessor(),
-            $this->createMock(AuthorizationCheckerInterface::class),
-            $this->createMock(ContainerInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(ContainerInterface::class),
             new EventDispatcher(),
         );
 

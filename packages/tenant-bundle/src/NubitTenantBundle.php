@@ -161,6 +161,15 @@ final class NubitTenantBundle extends AbstractBundle
         $builder->registerForAutoconfiguration(QuotaUsageProviderInterface::class)
             ->addTag('nubit.quota_usage_provider');
 
+        /** @var array{
+         *     enabled: bool, isolation: string, tenant_connection: string,
+         *     control_plane_connection: string, schema_prefix: string,
+         *     base_schemas: list<string>, quotas_enabled: bool, resolution: list<string>,
+         *     tenant_entity: string, unscoped_entities: list<string>, jwt_secret: string,
+         *     jwt_id_claim: string, jwt_name_claim: string, tenant_header: string,
+         *     base_domain: ?string, rls_enabled: bool
+         * } $config
+         */
         $this->registerResolvers($config, $services);
         $this->registerCoreServices($config, $services, $builder);
     }

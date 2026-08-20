@@ -17,6 +17,7 @@
     },
     "require": {
         "php": ">=8.3",
+        "doctrine/doctrine-bundle": "^3.2",
         "doctrine/orm": "^3.0",
         "firebase/php-jwt": "^7.0",
         "nubitio/platform": "^0.12",

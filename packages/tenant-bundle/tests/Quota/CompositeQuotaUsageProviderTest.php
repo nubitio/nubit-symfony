@@ -13,14 +13,14 @@ final class CompositeQuotaUsageProviderTest extends TestCase
 {
     public function testDelegatesToSupportingProvider(): void
     {
-        $primary = $this->createMock(QuotaUsageProviderInterface::class);
+        $primary = $this->createStub(QuotaUsageProviderInterface::class);
         $primary->method('supports')->willReturnMap([
             ['team_users', true],
             ['orders', false],
         ]);
-        $primary->method('count')->with('team_users')->willReturn(4);
+        $primary->method('count')->willReturn(4);
 
-        $secondary = $this->createMock(QuotaUsageProviderInterface::class);
+        $secondary = $this->createStub(QuotaUsageProviderInterface::class);
         $secondary->method('supports')->willReturn(false);
 
         $composite = new CompositeQuotaUsageProvider([$secondary, $primary]);

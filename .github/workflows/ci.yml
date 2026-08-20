@@ -41,6 +41,9 @@ jobs:
       - name: Mago lint
         run: vendor/bin/mago lint
 
+      - name: Static analysis (no new issues)
+        run: composer stan
+
       - name: PHPUnit
         run: vendor/bin/phpunit
 
@@ -85,4 +88,4 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Run package tests
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit --fail-on-phpunit-deprecation --fail-on-phpunit-notice

@@ -1,0 +1,1351 @@
+variant = "loose"
+
+[[issues]]
+file = "packages/admin-bundle/src/Audit/AuditTrailListener.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Auth/JWTAuthenticator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "packages/admin-bundle/src/Auth/JWTAuthenticator.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Auth/JWTAuthenticator.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$matches`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Auth/ResponseModeResolver.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "ambiguous-object-method-access"
+message = "Cannot statically verify method call on a generic `object` type."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "less-specific-nested-argument-type"
+message = '''Argument type mismatch for argument #1 of `ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface::create`: expected `class-string|string`, but provided type `('V.iteratoraggregate extends mixed)` is less specific.'''
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "less-specific-nested-argument-type"
+message = '''Argument type mismatch for argument #1 of `Nubit\AdminBundle\Command\DiscoverCommand::shortClassName`: expected `string`, but provided type `('V.iteratoraggregate extends mixed)` is less specific.'''
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "less-specific-nested-argument-type"
+message = "Argument type mismatch for argument #2 of `implode`: expected `array<array-key, Stringable|null|scalar>|null`, but provided type `array<array-key, mixed>|list<mixed>` is less specific."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "less-specific-nested-argument-type"
+message = "Argument type mismatch for argument #2 of `implode`: expected `array<array-key, Stringable|null|scalar>|null`, but provided type `array<non-negative-int, nonnull>` is less specific."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Nubit\AdminBundle\Command\DiscoverCommand::shortClassName`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `array_map`: expected `array<('K.array_map() extends array-key), ('V.array_map() extends mixed)>`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "mixed-property-access"
+message = "Attempting to access a property on a non-object type (`mixed`)."
+count = 4
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "mixed-property-access"
+message = "Attempting to access a property on a non-object type (`nonnull`)."
+count = 3
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "possible-method-access-on-null"
+message = "Attempting to call a method on `null`."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "possibly-null-iterator"
+message = 'Expression being iterated (type `ApiPlatform\Metadata\Operations<ApiPlatform\Metadata\HttpOperation>|null`) might be `null` at runtime.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
+code = "unknown-iterator-type"
+message = "Cannot determine the type of the expression provided to `foreach`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Command/PurgeAuditLogCommand.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Controller/ChangePasswordController.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Controller/LogoutController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Controller/RefreshController.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Nubit\AdminBundle\Auth\JWTManagerInterface::decode`: expected `string`, but found `truthy-mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Controller/RefreshController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Controller/RefreshController.php"
+code = "mixed-operand"
+message = "Left operand in `<` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/EmbeddedLines/Controller/EmbeddedLinesController.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$entityClass`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/EmbeddedLines/EmbeddedLinesDefinition.php"
+code = "possibly-false-operand"
+message = "Left operand in arithmetic operation might be `false` (type `false|non-negative-int`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/EmbeddedLines/EmbeddedLinesRegistry.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/EmbeddedLines/EmbeddedLinesRowSerializer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Media/Controller/MediaUploadController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Media/Serializer/MediaNormalizer.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$data` of `Nubit\AdminBundle\Media\Serializer\MediaNormalizer::normalize()` expects type `Nubit\AdminBundle\Media\Entity\Media` but parent `Symfony\Component\Serializer\Normalizer\NormalizerInterface::normalize()` expects type `mixed`'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Media/Serializer/MediaNormalizer.php"
+code = "possibly-null-operand"
+message = "Possibly null right operand used in string concatenation (type `null|string`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\AdminBundle\NubitAdminBundle::prependextension()` is named `$container` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::prependextension()` names it `$configurator`'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #2 of `Nubit\AdminBundle\NubitAdminBundle::prependextension()` is named `$builder` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::prependextension()` names it `$container`'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$config` of `Nubit\AdminBundle\NubitAdminBundle::loadextension()` expects type `array<string, mixed>` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::loadextension()` expects type `array<array-key, mixed>`'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "invalid-type-cast"
+message = "Casting `mixed` to `array`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "mixed-argument"
+message = '''Invalid argument type for argument #1 of `Nubit\AdminBundle\DependencyInjection\MediaModule::load`: expected `array{'allowed_mimes': list<string>, 'directory': string, 'max_size': int, 'purge_retention_days': int, 'storage': array{'filesystem': null|string, 'local_directory': string}}`, but found `mixed`.'''
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Nubit\AdminBundle\DependencyInjection\RuntimeConfigModule::load`: expected `bool`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Nubit\AdminBundle\Session\AppProfile::from`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 16
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/NubitAdminBundle.php"
+code = "mixed-operand"
+message = "Left operand in `&&` operation has `mixed` type."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer::normalize()` is named `$object` but parent `Symfony\Component\Serializer\Normalizer\NormalizerInterface::normalize()` names it `$data`'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"
+code = "invalid-return-statement"
+message = '''Invalid return type for function `Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer::getSupportedTypes`: expected `array<class-string, bool>`, but found `array<class-string|string|string('*')|string('object'), bool|null>`.'''
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"
+code = "less-specific-nested-argument-type"
+message = "Argument type mismatch for argument #1 of `strrpos`: expected `string`, but provided type `('V.iteratoraggregate extends mixed)` is less specific."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"
+code = "less-specific-nested-argument-type"
+message = "Argument type mismatch for argument #1 of `substr`: expected `string`, but provided type `('V.iteratoraggregate extends mixed)` is less specific."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `array<string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"
+code = "possibly-false-operand"
+message = "Left operand in arithmetic operation might be `false` (type `false|non-negative-int`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"
+code = "unused-property"
+message = "Property `$resourceMetadataCollectionFactory` is never used."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/State/AbstractEmbeddedLinesProcessor.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Nubit\AdminBundle\State\AbstractEmbeddedLinesProcessor::readProperty`: expected `object`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/State/AbstractEmbeddedLinesProcessor.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/State/AbstractEmbeddedLinesProcessor.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`non-empty-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/State/AbstractEmbeddedLinesProcessor.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/State/AbstractEmbeddedLinesProcessor.php"
+code = "unused-template-parameter"
+message = 'Template parameter `TLine` is never used in class `Nubit\AdminBundle\State\AbstractEmbeddedLinesProcessor`.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Audit/AuditTrailListenerTest.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Nubit\AdminBundle\Tests\Audit\AuditTrailListenerTest::allLogs`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Audit/Fixture/AuditedThing.php"
+code = "write-only-property"
+message = "Property `$name` is written to but never read."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Audit/Fixture/AuditedThing.php"
+code = "write-only-property"
+message = "Property `$price` is written to but never read."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Audit/Fixture/AuditedThing.php"
+code = "write-only-property"
+message = "Property `$updatedAt` is written to but never read."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Audit/Fixture/PlainThing.php"
+code = "write-only-property"
+message = "Property `$name` is written to but never read."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Controller/MeControllerTest.php"
+code = "invalid-return-statement"
+message = "Invalid return type for function `{anonymous-class:packages/admin-bundle/tests/Controller/MeControllerTest.php:57:16}::getUserIdentifier`: expected `non-empty-string`, but found `string`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Controller/MeControllerTest.php"
+code = "less-specific-nested-return-statement"
+message = "Returned type `array<array-key, mixed>` is less specific than the declared return type `array<array-key, string>` for function `{anonymous-class:packages/admin-bundle/tests/Controller/MeControllerTest.php:57:16}::getRoles` due to nested 'mixed'."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/EmbeddedLines/EmbeddedLinesRegistryTest.php"
+code = "possibly-null-array-index"
+message = "Possibly using `null` as an array index to access elementof variable $definitions."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php"
+code = "invalid-return-statement"
+message = "Invalid return type for function `{anonymous-class:packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php:132:16}::getUserIdentifier`: expected `non-empty-string`, but found `string`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php"
+code = "less-specific-nested-return-statement"
+message = "Returned type `array<array-key, mixed>` is less specific than the declared return type `array<array-key, string>` for function `{anonymous-class:packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php:132:16}::getRoles` due to nested 'mixed'."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "invalid-type-cast"
+message = "Casting `mixed` to `array`."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::applyFilter`: expected `array<int, mixed>`, but provided type `array{0: array<array-key, mixed>, ...}` is less specific.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::dqlOperator`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::valueForOperator`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::findVirtualField`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::uniqueParameterName`: expected `string`, but found `mixed`.'
+count = 3
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::uniqueParameterName`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
+count = 5
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::applyFilter`: expected `array<int, mixed>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::applySort`: expected `array<int, mixed>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::resolveFieldExpression`: expected `string`, but found `mixed`.'
+count = 2
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::resolveFieldExpression`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface::applyFilter`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #4 of `Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface::applyFilter`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 3
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 7
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/GridFilterHelper.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/GridFilterHelper.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/GridFilterHelper.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/GridFilterHelper.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::valueForOperator`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/ApiResponseListener.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/api-platform/src/Http/ApiResponseListener.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/ExceptionListener.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Nubit\ApiPlatform\Http\ExceptionListener::getStatusCode`: expected `int`, but found `int<400, 599>|string`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "less-specific-nested-argument-type"
+message = '''Argument type mismatch for argument #2 of `ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface::create`: expected `string`, but provided type `('V.iteratoraggregate extends mixed)` is less specific.'''
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `array<('V.iteratoraggregate extends mixed), string>` is less specific than the declared return type `array<string, string>` for function `Nubit\ApiPlatform\Http\GridSummaryCalculator::resolveSummableFields` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `array<string, nonnull>` is less specific than the declared return type `array<string, float|int|string>` for function `Nubit\ApiPlatform\Http\GridSummaryCalculator::compute` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/OpenApi/TranslatedDocumentationNormalizer.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer::normalize()` is named `$object` but parent `Symfony\Component\Serializer\Normalizer\NormalizerInterface::normalize()` names it `$data`'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/OpenApi/TranslatedDocumentationNormalizer.php"
+code = "invalid-return-statement"
+message = '''Invalid return type for function `Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer::getSupportedTypes`: expected `array<class-string, bool>`, but found `array<class-string|string|string('*')|string('object'), bool|null>`.'''
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/OpenApi/TranslatedDocumentationNormalizer.php"
+code = "less-specific-nested-argument-type"
+message = '''Argument type mismatch for argument #1 of `ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface::create`: expected `class-string|string`, but provided type `('V.iteratoraggregate extends mixed)` is less specific.'''
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/OpenApi/TranslatedDocumentationNormalizer.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `('V.iteratoraggregate extends nonnull)|null|string` is less specific than the declared return type `null|string` for function `Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer::resolveShortNameToClass` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/OpenApi/TranslatedDocumentationNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "packages/api-platform/src/OpenApi/TranslatedDocumentationNormalizer.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/tests/Doctrine/Filter/GridFilterHelperTest.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `mixed`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/tests/Doctrine/Filter/GridFilterHelperTest.php"
+code = "invalid-yield-key-type"
+message = "Invalid key type yielded; expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/tests/Doctrine/Filter/GridFilterHelperTest.php"
+code = "invalid-yield-value-type"
+message = "Invalid value type yielded; expected `array{0: string, 1: mixed, 2: string, 3: mixed}`, but found `list{mixed, mixed, mixed, mixed}`."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/tests/Doctrine/Filter/GridFilterHelperTest.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 6
+
+[[issues]]
+file = "packages/api-platform/tests/Doctrine/Filter/GridFilterHelperTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `PHPUnit\Framework\Assert::assertArrayNotHasKey`: expected `ArrayAccess<array-key, mixed>|array<array-key, mixed>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 11
+
+[[issues]]
+file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "packages/api-platform/tests/OpenApi/TranslatedDocumentationNormalizerTest.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `PHPUnit\Framework\Assert::assertArrayNotHasKey`: expected `ArrayAccess<array-key, mixed>|array<array-key, mixed>`, but found `mixed`.'
+count = 2
+
+[[issues]]
+file = "packages/api-platform/tests/OpenApi/TranslatedDocumentationNormalizerTest.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 14
+
+[[issues]]
+file = "packages/api-platform/tests/OpenApi/TranslatedDocumentationNormalizerTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "packages/platform/src/Cache/CacheManager.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/platform/src/Exception/DomainProblemException.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #3 of `Nubit\Platform\Http\ProblemDetails::__construct`: expected `int`, but possibly received `int|string`.'
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Exception/NotFoundException.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #3 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/PdfExporter.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Pontedilana\PhpWeasyPrint\AbstractGenerator::setOptions`: expected `array<string, array<array-key, mixed>|bool|int|null|string>`, but possibly received `array<int|string, mixed>`.'
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsCellWriter.php"
+code = "invalid-type-cast"
+message = "Casting `mixed` to `float`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsCellWriter.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsColumnResolver.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Nubit\Platform\Export\XlsColumnTypeResolver::infer`: expected `list<mixed>`, but possibly received `array<array-key, mixed>`.'
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsColumnTypeResolver.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsConfigReader.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsSpreadsheetStyler.php"
+code = "invalid-param-tag"
+message = "The @param tag references an unknown parameter."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsSpreadsheetStyler.php"
+code = "invalid-type-cast"
+message = "Non numeric string of type `string` implicitly cast to `float`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsValidationSpec.php"
+code = "invalid-param-tag"
+message = "The @param tag references an unknown parameter."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsValidationSpecResolver.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Nubit\Platform\Export\XlsConfigReader::string`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 7
+
+[[issues]]
+file = "packages/platform/src/Export/XlsValidationSpecResolver.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/platform/src/Export/XlsValidationSpecResolver.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Filesystem/FileManager.php"
+code = "implicit-to-string-cast"
+message = 'Implicit conversion to `string` for left operand via `Symfony\Component\String\AbstractUnicodeString::__toString()`.'
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Filesystem/FileManager.php"
+code = "possibly-null-operand"
+message = "Possibly null right operand used in string concatenation (type `null|string`)."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Messenger/TenantContextMiddleware.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$actorStamp`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Messenger/TenantContextMiddleware.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$stamp`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/RateLimit/TenantRateLimiter.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$current`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Report/GridFilterApplier.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Nubit\Platform\Report\GridFilterApplier::flattenRules`: expected `array<int, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 2
+
+[[issues]]
+file = "packages/platform/src/Report/GridFilterApplier.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Report/GridFilterApplier.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 6
+
+[[issues]]
+file = "packages/platform/src/Report/GridFilterApplier.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Report/GridFilterApplier.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Symfony/Console/PerTenantCommand.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Symfony\Component\Console\Input\InputInterface::getArgument`: expected `string`, but provided type `array-key` is less specific.'
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Symfony/Console/PerTenantCommand.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Symfony\Component\Console\Input\InputInterface::getOption`: expected `string`, but provided type `array-key` is less specific.'
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Symfony/Console/PerTenantCommand.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Nubit\Platform\Tenant\Contract\TenantRegistryInterface::getTenantByName`: expected `string`, but found `truthy-mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Symfony/Console/PerTenantCommand.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `truthy-mixed`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Symfony/Console/PerTenantCommand.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 6
+
+[[issues]]
+file = "packages/platform/src/Symfony/Console/PerTenantCommand.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 2
+
+[[issues]]
+file = "packages/platform/src/Symfony/Console/PerTenantCommand.php"
+code = "null-operand"
+message = "Right operand in `==` comparison is `null`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Symfony/Console/PerTenantCommand.php"
+code = "possibly-null-operand"
+message = "Possibly null right operand used in string concatenation (type `null|string`)."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Tenant/Model/TenantDescriptor.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/platform/src/Validation/Validator.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Nubit\Platform\Validation\Validator::getViolations`: expected `array<string, array<array-key, string>>`, but found `array<string, non-empty-list<Stringable|string>>`.'
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Validation/Validator.php"
+code = "less-specific-nested-argument-type"
+message = 'Argument type mismatch for argument #2 of `Symfony\Component\Validator\Validator\ValidatorInterface::validate`: expected `Symfony\Component\Validator\Constraint|array<array-key, Symfony\Component\Validator\Constraint>|null`, but provided type `array<int, mixed>` is less specific.'
+count = 3
+
+[[issues]]
+file = "packages/platform/src/Validation/Validator.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Nubit\Platform\Exception\ValidationException::withErrors`: expected `array<string, array<array-key, string>>`, but possibly received `array<string, non-empty-list<Stringable|string>>`.'
+count = 1
+
+[[issues]]
+file = "packages/platform/tests/Cache/CacheManagerTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "packages/platform/tests/Export/XlsExporterTest.php"
+code = "less-specific-nested-argument-type"
+message = 'Argument type mismatch for argument #1 of `Nubit\Platform\Export\XlsExporter::makeSpreadsheetFromIterable`: expected `iterable<mixed, array<string, mixed>>`, but provided type `Generator<mixed, mixed, mixed, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "packages/platform/tests/Export/XlsExporterTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/platform/tests/Filesystem/FileManagerTest.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$config` of `Nubit\Platform\Tests\Filesystem\RecordingFilesystemOperator::copy()` expects type `array<string, mixed>` but parent `League\Flysystem\FilesystemWriter::copy()` expects type `array<array-key, mixed>`'
+count = 1
+
+[[issues]]
+file = "packages/platform/tests/Filesystem/FileManagerTest.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$config` of `Nubit\Platform\Tests\Filesystem\RecordingFilesystemOperator::createdirectory()` expects type `array<string, mixed>` but parent `League\Flysystem\FilesystemWriter::createdirectory()` expects type `array<array-key, mixed>`'
+count = 1
+
+[[issues]]
+file = "packages/platform/tests/Filesystem/FileManagerTest.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$config` of `Nubit\Platform\Tests\Filesystem\RecordingFilesystemOperator::move()` expects type `array<string, mixed>` but parent `League\Flysystem\FilesystemWriter::move()` expects type `array<array-key, mixed>`'
+count = 1
+
+[[issues]]
+file = "packages/platform/tests/Filesystem/FileManagerTest.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$config` of `Nubit\Platform\Tests\Filesystem\RecordingFilesystemOperator::write()` expects type `array<string, mixed>` but parent `League\Flysystem\FilesystemWriter::write()` expects type `array<array-key, mixed>`'
+count = 1
+
+[[issues]]
+file = "packages/platform/tests/Filesystem/FileManagerTest.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$contents` of `Nubit\Platform\Tests\Filesystem\RecordingFilesystemOperator::writestream()` expects type `resource` but parent `League\Flysystem\FilesystemWriter::writestream()` expects type `mixed`'
+count = 1
+
+[[issues]]
+file = "packages/platform/tests/Http/ApiResponsePayloadTest.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Nubit\Platform\Tests\Http\ApiResponsePayloadTest::decode`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/platform/tests/Tenant/Runtime/TenantRuntimeTest.php"
+code = "unevaluated-code"
+message = "Unreachable code detected."
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/EventListener/SequenceStampListener.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/NubitSequenceBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\SequenceBundle\NubitSequenceBundle::prependextension()` is named `$container` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::prependextension()` names it `$configurator`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/NubitSequenceBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #2 of `Nubit\SequenceBundle\NubitSequenceBundle::loadextension()` is named `$container` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::loadextension()` names it `$configurator`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/NubitSequenceBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #2 of `Nubit\SequenceBundle\NubitSequenceBundle::prependextension()` is named `$builder` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::prependextension()` names it `$container`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/NubitSequenceBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #3 of `Nubit\SequenceBundle\NubitSequenceBundle::loadextension()` is named `$builder` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::loadextension()` names it `$container`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/OpenApi/SequenceDocumentationNormalizer.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\SequenceBundle\OpenApi\SequenceDocumentationNormalizer::normalize()` is named `$object` but parent `Symfony\Component\Serializer\Normalizer\NormalizerInterface::normalize()` names it `$data`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/OpenApi/SequenceDocumentationNormalizer.php"
+code = "invalid-return-statement"
+message = '''Invalid return type for function `Nubit\SequenceBundle\OpenApi\SequenceDocumentationNormalizer::getSupportedTypes`: expected `array<class-string, bool>`, but found `array<class-string|string|string('*')|string('object'), bool|null>`.'''
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/OpenApi/SequenceDocumentationNormalizer.php"
+code = "less-specific-nested-argument-type"
+message = '''Argument type mismatch for argument #1 of `ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface::create`: expected `class-string|string`, but provided type `('V.iteratoraggregate extends mixed)` is less specific.'''
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/OpenApi/SequenceDocumentationNormalizer.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `('V.iteratoraggregate extends nonnull)|null|string` is less specific than the declared return type `null|string` for function `Nubit\SequenceBundle\OpenApi\SequenceDocumentationNormalizer::resolveShortNameToClass` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/OpenApi/SequenceDocumentationNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/sequence-bundle/src/OpenApi/SequenceDocumentationNormalizer.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/Sequence/SequenceMetadata.php"
+code = "possibly-invalid-argument"
+message = "Possible argument type mismatch for argument #1 of `ReflectionClass::__construct`: expected `('T.reflectionclass extends object)|class-string<'T.reflectionclass extends object>`, but possibly received `string`."
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/src/Sequence/SequenceScopeResolver.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "docblock-type-mismatch"
+message = 'Docblock type `Doctrine\DBAL\Configuration|null` for parameter `$insertThrowsUniqueViolation` is incompatible with native type `bool`.'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "docblock-type-mismatch"
+message = 'Docblock type `Doctrine\DBAL\Driver` for parameter `$lockedValue` is incompatible with native type `string`.'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "docblock-type-mismatch"
+message = '''Docblock type `array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'keepReplica'?: bool, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'primary'?: array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}, 'replica'?: array<array-key, array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}>, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}` for parameter `$rowExists` is incompatible with native type `bool`.'''
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "false-argument"
+message = '''Argument #1 of method `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct` is `false`, but parameter type `array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'keepReplica'?: bool, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'primary'?: array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}, 'replica'?: array<array-key, array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}>, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}` does not accept it.'''
+count = 2
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct()` is named `$rowExists` but parent `Doctrine\DBAL\Connection::__construct()` names it `$params`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::fetchone()` is named `$sql` but parent `Doctrine\DBAL\Connection::fetchone()` names it `$query`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct()` is named `$lockedValue` but parent `Doctrine\DBAL\Connection::__construct()` names it `$driver`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #3 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct()` is named `$insertThrowsUniqueViolation` but parent `Doctrine\DBAL\Connection::__construct()` names it `$config`'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-argument"
+message = '''Invalid argument type for argument #1 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'keepReplica'?: bool, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'primary'?: array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}, 'replica'?: array<array-key, array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}>, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}`, but found `true`.'''
+count = 5
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-argument"
+message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('1')`.'''
+count = 2
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-argument"
+message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('3')`.'''
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-argument"
+message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('4')`.'''
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-argument"
+message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('7')`.'''
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-argument"
+message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('9')`.'''
+count = 2
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-argument"
+message = 'Invalid argument type for argument #3 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Configuration|null`, but found `true`.'
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-parameter-default-value"
+message = "Default value for parameter `$insertThrowsUniqueViolation` is not assignable to its declared type."
+count = 1
+
+[[issues]]
+file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
+code = "invalid-property-assignment-value"
+message = "Invalid type for property `$updateParams`: expected `list<list<mixed>>`, but got `non-empty-list<array<string, mixed>|list<mixed>>`."
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/EventListener/TenantStampListener.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 2
+
+[[issues]]
+file = "packages/tenant-bundle/src/NubitTenantBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\TenantBundle\NubitTenantBundle::prependextension()` is named `$container` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::prependextension()` names it `$configurator`'
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/NubitTenantBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #2 of `Nubit\TenantBundle\NubitTenantBundle::loadextension()` is named `$container` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::loadextension()` names it `$configurator`'
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/NubitTenantBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #2 of `Nubit\TenantBundle\NubitTenantBundle::prependextension()` is named `$builder` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::prependextension()` names it `$container`'
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/NubitTenantBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #3 of `Nubit\TenantBundle\NubitTenantBundle::loadextension()` is named `$builder` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::loadextension()` names it `$container`'
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/NubitTenantBundle.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/Provider/RegistryTenantDatabaseUrlProvider.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "packages/tenant-bundle/src/Quota/FeatureQuotaEnforcer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/Registry/DoctrineTenantRegistry.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 6
+
+[[issues]]
+file = "packages/tenant-bundle/src/Resolver/JwtClaimTenantResolver.php"
+code = "invalid-type-cast"
+message = "Object of type `object` cast to `array`. Property visibility (public, protected, private) affects the resulting array."
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/Resolver/JwtClaimTenantResolver.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/tenant-bundle/src/Resolver/JwtClaimTenantResolver.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$matches`."
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/tests/EventListener/QuotaEnforcementListenerTest.php"
+code = "less-specific-return-statement"
+message = 'Returned type `Doctrine\Persistence\Event\LifecycleEventArgs<Doctrine\Persistence\ObjectManager>&PHPUnit\Framework\MockObject\Stub` is less specific than the declared return type `Doctrine\Persistence\Event\LifecycleEventArgs<Doctrine\ORM\EntityManagerInterface>` for function `Nubit\TenantBundle\Tests\EventListener\QuotaEnforcementListenerTest::lifecycleArgs`.'
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/tests/Switcher/PostgresSchemaTenantConnectionSwitcherTest.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 5
+
+[[issues]]
+file = "packages/tenant-bundle/tests/Switcher/PostgresSchemaTenantConnectionSwitcherTest.php"
+code = "non-existent-method"
+message = 'Method `expects` does not exist on type `Doctrine\DBAL\Connection`.'
+count = 3
+
+[[issues]]
+file = "packages/workflow-bundle/src/Controller/WorkflowTransitionController.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<mixed>` is less specific than the declared return type `list<string>` for function `Nubit\WorkflowBundle\Controller\WorkflowTransitionController::normalizationGroups` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/Controller/WorkflowTransitionController.php"
+code = "possibly-invalid-argument"
+message = '''Possible argument type mismatch for argument #1 of `Doctrine\ORM\EntityManagerInterface::getRepository`: expected `class-string<'T.doctrine\orm\entitymanagerinterface::getrepository() extends object>`, but possibly received `string`.'''
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/NubitWorkflowBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #2 of `Nubit\WorkflowBundle\NubitWorkflowBundle::loadextension()` is named `$container` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::loadextension()` names it `$configurator`'
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/NubitWorkflowBundle.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #3 of `Nubit\WorkflowBundle\NubitWorkflowBundle::loadextension()` is named `$builder` but parent `Symfony\Component\DependencyInjection\Kernel\AbstractBundle::loadextension()` names it `$container`'
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/OpenApi/WorkflowDocumentationNormalizer.php"
+code = "incompatible-parameter-name"
+message = 'Parameter #1 of `Nubit\WorkflowBundle\OpenApi\WorkflowDocumentationNormalizer::normalize()` is named `$object` but parent `Symfony\Component\Serializer\Normalizer\NormalizerInterface::normalize()` names it `$data`'
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/OpenApi/WorkflowDocumentationNormalizer.php"
+code = "invalid-return-statement"
+message = '''Invalid return type for function `Nubit\WorkflowBundle\OpenApi\WorkflowDocumentationNormalizer::getSupportedTypes`: expected `array<class-string, bool>`, but found `array<class-string|string|string('*')|string('object'), bool|null>`.'''
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/OpenApi/WorkflowDocumentationNormalizer.php"
+code = "less-specific-nested-argument-type"
+message = '''Argument type mismatch for argument #1 of `ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface::create`: expected `class-string|string`, but provided type `('V.iteratoraggregate extends mixed)` is less specific.'''
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/OpenApi/WorkflowDocumentationNormalizer.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `('V.iteratoraggregate extends nonnull)|null|string` is less specific than the declared return type `null|string` for function `Nubit\WorkflowBundle\OpenApi\WorkflowDocumentationNormalizer::resolveShortNameToClass` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/OpenApi/WorkflowDocumentationNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/workflow-bundle/src/OpenApi/WorkflowDocumentationNormalizer.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowEngine.php"
+code = "impossible-condition"
+message = "This condition (type `false`) will always evaluate to false."
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowEngine.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowEngine.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 2
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowEngine.php"
+code = "unsafe-instantiation"
+message = 'Potentially unsafe instantiation: `class-string<Nubit\WorkflowBundle\Contract\WorkflowGuardInterface>` may contain the interface `Nubit\WorkflowBundle\Contract\WorkflowGuardInterface` itself, which cannot be instantiated.'
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowMetadata.php"
+code = "possibly-invalid-argument"
+message = "Possible argument type mismatch for argument #1 of `ReflectionClass::__construct`: expected `('T.reflectionclass extends object)|class-string<'T.reflectionclass extends object>`, but possibly received `string`."
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowMetadata.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 2
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowMetadata.php"
+code = "redundant-null-coalesce"
+message = "Redundant null coalesce: left-hand side can never be `null` or undefined."
+count = 2
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowRegistry.php"
+code = "impossible-condition"
+message = "This condition (type `false`) will always evaluate to false."
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowRegistry.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/src/Workflow/WorkflowRegistry.php"
+code = "possibly-invalid-argument"
+message = "Possible argument type mismatch for argument #1 of `ReflectionClass::__construct`: expected `('T.reflectionclass extends object)|class-string<'T.reflectionclass extends object>`, but possibly received `string`."
+count = 1
+
+[[issues]]
+file = "packages/workflow-bundle/tests/WorkflowEngineTest.php"
+code = "ambiguous-object-property-access"
+message = "Cannot statically verify property access on a generic `object` type."
+count = 2

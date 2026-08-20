@@ -11,6 +11,7 @@ use Nubit\Platform\Tenant\Model\TenantDescriptor;
 
 final readonly class DoctrineTenantRegistry implements TenantRegistryInterface, TenantDescriptorRegistryInterface
 {
+    /** @param class-string $tenantEntityClass */
     public function __construct(
         private EntityManagerInterface $entityManager,
         private string $tenantEntityClass,
@@ -52,7 +53,7 @@ final readonly class DoctrineTenantRegistry implements TenantRegistryInterface, 
         $repository = $this->entityManager->getRepository($this->tenantEntityClass);
         $row = $repository->findOneBy($this->nameCriteria($name));
 
-        return $row instanceof object ? $this->mapEntity($row) : null;
+        return is_object($row) ? $this->mapEntity($row) : null;
     }
 
     public function findByDomain(string $domain): ?TenantDescriptor
@@ -60,7 +61,7 @@ final readonly class DoctrineTenantRegistry implements TenantRegistryInterface, 
         $repository = $this->entityManager->getRepository($this->tenantEntityClass);
         $row = $repository->findOneBy(['primaryDomain' => $domain]);
 
-        return $row instanceof object ? $this->mapEntity($row) : null;
+        return is_object($row) ? $this->mapEntity($row) : null;
     }
 
     /**

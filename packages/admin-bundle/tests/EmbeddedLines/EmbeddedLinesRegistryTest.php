@@ -20,13 +20,13 @@ final class EmbeddedLinesRegistryTest extends TestCase
         $metadata = new ClassMetadata(EmbeddedLineFixture::class);
         $metadata->setPrimaryTable(['name' => 'sales_document_line']);
 
-        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory = $this->createStub(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
-        $manager = $this->createMock(ObjectManager::class);
+        $manager = $this->createStub(ObjectManager::class);
         $manager->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $managerRegistry = $this->createMock(ManagerRegistry::class);
+        $managerRegistry = $this->createStub(ManagerRegistry::class);
         $managerRegistry->method('getManagers')->willReturn(['default' => $manager]);
 
         $definitions = (new EmbeddedLinesRegistry($managerRegistry))->all();
@@ -45,13 +45,13 @@ final class EmbeddedLinesRegistryTest extends TestCase
         $metadata = new ClassMetadata(ImplicitRouteEmbeddedLineFixture::class);
         $metadata->setPrimaryTable(['name' => 'implicit_route_line']);
 
-        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory = $this->createStub(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
-        $manager = $this->createMock(ObjectManager::class);
+        $manager = $this->createStub(ObjectManager::class);
         $manager->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $managerRegistry = $this->createMock(ManagerRegistry::class);
+        $managerRegistry = $this->createStub(ManagerRegistry::class);
         $managerRegistry->method('getManagers')->willReturn(['default' => $manager]);
 
         $deprecation = null;

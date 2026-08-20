@@ -26,7 +26,7 @@ final class FeatureQuotaEnforcerTest extends TestCase
 
     public function testSkipsWhenNoMaxConfigured(): void
     {
-        $checker = $this->createMock(FeatureCheckerInterface::class);
+        $checker = $this->createStub(FeatureCheckerInterface::class);
         $checker->method('hasFeature')->willReturn(true);
         $checker->method('getFeatureConfig')->willReturn([]);
 
@@ -38,12 +38,12 @@ final class FeatureQuotaEnforcerTest extends TestCase
 
     public function testAllowsWhenBelowLimit(): void
     {
-        $checker = $this->createMock(FeatureCheckerInterface::class);
+        $checker = $this->createStub(FeatureCheckerInterface::class);
         $checker->method('hasFeature')->willReturn(true);
         $checker->method('getFeatureConfig')->willReturn(['max' => 3]);
 
-        $usage = $this->createMock(QuotaUsageProviderInterface::class);
-        $usage->method('count')->with('team_users')->willReturn(2);
+        $usage = $this->createStub(QuotaUsageProviderInterface::class);
+        $usage->method('count')->willReturn(2);
 
         (new FeatureQuotaEnforcer($checker, $usage))->enforce('team_users');
         self::assertTrue(true);
@@ -51,12 +51,12 @@ final class FeatureQuotaEnforcerTest extends TestCase
 
     public function testThrowsWhenAtLimit(): void
     {
-        $checker = $this->createMock(FeatureCheckerInterface::class);
+        $checker = $this->createStub(FeatureCheckerInterface::class);
         $checker->method('hasFeature')->willReturn(true);
         $checker->method('getFeatureConfig')->willReturn(['max' => 3]);
 
-        $usage = $this->createMock(QuotaUsageProviderInterface::class);
-        $usage->method('count')->with('team_users')->willReturn(3);
+        $usage = $this->createStub(QuotaUsageProviderInterface::class);
+        $usage->method('count')->willReturn(3);
 
         $this->expectException(QuotaExceededException::class);
         $this->expectExceptionMessage('Quota exceeded for "team_users": 3/3');

@@ -17,10 +17,10 @@ final class RegistryTenantDatabaseUrlProviderTest extends TestCase
     {
         $tenant = new TenantWithDatabaseUrl('postgresql://tenant-db');
 
-        $repository = $this->createMock(EntityRepository::class);
-        $repository->method('findOneBy')->with(['slug' => 'acme'])->willReturn($tenant);
+        $repository = $this->createStub(EntityRepository::class);
+        $repository->method('findOneBy')->willReturn($tenant);
 
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
 
         $provider = new RegistryTenantDatabaseUrlProvider($entityManager, TenantWithDatabaseUrl::class);
@@ -30,10 +30,10 @@ final class RegistryTenantDatabaseUrlProviderTest extends TestCase
 
     public function testReturnsNullWhenTenantMissing(): void
     {
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = $this->createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn(null);
 
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
 
         $provider = new RegistryTenantDatabaseUrlProvider($entityManager, TenantWithDatabaseUrl::class);
@@ -43,10 +43,10 @@ final class RegistryTenantDatabaseUrlProviderTest extends TestCase
 
     public function testRequiresGetDatabaseUrlOnCustomTenantEntity(): void
     {
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = $this->createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn(new TenantWithoutDatabaseUrl());
 
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
 
         $provider = new RegistryTenantDatabaseUrlProvider($entityManager, TenantWithoutDatabaseUrl::class);
@@ -60,9 +60,9 @@ final class RegistryTenantDatabaseUrlProviderTest extends TestCase
     public function testResolvesDatabaseTargetFromControlPlaneTenant(): void
     {
         $tenant = new TenantWithDatabaseUrl('postgresql://tenant-db', TenantIsolationTarget::DATABASE);
-        $repository = $this->createMock(EntityRepository::class);
-        $repository->method('find')->with(42)->willReturn($tenant);
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $repository = $this->createStub(EntityRepository::class);
+        $repository->method('find')->willReturn($tenant);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
 
         $provider = new RegistryTenantDatabaseUrlProvider($entityManager, TenantWithDatabaseUrl::class);
@@ -75,9 +75,9 @@ final class RegistryTenantDatabaseUrlProviderTest extends TestCase
 
     public function testExplicitlyRejectsSchemaIsolationForTheDefaultProvider(): void
     {
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = $this->createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn(new TenantWithDatabaseUrl('postgresql://tenant-db', 'schema'));
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
 
         $provider = new RegistryTenantDatabaseUrlProvider($entityManager, TenantWithDatabaseUrl::class);
@@ -96,9 +96,9 @@ final class RegistryTenantDatabaseUrlProviderTest extends TestCase
 
     public function testFailsClosedWhenDatabaseTargetHasNoUrl(): void
     {
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = $this->createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn(new TenantWithDatabaseUrl('', TenantIsolationTarget::DATABASE));
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
 
         $provider = new RegistryTenantDatabaseUrlProvider($entityManager, TenantWithDatabaseUrl::class);

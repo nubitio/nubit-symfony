@@ -59,6 +59,10 @@ final readonly class TenantScopedMetadata
 
     private function readAttribute(string $entityClass): ?TenantScoped
     {
+        if (!class_exists($entityClass)) {
+            return null;
+        }
+
         $reflection = new ReflectionClass($entityClass);
         $attributes = $reflection->getAttributes(TenantScoped::class);
 

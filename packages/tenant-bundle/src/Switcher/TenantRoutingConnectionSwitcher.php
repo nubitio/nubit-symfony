@@ -32,30 +32,30 @@ final class TenantRoutingConnectionSwitcher implements TenantConnectionSwitcherI
         }
     }
 
-    public function switchConnection(string $tenantName): void
+    public function switchConnection(string $tenant): void
     {
-        if ('' === trim($tenantName)) {
+        if ('' === trim($tenant)) {
             throw new ServiceException('Tenant connection switching requires a non-empty tenant name.');
         }
 
-        $tenant = $this->resolveTenant($tenantName);
+        $tenantDescriptor = $this->resolveTenant($tenant);
 
         if ('schema' === $this->isolation) {
-            $this->switchToSchema($tenant);
+            $this->switchToSchema($tenantDescriptor);
 
             return;
         }
 
-        $target = $this->targetProvider?->resolveTarget($tenant->name, $tenant->id);
+        $target = $this->targetProvider?->resolveTarget($tenantDescriptor->name, $tenantDescriptor->id);
         if (null === $target) {
-            throw new ServiceException(sprintf('No isolation target configured for tenant "%s".', $tenantName));
+            throw new ServiceException(sprintf('No isolation target configured for tenant "%s".', $tenant));
         }
 
         match ($target->mode) {
-            TenantIsolationTarget::COLUMN => $this->switchToColumn($tenantName),
-            TenantIsolationTarget::DATABASE => $this->switchToDatabase($target, $tenantName),
-            TenantIsolationTarget::SCHEMA => $this->switchToSchema($tenant),
-            default => throw new ServiceException(sprintf('Unsupported isolation target for tenant "%s".', $tenantName)),
+            TenantIsolationTarget::COLUMN => $this->switchToColumn($tenant),
+            TenantIsolationTarget::DATABASE => $this->switchToDatabase($target, $tenant),
+            TenantIsolationTarget::SCHEMA => $this->switchToSchema($tenantDescriptor),
+            default => throw new ServiceException(sprintf('Unsupported isolation target for tenant "%s".', $tenant)),
         };
     }
 

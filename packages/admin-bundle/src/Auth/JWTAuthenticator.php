@@ -108,7 +108,7 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
         }
 
         $username = $tokenData['username'] ?? null;
-        if (!$username) {
+        if (!is_string($username) || '' === $username) {
             $this->logger->error('JWT token missing username claim');
             throw new AuthenticationException('Invalid token', Response::HTTP_UNAUTHORIZED);
         }

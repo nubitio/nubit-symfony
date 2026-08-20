@@ -58,7 +58,7 @@ final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        new PostgresSchemaTenantConnectionSwitcher($this->registry($this->connection(false)), schemaPrefix: $prefix);
+        new PostgresSchemaTenantConnectionSwitcher($this->registry($this->stubConnection()), schemaPrefix: $prefix);
     }
 
     /** @return iterable<string, array{string}> */
@@ -72,7 +72,7 @@ final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
 
     public function testRejectsNonPositiveIdsAndFinalNamesOverPostgresLimit(): void
     {
-        $switcher = new PostgresSchemaTenantConnectionSwitcher($this->registry($this->connection(false)), schemaPrefix: str_repeat('a', 63));
+        $switcher = new PostgresSchemaTenantConnectionSwitcher($this->registry($this->stubConnection()), schemaPrefix: str_repeat('a', 63));
 
         try {
             $switcher->switchToTenantId(0);
@@ -93,9 +93,14 @@ final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
         return $connection;
     }
 
+    private function stubConnection(): Connection
+    {
+        return $this->createStub(Connection::class);
+    }
+
     private function registry(Connection $connection): ConnectionRegistry
     {
-        $registry = $this->createMock(ConnectionRegistry::class);
+        $registry = $this->createStub(ConnectionRegistry::class);
         $registry->method('getConnection')->willReturn($connection);
 
         return $registry;

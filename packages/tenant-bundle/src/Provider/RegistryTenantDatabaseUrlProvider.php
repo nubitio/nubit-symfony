@@ -15,6 +15,7 @@ use Nubit\TenantBundle\Isolation\TenantIsolationTarget;
  */
 final readonly class RegistryTenantDatabaseUrlProvider implements TenantDatabaseUrlProviderInterface, TenantIsolationTargetProviderInterface
 {
+    /** @param class-string $tenantEntityClass */
     public function __construct(
         private EntityManagerInterface $controlPlaneEntityManager,
         private string $tenantEntityClass,

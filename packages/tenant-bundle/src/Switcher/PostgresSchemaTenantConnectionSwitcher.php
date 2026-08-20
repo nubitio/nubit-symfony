@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nubit\TenantBundle\Switcher;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\Persistence\ConnectionRegistry;
 use Nubit\Platform\Exception\ServiceException;
 use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
@@ -27,9 +28,6 @@ final readonly class PostgresSchemaTenantConnectionSwitcher implements TenantSch
             throw new \InvalidArgumentException('At least one base schema must be configured.');
         }
         foreach ($baseSchemas as $schema) {
-            if (!is_string($schema)) {
-                throw new \InvalidArgumentException('Base schema names must be strings.');
-            }
             self::assertIdentifier($schema, 'Base schema');
         }
         $this->baseSchemas = array_values($baseSchemas);
@@ -77,10 +75,10 @@ final readonly class PostgresSchemaTenantConnectionSwitcher implements TenantSch
         return $schema;
     }
 
-    private function connection(): object
+    private function connection(): Connection
     {
         $connection = $this->connectionRegistry->getConnection($this->tenantConnectionName);
-        if (!method_exists($connection, 'isTransactionActive') || !method_exists($connection, 'executeStatement')) {
+        if (!$connection instanceof Connection) {
             throw new ServiceException(sprintf('Connection "%s" must support Doctrine DBAL search_path switching.', $this->tenantConnectionName));
         }
 

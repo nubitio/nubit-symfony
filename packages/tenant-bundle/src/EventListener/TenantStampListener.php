@@ -64,7 +64,7 @@ final class TenantStampListener
         }
 
         $tenantId = $this->tenantContext->getTenantId();
-        if (null === $tenantId || null === $this->tenantEntityClass) {
+        if (null === $tenantId || null === $this->tenantEntityClass || !class_exists($this->tenantEntityClass)) {
             return;
         }
 

@@ -72,11 +72,18 @@ final readonly class JWTManager implements JWTManagerInterface
         try {
             $payload = $this->decode($token);
 
-            if (!isset($payload['exp'])) {
+            $expiresAt = $payload['exp'] ?? null;
+            if (null === $expiresAt) {
                 return false;
             }
 
-            return time() > $payload['exp'];
+            // RFC 7519 NumericDate values are JSON numbers. Treat a malformed
+            // claim as expired instead of allowing an invalid token to live.
+            if (!is_int($expiresAt) && !is_float($expiresAt)) {
+                return true;
+            }
+
+            return time() > $expiresAt;
         } catch (Exception $e) {
             $this->logger->error('Invalid JWT token', ['exception' => $e]);
             return true;

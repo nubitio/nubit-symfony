@@ -13,6 +13,7 @@ final readonly class CookieFactory
     ) {
     }
 
+    /** @param ''|'lax'|'none'|'strict' $sameSite */
     public function createSecureCookie(
         string $name,
         string $value,
