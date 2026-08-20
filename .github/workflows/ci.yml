@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Audit dependencies
+        run: composer audit
+
       - name: Mago lint
         run: vendor/bin/mago lint
 
