@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle;
 
+use Nubit\AdminBundle\Audit\AuditTrailListener;
+use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
 use Nubit\AdminBundle\Auth\CookieFactory;
 use Nubit\AdminBundle\Auth\DefaultTokenClaimsProvider;
 use Nubit\AdminBundle\Auth\DoctrineRefreshTokenStore;
@@ -17,8 +19,6 @@ use Nubit\AdminBundle\Auth\RefreshTokenStoreInterface;
 use Nubit\AdminBundle\Auth\ResponseModeResolver;
 use Nubit\AdminBundle\Auth\TokenClaimsProviderInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
-use Nubit\AdminBundle\Audit\AuditTrailListener;
-use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
 use Nubit\AdminBundle\Command\DiscoverCommand;
 use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
@@ -28,17 +28,18 @@ use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\MeController;
 use Nubit\AdminBundle\Controller\RefreshController;
 use Nubit\AdminBundle\DependencyInjection\MediaModule;
+use Nubit\AdminBundle\DependencyInjection\ObservabilityModule;
 use Nubit\AdminBundle\DependencyInjection\RuntimeConfigModule;
 use Nubit\AdminBundle\EmbeddedLines\Controller\EmbeddedLinesController;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRegistry;
-use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRouteLoader;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRowSerializer;
+use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
+use Nubit\AdminBundle\Mercure\FailSafeHub;
+use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\Session\AppProfile;
 use Nubit\AdminBundle\Session\DefaultMeResponseBuilder;
 use Nubit\AdminBundle\Session\MeResponseBuilderInterface;
-use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
-use Nubit\AdminBundle\Mercure\FailSafeHub;
 use Nubit\AdminBundle\Tenant\AllowAllFeatureChecker;
 use Nubit\AdminBundle\Tenant\SingleTenantConnectionSwitcher;
 use Nubit\AdminBundle\Tenant\SingleTenantRegistry;
@@ -47,8 +48,8 @@ use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
 use Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface;
 use Nubit\ApiPlatform\Doctrine\Filter\SoftDeleteFilter;
 use Nubit\ApiPlatform\Http\ApiResponseListener;
-use Nubit\ApiPlatform\Http\GridSummaryCalculator;
 use Nubit\ApiPlatform\Http\ExceptionListener;
+use Nubit\ApiPlatform\Http\GridSummaryCalculator;
 use Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer;
 use Nubit\Platform\Feature\Contract\FeatureCheckerInterface;
 use Nubit\Platform\Quota\Contract\QuotaEnforcerInterface;
@@ -77,133 +78,166 @@ final class NubitAdminBundle extends AbstractBundle
 {
     public function configure(DefinitionConfigurator $definition): void
     {
-        $definition->rootNode()
+        $definition
+            ->rootNode()
             ->children()
-                ->scalarNode('app_profile')
-                    ->info('Application profile: internal (single org), saas (B2B multi-tenant), hybrid (one org, multiple spaces).')
-                    ->defaultValue('internal')
-                    ->validate()
-                        ->ifNotInArray(['internal', 'saas', 'hybrid'])
-                        ->thenInvalid('Invalid app_profile %s')
-                    ->end()
-                ->end()
-                ->arrayNode('auth')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('secret')
-                            ->info('Secret used to sign JWTs. Defaults to %env(APP_SECRET)%.')
-                            ->defaultValue('%env(APP_SECRET)%')
-                        ->end()
-                        ->integerNode('access_token_ttl')->defaultValue(3600)->end()
-                        ->integerNode('refresh_token_ttl')->defaultValue(1209600)->end()
-                        ->booleanNode('cookie_secure')->defaultTrue()->end()
-                    ->end()
-                ->end()
-                ->arrayNode('api')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->booleanNode('translated_docs')
-                            ->info('Decorate the Hydra docs normalizer to translate labels and forward x-crud hints.')
-                            ->defaultTrue()
-                        ->end()
-                        ->scalarNode('docs_locale')
-                            ->info('Locale used when translating API docs. Reads APP_API_LOCALE, falling back to "en".')
-                            ->defaultValue('%env(default:nubit_admin.api.default_docs_locale:APP_API_LOCALE)%')
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('mercure')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->booleanNode('enabled')
-                            ->info('Issue a Mercure subscriber JWT cookie on login/refresh.')
-                            ->defaultFalse()
-                        ->end()
-                        ->scalarNode('secret')
-                            ->info('Mercure hub subscriber JWT secret.')
-                            ->defaultValue('%env(MERCURE_JWT_SECRET)%')
-                        ->end()
-                        ->arrayNode('topics')
-                            ->info('Topic selectors the subscriber token grants.')
-                            ->scalarPrototype()->end()
-                            ->defaultValue(['*'])
-                        ->end()
-                        ->scalarNode('hub_path')->defaultValue('/.well-known/mercure')->end()
-                        ->booleanNode('fail_safe')
-                            ->info('Decorate the default hub so a dead Mercure never turns a successful write into a 500. HTTP requests log-and-continue; workers/console rethrow so async retries still work. Applies whenever MercureBundle is installed, regardless of "enabled".')
-                            ->defaultTrue()
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('audit')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->booleanNode('enabled')
-                            ->info('Record field-level diffs of #[Auditable] entities and expose GET /api/audit-trail/{resource}/{id}.')
-                            ->defaultFalse()
-                        ->end()
-                        ->arrayNode('ignored_fields')
-                            ->info('Entity fields excluded from the recorded diffs.')
-                            ->scalarPrototype()->end()
-                            ->defaultValue(['createdAt', 'updatedAt', 'password'])
-                        ->end()
-                        ->integerNode('purge_retention_days')
-                            ->info('nubit:audit:purge removes entries older than this.')
-                            ->defaultValue(365)
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('media')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->booleanNode('enabled')
-                            ->info('Expose the media library: POST /api/media (multipart), Media entity, streaming route, purge command.')
-                            ->defaultFalse()
-                        ->end()
-                        ->arrayNode('storage')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->scalarNode('filesystem')
-                                    ->info('Service id of a League\\Flysystem FilesystemOperator (e.g. an S3 filesystem from oneup/flysystem-bundle). Overrides local_directory.')
-                                    ->defaultNull()
-                                ->end()
-                                ->scalarNode('local_directory')
-                                    ->info('Root directory of the default local storage.')
-                                    ->defaultValue('%kernel.project_dir%/var/uploads')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->scalarNode('directory')
-                            ->info('Sub-directory inside the storage where uploads land.')
-                            ->defaultValue('media')
-                        ->end()
-                        ->integerNode('purge_retention_days')
-                            ->info('nubit:media:purge removes media soft-deleted longer ago than this.')
-                            ->defaultValue(30)
-                        ->end()
-                        ->integerNode('max_size')
-                            ->info('Maximum upload size in bytes. 0 means no limit.')
-                            ->defaultValue(10 * 1024 * 1024)
-                        ->end()
-                        ->arrayNode('allowed_mimes')
-                            ->info('Allowlist of server-detected MIME types. Empty array allows all types.')
-                            ->scalarPrototype()->end()
-                            ->defaultValue(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'])
-                        ->end()
-                    ->end()
-                ->end()
-                ->booleanNode('runtime_config')
-                    ->info('Expose GET /api/runtime-config (opt-in; payload from RuntimeConfigProviderInterface).')
-                    ->defaultFalse()
-                ->end()
-                ->booleanNode('soft_delete')
-                    ->info('Register the Doctrine filter hiding #[SoftDeletable] rows.')
-                    ->defaultTrue()
-                ->end()
-                ->booleanNode('single_tenant_defaults')
-                    ->info('Bind noop single-tenant implementations of the Nubit\\Platform contracts.')
-                    ->defaultTrue()
-                ->end()
+            ->scalarNode('app_profile')
+            ->info(
+                'Application profile: internal (single org), saas (B2B multi-tenant), hybrid (one org, multiple spaces).',
+            )
+            ->defaultValue('internal')
+            ->validate()
+            ->ifNotInArray(['internal', 'saas', 'hybrid'])
+            ->thenInvalid('Invalid app_profile %s')
+            ->end()
+            ->end()
+            ->arrayNode('auth')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->scalarNode('secret')
+            ->info('Secret used to sign JWTs. Defaults to %env(APP_SECRET)%.')
+            ->defaultValue('%env(APP_SECRET)%')
+            ->end()
+            ->integerNode('access_token_ttl')
+            ->defaultValue(3600)
+            ->end()
+            ->integerNode('refresh_token_ttl')
+            ->defaultValue(1209600)
+            ->end()
+            ->booleanNode('cookie_secure')
+            ->defaultTrue()
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('api')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('translated_docs')
+            ->info('Decorate the Hydra docs normalizer to translate labels and forward x-crud hints.')
+            ->defaultTrue()
+            ->end()
+            ->scalarNode('docs_locale')
+            ->info('Locale used when translating API docs. Reads APP_API_LOCALE, falling back to "en".')
+            ->defaultValue('%env(default:nubit_admin.api.default_docs_locale:APP_API_LOCALE)%')
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('mercure')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info('Issue a Mercure subscriber JWT cookie on login/refresh.')
+            ->defaultFalse()
+            ->end()
+            ->scalarNode('secret')
+            ->info('Mercure hub subscriber JWT secret.')
+            ->defaultValue('%env(MERCURE_JWT_SECRET)%')
+            ->end()
+            ->arrayNode('topics')
+            ->info('Topic selectors the subscriber token grants.')
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue(['*'])
+            ->end()
+            ->scalarNode('hub_path')
+            ->defaultValue('/.well-known/mercure')
+            ->end()
+            ->booleanNode('fail_safe')
+            ->info(
+                'Decorate the default hub so a dead Mercure never turns a successful write into a 500. HTTP requests log-and-continue; workers/console rethrow so async retries still work. Applies whenever MercureBundle is installed, regardless of "enabled".',
+            )
+            ->defaultTrue()
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('audit')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info('Record field-level diffs of #[Auditable] entities and expose GET /api/audit-trail/{resource}/{id}.')
+            ->defaultFalse()
+            ->end()
+            ->arrayNode('ignored_fields')
+            ->info('Entity fields excluded from the recorded diffs.')
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue(['createdAt', 'updatedAt', 'password'])
+            ->end()
+            ->integerNode('purge_retention_days')
+            ->info('nubit:audit:purge removes entries older than this.')
+            ->defaultValue(365)
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('observability')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info('Register privacy-safe Monolog processors and tenant-aware OpenTelemetry tracing services.')
+            ->defaultFalse()
+            ->end()
+            ->scalarNode('redaction_hmac_key')
+            ->info('HMAC key for stable confidential-value correlation. Empty means confidential hashes are dropped.')
+            ->defaultValue('')
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('media')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Expose the media library: POST /api/media (multipart), Media entity, streaming route, purge command.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->arrayNode('storage')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->scalarNode('filesystem')
+            ->info(
+                'Service id of a League\\Flysystem FilesystemOperator (e.g. an S3 filesystem from oneup/flysystem-bundle). Overrides local_directory.',
+            )
+            ->defaultNull()
+            ->end()
+            ->scalarNode('local_directory')
+            ->info('Root directory of the default local storage.')
+            ->defaultValue('%kernel.project_dir%/var/uploads')
+            ->end()
+            ->end()
+            ->end()
+            ->scalarNode('directory')
+            ->info('Sub-directory inside the storage where uploads land.')
+            ->defaultValue('media')
+            ->end()
+            ->integerNode('purge_retention_days')
+            ->info('nubit:media:purge removes media soft-deleted longer ago than this.')
+            ->defaultValue(30)
+            ->end()
+            ->integerNode('max_size')
+            ->info('Maximum upload size in bytes. 0 means no limit.')
+            ->defaultValue(10 * 1024 * 1024)
+            ->end()
+            ->arrayNode('allowed_mimes')
+            ->info('Allowlist of server-detected MIME types. Empty array allows all types.')
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'])
+            ->end()
+            ->end()
+            ->end()
+            ->booleanNode('runtime_config')
+            ->info('Expose GET /api/runtime-config (opt-in; payload from RuntimeConfigProviderInterface).')
+            ->defaultFalse()
+            ->end()
+            ->booleanNode('soft_delete')
+            ->info('Register the Doctrine filter hiding #[SoftDeletable] rows.')
+            ->defaultTrue()
+            ->end()
+            ->booleanNode('single_tenant_defaults')
+            ->info('Bind noop single-tenant implementations of the Nubit\\Platform contracts.')
+            ->defaultTrue()
+            ->end()
             ->end();
     }
 
@@ -214,15 +248,14 @@ final class NubitAdminBundle extends AbstractBundle
     {
         $container->parameters()->set('nubit_admin.api.default_docs_locale', 'en');
 
-        $services = $container->services()
-            ->defaults()
-                ->autowire()
-                ->autoconfigure();
+        $services = $container->services()->defaults()->autowire()->autoconfigure();
 
         // ── Extension-point autoconfiguration ────────────────────────────────
-        $builder->registerForAutoconfiguration(GridVirtualFieldInterface::class)
+        $builder
+            ->registerForAutoconfiguration(GridVirtualFieldInterface::class)
             ->addTag('nubit.api_platform.grid_virtual_field');
-        $builder->registerForAutoconfiguration(LoginResponseDecoratorInterface::class)
+        $builder
+            ->registerForAutoconfiguration(LoginResponseDecoratorInterface::class)
             ->addTag('nubit.admin.login_response_decorator');
         // ── nubitio/api-platform bridge ──────────────────────────────────────
         $services->set(DataGridFilter::class);
@@ -231,12 +264,12 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(ExceptionListener::class);
 
         if ($config['api']['translated_docs']) {
-            $services->set(TranslatedDocumentationNormalizer::class)
-                ->decorate('api_platform.hydra.normalizer.documentation')
-                ->arg('$inner', service('.inner'))
-                ->arg('$apiLocale', $config['api']['docs_locale']);
+            $services->set(TranslatedDocumentationNormalizer::class)->decorate(
+                'api_platform.hydra.normalizer.documentation',
+            )->arg('$inner', service('.inner'))->arg('$apiLocale', $config['api']['docs_locale']);
 
-            $services->set(EmbeddedLinesDocumentationNormalizer::class)
+            $services
+                ->set(EmbeddedLinesDocumentationNormalizer::class)
                 ->decorate(TranslatedDocumentationNormalizer::class)
                 ->args([
                     '$inner' => service('.inner'),
@@ -244,14 +277,12 @@ final class NubitAdminBundle extends AbstractBundle
         }
 
         // ── Auth ─────────────────────────────────────────────────────────────
-        $services->set(JWTManager::class)
-            ->arg('$secret', $config['auth']['secret']);
+        $services->set(JWTManager::class)->arg('$secret', $config['auth']['secret']);
         $services->alias(JWTManagerInterface::class, JWTManager::class);
 
         $services->set(ResponseModeResolver::class);
 
-        $services->set(CookieFactory::class)
-            ->arg('$cookieSecure', $config['auth']['cookie_secure']);
+        $services->set(CookieFactory::class)->arg('$cookieSecure', $config['auth']['cookie_secure']);
 
         $services->set(DefaultTokenClaimsProvider::class);
         $services->alias(TokenClaimsProviderInterface::class, DefaultTokenClaimsProvider::class);
@@ -259,9 +290,10 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(DoctrineRefreshTokenStore::class);
         $services->alias(RefreshTokenStoreInterface::class, DoctrineRefreshTokenStore::class);
 
-        $services->set(TokenGenerator::class)
-            ->arg('$accessTokenTtl', $config['auth']['access_token_ttl'])
-            ->arg('$refreshTokenTtl', $config['auth']['refresh_token_ttl']);
+        $services->set(TokenGenerator::class)->arg('$accessTokenTtl', $config['auth']['access_token_ttl'])->arg(
+            '$refreshTokenTtl',
+            $config['auth']['refresh_token_ttl'],
+        );
 
         $services->set(JWTAuthenticator::class);
 
@@ -280,16 +312,21 @@ final class NubitAdminBundle extends AbstractBundle
         // the decoration when MercureBundle is installed but no default hub is
         // configured (apps with custom hub names decorate manually).
         if ($config['mercure']['fail_safe'] && class_exists('Symfony\\Bundle\\MercureBundle\\MercureBundle')) {
-            $services->set(FailSafeHub::class)
-                ->decorate('mercure.hub.default', null, 0, ContainerInterface::IGNORE_ON_INVALID_REFERENCE)
-                ->arg('$inner', service('.inner'));
+            $services->set(FailSafeHub::class)->decorate(
+                'mercure.hub.default',
+                null,
+                0,
+                ContainerInterface::IGNORE_ON_INVALID_REFERENCE,
+            )->arg('$inner', service('.inner'));
         }
 
         if ($config['mercure']['enabled']) {
-            $services->set(MercureSubscriberTokenService::class)
-                ->arg('$mercureJwtSecret', $config['mercure']['secret'])
-                ->arg('$tokenTtl', $config['auth']['access_token_ttl']);
-            $services->set(MercureCookieDecorator::class)
+            $services->set(MercureSubscriberTokenService::class)->arg(
+                '$mercureJwtSecret',
+                $config['mercure']['secret'],
+            )->arg('$tokenTtl', $config['auth']['access_token_ttl']);
+            $services
+                ->set(MercureCookieDecorator::class)
                 ->arg('$topics', $config['mercure']['topics'])
                 ->arg('$hubPath', $config['mercure']['hub_path'])
                 ->tag('nubit.admin.login_response_decorator');
@@ -301,20 +338,29 @@ final class NubitAdminBundle extends AbstractBundle
 
         RuntimeConfigModule::load($config['runtime_config'], $container, $services);
 
+        /** @var array{enabled: bool, redaction_hmac_key: string} $observabilityConfig */
+        $observabilityConfig = $config['observability'];
+        if ($observabilityConfig['enabled']) {
+            ObservabilityModule::load($observabilityConfig, $services);
+        }
+
         if ($config['audit']['enabled']) {
-            $services->set(AuditTrailListener::class)
-                ->arg('$ignoredFields', $config['audit']['ignored_fields'])
-                ->tag('doctrine.event_listener', ['event' => 'onFlush'])
-                ->tag('doctrine.event_listener', ['event' => 'postFlush']);
+            $services->set(AuditTrailListener::class)->arg(
+                '$ignoredFields',
+                $config['audit']['ignored_fields'],
+            )->tag('doctrine.event_listener', ['event' => 'onFlush'])->tag('doctrine.event_listener', [
+                'event' => 'postFlush',
+            ]);
 
             $services->set(AuditTrailController::class)->tag('controller.service_arguments');
 
-            $services->set(PurgeAuditLogCommand::class)
-                ->arg('$retentionDays', $config['audit']['purge_retention_days']);
+            $services->set(PurgeAuditLogCommand::class)->arg(
+                '$retentionDays',
+                $config['audit']['purge_retention_days'],
+            );
         }
 
-        $services->set(DefaultMeResponseBuilder::class)
-            ->arg('$appProfile', AppProfile::from($config['app_profile']));
+        $services->set(DefaultMeResponseBuilder::class)->arg('$appProfile', AppProfile::from($config['app_profile']));
         $services->alias(MeResponseBuilderInterface::class, DefaultMeResponseBuilder::class);
 
         $services->set(LoginController::class)->tag('controller.service_arguments');
@@ -326,8 +372,7 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(EmbeddedLinesRegistry::class);
         $services->set(EmbeddedLinesRowSerializer::class);
         $services->set(EmbeddedLinesController::class)->tag('controller.service_arguments');
-        $services->set(EmbeddedLinesRouteLoader::class)
-            ->tag('routing.loader');
+        $services->set(EmbeddedLinesRouteLoader::class)->tag('routing.loader');
 
         // ── Tenant context + single-tenant defaults ──────────────────────────
         $services->set(TenantContext::class);
@@ -460,7 +505,11 @@ final class NubitAdminBundle extends AbstractBundle
             if ($appPaths === []) {
                 /** @var string $projectDir */
                 $projectDir = $builder->getParameter('kernel.project_dir');
-                foreach (["$projectDir/config/api_platform", "$projectDir/src/ApiResource", "$projectDir/src/Entity"] as $dir) {
+                foreach ([
+                    "$projectDir/config/api_platform",
+                    "$projectDir/src/ApiResource",
+                    "$projectDir/src/Entity",
+                ] as $dir) {
                     if (is_dir($dir)) {
                         $paths[] = $dir;
                     }

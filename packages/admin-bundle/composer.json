@@ -64,6 +64,8 @@
         "sort-packages": true
     },
     "suggest": {
+        "monolog/monolog": "Privacy-safe structured log processors when nubit_admin.observability.enabled is true",
+        "open-telemetry/api": "Tenant-aware tracing when nubit_admin.observability.enabled is true",
         "symfony/mercure-bundle": "Live grid updates; the bundle adds a fail-safe hub decorator and the subscriber cookie",
         "nubitio/tenant-bundle": "Column-mode multi-tenancy: TenantScoped attribute, Doctrine filter, registry, and resolvers"
     }
