@@ -16,6 +16,7 @@ composer require nubitio/platform
 - **Infra helpers** — `CacheManager`, `FileManager` (Flysystem), `TenantRateLimiter`, `XlsExporter` (PhpSpreadsheet), `PdfExporter` (WeasyPrint), `PerTenantCommand` console base class, `TenantLogProcessor` (Monolog) and tenant-aware OpenTelemetry spans via `TenantTracer`.
 - **Feature flags** — vendor-neutral, typed evaluation through `TenantFeatureFlags`; distinct from plan entitlements exposed by `FeatureCheckerInterface`. `StaticFeatureFlagProvider` provides deterministic local defaults and the provider port can be adapted to OpenFeature.
 - **Privacy** — `#[SensitiveData]`, `DataRedactor` and sink-specific policies protect structured logs, traces, analytics and integrations.
+- **Analytics** — typed, versioned events with explicit purpose, consent checks, deduplication and provider-neutral sanitized delivery.
 - **HTTP** — `ApiResponse` JSON envelope (`success`/`message`/`data`).
 
 Heavy integrations (Flysystem, PhpSpreadsheet, WeasyPrint, Monolog, OpenTelemetry) are `suggest`-ed — install them only if you use the corresponding helper.
@@ -68,6 +69,27 @@ $logger->info('Authentication failed', ['email' => new SensitiveValue(
 
 See the [ERP SaaS platform roadmap](../../docs/platform/saas-platform-roadmap.md) for the
 classification matrix, threat model and phased rollout.
+
+## Analytics
+
+Analytics payloads must be DTOs so the privacy metadata is applied before a provider
+receives them:
+
+```php
+$result = $publisher->publish(new AnalyticsEvent(
+    id: $commandId, // stable idempotency key
+    name: 'invoice.paid',
+    schemaVersion: 1,
+    purpose: AnalyticsPurpose::Operational,
+    payload: new InvoicePaidAnalyticsPayload($channel, $customerEmail),
+));
+```
+
+`AnalyticsProviderInterface` receives only `SanitizedAnalyticsEvent`. Product and
+marketing events are denied by the safe default consent checker. The included
+`InMemoryAnalyticsDeduplicator` is bounded and suitable for tests or one local process;
+production must bind `AnalyticsDeduplicatorInterface` to an atomic shared store or use
+an outbox table with a unique event ID.
 
 ## License
 
