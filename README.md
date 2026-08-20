@@ -8,6 +8,8 @@ Backend packages for the Nubit admin stack — the Symfony / API Platform counte
 | [api-platform](packages/api-platform) | `nubitio/api-platform` | The frontend contract: grid filter (`sort`/`filter`/`searchValue`), translated OpenAPI docs with `x-crud` hints, pagination headers, entity traits |
 | [admin-bundle](packages/admin-bundle) | `nubitio/admin-bundle` | One-line install: registers the bridge, dual cookie/Bearer JWT auth (login/refresh/logout), single-tenant defaults |
 | [tenant-bundle](packages/tenant-bundle) | `nubitio/tenant-bundle` | Opt-in column, database, PostgreSQL schema, and hybrid tenant isolation |
+| [sequence-bundle](packages/sequence-bundle) | `nubitio/sequence-bundle` | Transaction-safe, scoped document numbering from entity attributes |
+| [workflow-bundle](packages/workflow-bundle) | `nubitio/workflow-bundle` | Attribute-driven state transitions published into API documentation |
 
 Starter template: [`nubit-skeleton`](https://github.com/nubitio/nubit-skeleton) — Symfony + `@nubitio/react-admin` + Docker Compose + auth, Mercure, media, audit, and master-detail examples.
 
@@ -68,6 +70,11 @@ vendor/bin/mago analyze
 ```
 
 Monorepo: packages are mirrored to read-only repos ([nubitio/platform](https://github.com/nubitio/platform), [nubitio/api-platform](https://github.com/nubitio/api-platform)) by the split workflow on every push/tag. Release = tag `vX.Y.Z` (lockstep; release notes in GitHub Releases, no changelog files).
+
+All internal packages depend on the same `0.x` minor release line. A minor
+release updates every internal constraint and tag together; the
+`nubit-skeleton` compatibility declaration records the supported frontend and
+backend line pair.
 
 ## License
 

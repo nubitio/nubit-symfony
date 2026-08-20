@@ -32,6 +32,8 @@ jobs:
           composer validate --strict packages/api-platform/composer.json
           composer validate --strict packages/admin-bundle/composer.json
           composer validate --strict packages/sequence-bundle/composer.json
+          composer validate --strict packages/tenant-bundle/composer.json
+          composer validate --strict packages/workflow-bundle/composer.json
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist

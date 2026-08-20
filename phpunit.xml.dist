@@ -21,6 +21,9 @@
         <testsuite name="sequence-bundle">
             <directory>packages/sequence-bundle/tests</directory>
         </testsuite>
+        <testsuite name="workflow-bundle">
+            <directory>packages/workflow-bundle/tests</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
@@ -29,6 +32,7 @@
             <directory>packages/admin-bundle/src</directory>
             <directory>packages/tenant-bundle/src</directory>
             <directory>packages/sequence-bundle/src</directory>
+            <directory>packages/workflow-bundle/src</directory>
         </include>
     </source>
 </phpunit>

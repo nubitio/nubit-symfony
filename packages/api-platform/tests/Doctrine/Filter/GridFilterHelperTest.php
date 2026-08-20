@@ -10,6 +10,35 @@ use PHPUnit\Framework\TestCase;
 
 final class GridFilterHelperTest extends TestCase
 {
+    /** @return iterable<string, array{string, mixed, string, mixed}> */
+    public static function protocolFixtureCases(): iterable
+    {
+        $path = __DIR__ . '/../../../contracts/x-grid-protocol.fixtures.json';
+        $contents = file_get_contents($path);
+        self::assertIsString($contents);
+        $fixtures = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+
+        foreach ($fixtures['operatorCases'] as $case) {
+            yield $case['name'] => [
+                $case['operator'],
+                $case['value'],
+                $case['dqlOperator'],
+                $case['boundValue'],
+            ];
+        }
+    }
+
+    #[DataProvider('protocolFixtureCases')]
+    public function testExecutableProtocolFixture(
+        string $operator,
+        mixed $value,
+        string $expectedDqlOperator,
+        mixed $expectedBoundValue,
+    ): void {
+        self::assertSame($expectedDqlOperator, GridFilterHelper::dqlOperator($operator));
+        self::assertSame($expectedBoundValue, GridFilterHelper::valueForOperator($operator, $value));
+    }
+
     /** @return iterable<string, array{string, string}> */
     public static function operatorCases(): iterable
     {

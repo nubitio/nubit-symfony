@@ -70,7 +70,7 @@ final class WorkflowEngineTest extends TestCase
         );
 
         $engine = new WorkflowEngine(
-            $this->createEntityManagerStub($entity),
+            $this->createEntityManagerStub($entity, willPersist: false),
             new PropertyAccessor(),
             $this->createMock(AuthorizationCheckerInterface::class),
             $this->createMock(ContainerInterface::class),
@@ -81,11 +81,11 @@ final class WorkflowEngineTest extends TestCase
         $engine->apply($entity, $definition, 'pay');
     }
 
-    private function createEntityManagerStub(object $entity): EntityManagerInterface
+    private function createEntityManagerStub(object $entity, bool $willPersist = true): EntityManagerInterface
     {
         $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects(self::once())->method('persist')->with($entity);
-        $em->expects(self::once())->method('flush');
+        $em->expects($willPersist ? self::once() : self::never())->method('persist')->with($entity);
+        $em->expects($willPersist ? self::once() : self::never())->method('flush');
 
         return $em;
     }

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nubit.io/schemas/x-grid-protocol/fixtures/v1",
+  "protocol": "https://nubit.io/schemas/x-grid-protocol/v1",
+  "operatorCases": [
+    { "name": "contains", "operator": "contains", "value": "abc", "dqlOperator": "LIKE", "boundValue": "%abc%" },
+    { "name": "starts with", "operator": "startswith", "value": "abc", "dqlOperator": "LIKE", "boundValue": "abc%" },
+    { "name": "ends with", "operator": "endswith", "value": "abc", "dqlOperator": "LIKE", "boundValue": "%abc" },
+    { "name": "not contains", "operator": "notcontains", "value": "abc", "dqlOperator": "NOT LIKE", "boundValue": "%abc%" },
+    { "name": "is null", "operator": "isnull", "value": "ignored", "dqlOperator": "IS NULL", "boundValue": null },
+    { "name": "is not null", "operator": "isnotnull", "value": "ignored", "dqlOperator": "IS NOT NULL", "boundValue": null },
+    { "name": "equals", "operator": "=", "value": 42, "dqlOperator": "=", "boundValue": 42 },
+    { "name": "greater or equal", "operator": ">=", "value": 42, "dqlOperator": ">=", "boundValue": 42 }
+  ],
+  "loadOptionCases": [
+    {
+      "name": "pagination is one-based",
+      "input": { "skip": 40, "take": 20 },
+      "expected": { "itemsPerPage": 20, "page": 3 }
+    },
+    {
+      "name": "single filter is normalized",
+      "input": { "filter": ["name", "contains", "acme"] },
+      "expected": { "filter": [["name", "contains", "acme"]] }
+    },
+    {
+      "name": "adapter-only search is removed without expression",
+      "input": { "searchValue": "acme", "searchOperation": "contains" },
+      "expected": {},
+      "absent": ["searchValue", "searchOperation"]
+    },
+    {
+      "name": "search survives with expression",
+      "input": { "searchExpr": "name", "searchValue": "acme", "searchOperation": "contains" },
+      "expected": { "searchExpr": "name", "searchValue": "acme" },
+      "absent": ["searchOperation"]
+    }
+  ],
+  "responseCases": [
+    {
+      "name": "array plus count and summary headers",
+      "body": [{ "id": 1 }],
+      "headers": { "x-total-count": "7", "x-grid-summary": "{\"price\":123.45}" },
+      "expected": { "totalCount": 7, "gridSummary": { "price": 123.45 } }
+    },
+    {
+      "name": "Hydra collection count",
+      "body": { "hydra:member": [{ "@id": "/api/products/1" }], "hydra:totalItems": 9 },
+      "headers": {},
+      "expected": { "totalCount": 9, "gridSummary": null }
+    }
+  ]
+}

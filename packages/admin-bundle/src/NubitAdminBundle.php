@@ -17,38 +17,27 @@ use Nubit\AdminBundle\Auth\RefreshTokenStoreInterface;
 use Nubit\AdminBundle\Auth\ResponseModeResolver;
 use Nubit\AdminBundle\Auth\TokenClaimsProviderInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
-use League\Flysystem\Filesystem;
-use League\Flysystem\Local\LocalFilesystemAdapter;
 use Nubit\AdminBundle\Audit\AuditTrailListener;
 use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
 use Nubit\AdminBundle\Command\DiscoverCommand;
 use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
-use Nubit\AdminBundle\Command\PurgeMediaCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
 use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\MeController;
 use Nubit\AdminBundle\Controller\RefreshController;
-use Nubit\AdminBundle\Controller\RuntimeConfigController;
+use Nubit\AdminBundle\DependencyInjection\MediaModule;
+use Nubit\AdminBundle\DependencyInjection\RuntimeConfigModule;
 use Nubit\AdminBundle\EmbeddedLines\Controller\EmbeddedLinesController;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRegistry;
 use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRouteLoader;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRowSerializer;
-use Nubit\AdminBundle\Runtime\NullRuntimeConfigProvider;
-use Nubit\AdminBundle\Runtime\RuntimeConfigProviderInterface;
 use Nubit\AdminBundle\Session\AppProfile;
 use Nubit\AdminBundle\Session\DefaultMeResponseBuilder;
 use Nubit\AdminBundle\Session\MeResponseBuilderInterface;
 use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
-use Nubit\AdminBundle\Media\Controller\MediaFileController;
-use Nubit\AdminBundle\Media\Controller\MediaUploadController;
-use Nubit\AdminBundle\Media\MediaStorage;
-use Nubit\AdminBundle\Media\MediaUrlResolverInterface;
-use Nubit\AdminBundle\Media\RouteMediaUrlResolver;
-use Nubit\AdminBundle\Media\Serializer\MediaNormalizer;
-use Nubit\AdminBundle\Media\State\MediaSoftDeleteProcessor;
 use Nubit\AdminBundle\Mercure\FailSafeHub;
 use Nubit\AdminBundle\Tenant\AllowAllFeatureChecker;
 use Nubit\AdminBundle\Tenant\SingleTenantConnectionSwitcher;
@@ -62,7 +51,6 @@ use Nubit\ApiPlatform\Http\GridSummaryCalculator;
 use Nubit\ApiPlatform\Http\ExceptionListener;
 use Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer;
 use Nubit\Platform\Feature\Contract\FeatureCheckerInterface;
-use Nubit\Platform\Filesystem\FileManager;
 use Nubit\Platform\Quota\Contract\QuotaEnforcerInterface;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
@@ -308,10 +296,10 @@ final class NubitAdminBundle extends AbstractBundle
         }
 
         if ($config['media']['enabled']) {
-            $this->loadMedia($config['media'], $container, $services);
+            MediaModule::load($config['media'], $container, $services);
         }
 
-        $this->loadRuntimeConfig($config['runtime_config'], $container, $services);
+        RuntimeConfigModule::load($config['runtime_config'], $container, $services);
 
         if ($config['audit']['enabled']) {
             $services->set(AuditTrailListener::class)
@@ -357,64 +345,6 @@ final class NubitAdminBundle extends AbstractBundle
             $services->set(UnlimitedQuotaEnforcer::class);
             $services->alias(QuotaEnforcerInterface::class, UnlimitedQuotaEnforcer::class);
         }
-    }
-
-    private function loadRuntimeConfig(bool $enabled, ContainerConfigurator $container, DefaultsConfigurator $services): void
-    {
-        $container->parameters()->set('nubit_admin.runtime_config.enabled', $enabled);
-
-        $services->set(NullRuntimeConfigProvider::class);
-        $services->alias(RuntimeConfigProviderInterface::class, NullRuntimeConfigProvider::class);
-
-        $services->set(RuntimeConfigController::class)
-            ->arg('$enabled', $enabled)
-            ->tag('controller.service_arguments');
-    }
-
-    /**
-     * @param array{
-     *     storage: array{filesystem: ?string, local_directory: string},
-     *     directory: string,
-     *     purge_retention_days: int,
-     *     max_size: int,
-     *     allowed_mimes: list<string>,
-     * } $config
-     */
-    private function loadMedia(array $config, ContainerConfigurator $container, DefaultsConfigurator $services): void
-    {
-        $container->parameters()->set('nubit_admin.media.directory', $config['directory']);
-
-        if ($config['storage']['filesystem'] !== null) {
-            $services->alias('nubit_admin.media.filesystem', $config['storage']['filesystem']);
-        } else {
-            $services->set('nubit_admin.media.local_adapter', LocalFilesystemAdapter::class)
-                ->arg('$location', $config['storage']['local_directory']);
-            $services->set('nubit_admin.media.filesystem', Filesystem::class)
-                ->arg('$adapter', service('nubit_admin.media.local_adapter'));
-        }
-
-        // Bundle-scoped FileManager so apps keep their own FileManager (with a
-        // different filesystem) without colliding with the media storage.
-        $services->set('nubit_admin.media.file_manager', FileManager::class)
-            ->arg('$defaultFilesystem', service('nubit_admin.media.filesystem'));
-
-        $services->set(MediaStorage::class)
-            ->arg('$fileManager', service('nubit_admin.media.file_manager'))
-            ->arg('$directory', $config['directory'])
-            ->arg('$allowedMimes', $config['allowed_mimes'])
-            ->arg('$maxSize', $config['max_size']);
-
-        $services->set(RouteMediaUrlResolver::class);
-        $services->alias(MediaUrlResolverInterface::class, RouteMediaUrlResolver::class);
-
-        $services->set(MediaNormalizer::class);
-        $services->set(MediaSoftDeleteProcessor::class);
-
-        $services->set(MediaUploadController::class)->tag('controller.service_arguments');
-        $services->set(MediaFileController::class)->tag('controller.service_arguments');
-
-        $services->set(PurgeMediaCommand::class)
-            ->arg('$retentionDays', $config['purge_retention_days']);
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
