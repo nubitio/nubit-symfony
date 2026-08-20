@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Observability\Doctrine;
 
+use Nubit\Platform\Observability\Metrics\OperationalMetrics;
 use Nubit\Platform\Observability\Tracing\TraceAttributeSanitizer;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use OpenTelemetry\API\Trace\SpanKind;
@@ -17,6 +18,7 @@ final readonly class DbalTracer
         private TracerInterface $tracer,
         private TenantContext $tenantContext,
         private TraceAttributeSanitizer $attributeSanitizer,
+        private OperationalMetrics $metrics,
     ) {}
 
     /**
@@ -41,15 +43,19 @@ final readonly class DbalTracer
             ]))
             ->startSpan();
         $scope = $span->activate();
+        $startedAt = (int) hrtime(true);
+        $failed = false;
 
         try {
             return $operation();
         } catch (Throwable $exception) {
+            $failed = true;
             $span->addEvent('exception', ['exception.type' => $exception::class]);
             $span->setStatus(StatusCode::STATUS_ERROR);
 
             throw $exception;
         } finally {
+            $this->metrics->recordDatabase($operationName, $failed, ((int) hrtime(true) - $startedAt) / 1_000_000_000);
             $scope->detach();
             $span->end();
         }

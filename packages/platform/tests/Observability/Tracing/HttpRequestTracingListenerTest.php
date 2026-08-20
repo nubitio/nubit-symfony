@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Tests\Observability\Tracing;
 
+use Nubit\Platform\Observability\Metrics\OperationalMetrics;
 use Nubit\Platform\Observability\Tracing\HttpRequestTracingListener;
 use Nubit\Platform\Observability\Tracing\TraceAttributeSanitizer;
 use Nubit\Platform\Privacy\DataRedactor;
 use Nubit\Platform\Tenant\Context\TenantContext;
+use OpenTelemetry\API\Metrics\Noop\NoopMeter;
 use OpenTelemetry\API\Trace\SpanBuilderInterface;
 use OpenTelemetry\API\Trace\SpanInterface;
 use OpenTelemetry\API\Trace\TracerInterface;
@@ -101,6 +103,7 @@ final class HttpRequestTracingListenerTest extends TestCase
             $tracer,
             new TenantContext(),
             new TraceAttributeSanitizer(new DataRedactor()),
+            new OperationalMetrics(new NoopMeter()),
             $propagator,
         );
     }

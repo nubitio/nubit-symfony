@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Observability\Tracing;
 
+use Nubit\Platform\Observability\Metrics\OperationalMetrics;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Trace\SpanKind;
@@ -26,6 +27,7 @@ final class HttpRequestTracingListener
         private readonly TracerInterface $tracer,
         private readonly TenantContext $tenantContext,
         private readonly TraceAttributeSanitizer $attributeSanitizer,
+        private readonly OperationalMetrics $metrics,
         private readonly ?TextMapPropagatorInterface $propagator = null,
     ) {
         $this->activeSpans = new WeakMap();
@@ -57,7 +59,7 @@ final class HttpRequestTracingListener
             ]))
             ->startSpan();
 
-        $this->activeSpans[$request] = new HttpRequestSpanState($span, $span->activate());
+        $this->activeSpans[$request] = new HttpRequestSpanState($span, $span->activate(), (int) hrtime(true));
     }
 
     public function onException(ExceptionEvent $event): void
@@ -106,6 +108,13 @@ final class HttpRequestTracingListener
         if ($statusCode >= 500) {
             $state->span->setStatus(StatusCode::STATUS_ERROR);
         }
+
+        $this->metrics->recordHttp(
+            $request->getMethod(),
+            $route,
+            $statusCode,
+            ((int) hrtime(true) - $state->startedAtNanoseconds) / 1_000_000_000,
+        );
 
         $this->finish($request, $state);
     }

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Nubit\Platform\Tests\Observability\Doctrine;
 
 use Nubit\Platform\Observability\Doctrine\DbalTracer;
+use Nubit\Platform\Observability\Metrics\OperationalMetrics;
 use Nubit\Platform\Observability\Tracing\TraceAttributeSanitizer;
 use Nubit\Platform\Privacy\DataRedactor;
 use Nubit\Platform\Tenant\Context\TenantContext;
+use OpenTelemetry\API\Metrics\Noop\NoopMeter;
 use OpenTelemetry\API\Trace\SpanBuilderInterface;
 use OpenTelemetry\API\Trace\SpanInterface;
 use OpenTelemetry\API\Trace\TracerInterface;
@@ -24,10 +26,12 @@ final class DbalTracerTest extends TestCase
         $context = new TenantContext();
         $context->setTenant(42, 'customer@example.com', 'secret.example.test', 'req-42');
 
-        $result = (new DbalTracer($tracer, $context, new TraceAttributeSanitizer(new DataRedactor())))->trace(
-            'query',
-            static fn(): string => 'result',
-        );
+        $result = (new DbalTracer(
+            $tracer,
+            $context,
+            new TraceAttributeSanitizer(new DataRedactor()),
+            new OperationalMetrics(new NoopMeter()),
+        ))->trace('query', static fn(): string => 'result');
 
         self::assertSame('result', $result);
         self::assertSame('doctrine_dbal', $captured['db.system.name']);
@@ -55,6 +59,7 @@ final class DbalTracerTest extends TestCase
             $this->tracer($captured, $span),
             new TenantContext(),
             new TraceAttributeSanitizer(new DataRedactor()),
+            new OperationalMetrics(new NoopMeter()),
         );
 
         $this->expectException(RuntimeException::class);

@@ -13,5 +13,6 @@ final readonly class HttpRequestSpanState
     public function __construct(
         public SpanInterface $span,
         public ScopeInterface $scope,
+        public int $startedAtNanoseconds,
     ) {}
 }

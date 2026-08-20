@@ -6,8 +6,10 @@ namespace Nubit\Platform\Tests\Messenger;
 
 use Nubit\Platform\Messenger\TraceContextStamp;
 use Nubit\Platform\Messenger\TracingMiddleware;
+use Nubit\Platform\Observability\Metrics\OperationalMetrics;
 use Nubit\Platform\Observability\Tracing\TraceAttributeSanitizer;
 use Nubit\Platform\Privacy\DataRedactor;
+use OpenTelemetry\API\Metrics\Noop\NoopMeter;
 use OpenTelemetry\API\Trace\SpanBuilderInterface;
 use OpenTelemetry\API\Trace\SpanInterface;
 use OpenTelemetry\API\Trace\TracerInterface;
@@ -91,7 +93,12 @@ final class TracingMiddlewareTest extends TestCase
         $tracer->method('isEnabled')->willReturn(true);
         $tracer->method('spanBuilder')->willReturn($builder);
 
-        return new TracingMiddleware($tracer, new TraceAttributeSanitizer(new DataRedactor()), $propagator);
+        return new TracingMiddleware(
+            $tracer,
+            new TraceAttributeSanitizer(new DataRedactor()),
+            new OperationalMetrics(new NoopMeter()),
+            $propagator,
+        );
     }
 }
 

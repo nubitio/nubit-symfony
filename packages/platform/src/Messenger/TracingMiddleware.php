@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Messenger;
 
+use Nubit\Platform\Observability\Metrics\OperationalMetrics;
 use Nubit\Platform\Observability\Tracing\TraceAttributeSanitizer;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Trace\SpanKind;
@@ -21,6 +22,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
     public function __construct(
         private TracerInterface $tracer,
         private TraceAttributeSanitizer $attributeSanitizer,
+        private OperationalMetrics $metrics,
         private ?TextMapPropagatorInterface $propagator = null,
     ) {}
 
@@ -52,6 +54,8 @@ final readonly class TracingMiddleware implements MiddlewareInterface
 
         $span = $builder->startSpan();
         $scope = $span->activate();
+        $startedAt = (int) hrtime(true);
+        $failed = false;
 
         if (!$consumer) {
             $carrier = [];
@@ -74,11 +78,18 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         try {
             return $stack->next()->handle($envelope, $stack);
         } catch (Throwable $exception) {
+            $failed = true;
             $span->addEvent('exception', ['exception.type' => $exception::class]);
             $span->setStatus(StatusCode::STATUS_ERROR);
 
             throw $exception;
         } finally {
+            $this->metrics->recordMessaging(
+                $operation,
+                $messageType,
+                $failed,
+                ((int) hrtime(true) - $startedAt) / 1_000_000_000,
+            );
             $scope->detach();
             $span->end();
         }

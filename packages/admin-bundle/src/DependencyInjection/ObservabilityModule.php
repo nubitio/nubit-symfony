@@ -11,6 +11,7 @@ use Nubit\Platform\Observability\Doctrine\DbalTracer;
 use Nubit\Platform\Observability\Doctrine\TracingDriverMiddleware;
 use Nubit\Platform\Observability\Logging\SensitiveDataProcessor;
 use Nubit\Platform\Observability\Logging\TenantLogProcessor;
+use Nubit\Platform\Observability\Metrics\OperationalMetrics;
 use Nubit\Platform\Observability\Tracing\HttpRequestTracingListener;
 use Nubit\Platform\Observability\Tracing\TenantTracer;
 use Nubit\Platform\Observability\Tracing\TenantTracerFactory;
@@ -19,6 +20,7 @@ use Nubit\Platform\Privacy\DataRedactor;
 use Nubit\Platform\Privacy\Metadata\SensitiveDataMetadataReader;
 use Nubit\Platform\Privacy\Policy\DefaultSensitiveDataPolicy;
 use Nubit\Platform\Privacy\Policy\SensitiveDataPolicyInterface;
+use OpenTelemetry\API\Metrics\MeterInterface;
 use OpenTelemetry\API\Trace\TracerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 
@@ -51,6 +53,11 @@ final class ObservabilityModule
             service(TenantTracerFactory::class),
             'createTracer',
         ]);
+        $services->set('nubit.observability.meter', MeterInterface::class)->factory([
+            service(TenantTracerFactory::class),
+            'createMeter',
+        ]);
+        $services->set(OperationalMetrics::class)->arg('$meter', service('nubit.observability.meter'));
         $services
             ->set(HttpRequestTracingListener::class)
             ->arg('$tracer', service('nubit.observability.tracer'))
