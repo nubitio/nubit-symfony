@@ -53,7 +53,10 @@ final readonly class JWTManager implements JWTManagerInterface
      */
     public function decode(string $token): array
     {
-        return (array) JWT::decode($token, new Key($this->secret, self::JWT_ALGORITHM));
+        /** @var array<string, mixed> $claims */
+        $claims = get_object_vars(JWT::decode($token, new Key($this->secret, self::JWT_ALGORITHM)));
+
+        return $claims;
     }
 
     public function verify(string $token): bool
@@ -72,15 +75,9 @@ final readonly class JWTManager implements JWTManagerInterface
         try {
             $payload = $this->decode($token);
 
-            $expiresAt = $payload['exp'] ?? null;
+            $expiresAt = self::numericClaim($payload, 'exp');
             if (null === $expiresAt) {
-                return false;
-            }
-
-            // RFC 7519 NumericDate values are JSON numbers. Treat a malformed
-            // claim as expired instead of allowing an invalid token to live.
-            if (!is_int($expiresAt) && !is_float($expiresAt)) {
-                return true;
+                return array_key_exists('exp', $payload);
             }
 
             return time() > $expiresAt;
@@ -88,5 +85,15 @@ final readonly class JWTManager implements JWTManagerInterface
             $this->logger->error('Invalid JWT token', ['exception' => $e]);
             return true;
         }
+    }
+
+    /** @param array<array-key, mixed> $payload */
+    private static function numericClaim(array $payload, string $name): int|float|null
+    {
+        if (is_int($payload[$name] ?? null) || is_float($payload[$name] ?? null)) {
+            return $payload[$name];
+        }
+
+        return null;
     }
 }

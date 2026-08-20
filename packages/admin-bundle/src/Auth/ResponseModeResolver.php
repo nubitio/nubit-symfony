@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\AdminBundle\Auth;
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Exception\JsonException;
 
 /**
  * Decides whether auth endpoints respond with tokens in the JSON body
@@ -22,9 +23,13 @@ final readonly class ResponseModeResolver
 
     public function wantsJsonTokens(Request $request): bool
     {
-        $body = json_decode($request->getContent(), true);
-        if (is_array($body) && isset($body['response_mode'])) {
-            return 'json' === $body['response_mode'];
+        try {
+            $body = $request->toArray();
+            if (array_key_exists('response_mode', $body)) {
+                return 'json' === $body['response_mode'];
+            }
+        } catch (JsonException) {
+            $body = [];
         }
 
         $clientTypeHeader = $request->headers->get(self::CLIENT_TYPE_HEADER);

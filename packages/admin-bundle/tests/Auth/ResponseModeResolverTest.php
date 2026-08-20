@@ -66,4 +66,16 @@ final class ResponseModeResolverTest extends TestCase
 
         self::assertFalse($this->resolver->wantsJsonTokens($request));
     }
+
+    public function testInvalidJsonFallsBackToMobileHeader(): void
+    {
+        $request = Request::create(
+            '/api/auth/login',
+            'POST',
+            server: ['HTTP_X_CLIENT_TYPE' => 'ios'],
+            content: '{invalid',
+        );
+
+        self::assertTrue($this->resolver->wantsJsonTokens($request));
+    }
 }

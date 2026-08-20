@@ -12,6 +12,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Exception\JsonException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -107,13 +108,17 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
             throw new AuthenticationException('Invalid token', Response::HTTP_UNAUTHORIZED);
         }
 
-        $username = $tokenData['username'] ?? null;
-        if (!is_string($username) || '' === $username) {
+        $username = self::stringClaim($tokenData, 'username');
+        if (null === $username || '' === $username) {
             $this->logger->error('JWT token missing username claim');
             throw new AuthenticationException('Invalid token', Response::HTTP_UNAUTHORIZED);
         }
 
-        $tokenTenantName = $tokenData['tenantName'] ?? null;
+        $tokenTenantName = self::stringClaim($tokenData, 'tenantName');
+        if (array_key_exists('tenantName', $tokenData) && null === $tokenTenantName) {
+            $this->logger->error('JWT token contains an invalid tenantName claim');
+            throw new AuthenticationException('Invalid token', Response::HTTP_UNAUTHORIZED);
+        }
         $currentTenantName = $this->tenantContext?->getTenantName();
         if (null !== $tokenTenantName && null !== $currentTenantName && $tokenTenantName !== $currentTenantName) {
             $this->logger->warning('JWT tenant mismatch: token belongs to a different tenant', [
@@ -138,10 +143,13 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
         $username = '';
         $password = '';
 
-        $data = json_decode($request->getContent(), true);
-        if (is_array($data)) {
-            $username = (string) ($data['username'] ?? '');
-            $password = (string) ($data['password'] ?? '');
+        try {
+            $data = $request->toArray();
+            $username = self::stringClaim($data, 'username') ?? '';
+            $password = self::stringClaim($data, 'password') ?? '';
+        } catch (JsonException) {
+            $username = '';
+            $password = '';
         }
 
         if ('' === $username || '' === $password) {
@@ -165,9 +173,7 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
     public function createToken(Passport $passport, string $firewallName): TokenInterface
     {
         $user = $passport->getUser();
-        $isLogin = $passport->getAttribute('is_login') ?? true;
-
-        if (!$isLogin) {
+        if (false === $passport->getAttribute('is_login')) {
             return new JWTAuthenticationToken(
                 $user,
                 $firewallName,
@@ -208,8 +214,8 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
             return null;
         }
 
-        $tokenPair = $token->hasAttribute('tokenPair') ? $token->getAttribute('tokenPair') : null;
-        if (!$tokenPair instanceof TokenPair) {
+        $tokenPair = self::tokenPair($token);
+        if (null === $tokenPair) {
             return null;
         }
 
@@ -282,6 +288,7 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
 
     private function extractBearerToken(?string $authHeader): ?string
     {
+        $matches = [];
         if (null === $authHeader || 1 !== preg_match('/^\s*Bearer\s+(.+)$/i', $authHeader, $matches)) {
             return null;
         }
@@ -289,5 +296,23 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
         $token = trim($matches[1]);
 
         return '' === $token ? null : $token;
+    }
+
+    /** @param array<array-key, mixed> $claims */
+    private static function stringClaim(array $claims, string $name): ?string
+    {
+        return is_string($claims[$name] ?? null) ? $claims[$name] : null;
+    }
+
+    private static function tokenPair(JWTAuthenticationToken $token): ?TokenPair
+    {
+        return $token->hasAttribute('tokenPair')
+            ? self::asTokenPair($token->getAttribute('tokenPair'))
+            : null;
+    }
+
+    private static function asTokenPair(mixed $value): ?TokenPair
+    {
+        return $value instanceof TokenPair ? $value : null;
     }
 }

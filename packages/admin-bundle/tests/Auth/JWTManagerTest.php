@@ -54,6 +54,26 @@ final class JWTManagerTest extends TestCase
         self::assertFalse($this->manager->isExpired($this->manager->encode(['username' => 'jane'], 3600)));
     }
 
+    public function testMalformedExpirationClaimIsTreatedAsExpired(): void
+    {
+        $header = self::base64UrlEncode(json_encode(['typ' => 'JWT', 'alg' => 'HS256'], JSON_THROW_ON_ERROR));
+        $payload = self::base64UrlEncode(json_encode(['username' => 'jane', 'exp' => 'tomorrow'], JSON_THROW_ON_ERROR));
+        $signature = self::base64UrlEncode(hash_hmac(
+            'sha256',
+            $header.'.'.$payload,
+            'test-secret-key-with-32-or-more-chars!',
+            true,
+        ));
+        $token = $header.'.'.$payload.'.'.$signature;
+
+        self::assertTrue($this->manager->isExpired($token));
+    }
+
+    private static function base64UrlEncode(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
     public function testEmptySecretIsRejected(): void
     {
         $this->expectException(LogicException::class);
