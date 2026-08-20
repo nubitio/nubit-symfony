@@ -19,7 +19,7 @@
     },
     "require": {
         "php": ">=8.3",
-        "api-platform/core": "^4.1",
+        "api-platform/core": "^4.3.12",
         "doctrine/orm": "^3.0",
         "firebase/php-jwt": "^7.0",
         "league/flysystem": "^3.0",

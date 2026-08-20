@@ -37,7 +37,7 @@
         "league/flysystem": "^3.0",
         "monolog/monolog": "^3.0",
         "open-telemetry/api": "^1.0",
-        "phpoffice/phpspreadsheet": "^5.3",
+        "phpoffice/phpspreadsheet": "^5.8.1",
         "phpunit/phpunit": "^11.5 || ^12.0",
         "pontedilana/php-weasyprint": "^2.2",
         "symfony/cache": "^7.4 || ^8.0"

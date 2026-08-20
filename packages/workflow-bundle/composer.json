@@ -17,7 +17,7 @@
     },
     "require": {
         "php": ">=8.3",
-        "api-platform/core": "^4.1",
+        "api-platform/core": "^4.3.12",
         "doctrine/orm": "^3.0",
         "nubitio/api-platform": "^0.13",
         "symfony/config": "^7.4 || ^8.0",

@@ -17,7 +17,7 @@
         "source": "https://github.com/nubitio/nubit-symfony"
     },
     "require": {
-        "api-platform/core": "^4.1",
+        "api-platform/core": "^4.3.12",
         "doctrine/orm": "^3.0",
         "doctrine/persistence": "^4.0",
         "nubitio/platform": "^0.13",
