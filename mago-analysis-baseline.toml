@@ -7,6 +7,12 @@ message = "Assigning `mixed` type to a variable may lead to unexpected behavior.
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/Auth/JWTAuthenticator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
 code = "ambiguous-object-method-access"
 message = "Cannot statically verify method call on a generic `object` type."
@@ -316,6 +322,12 @@ count = 1
 file = "packages/admin-bundle/tests/Audit/Fixture/PlainThing.php"
 code = "write-only-property"
 message = "Property `$name` is written to but never read."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Auth/JWTAuthenticatorTest.php"
+code = "missing-template-parameter"
+message = 'Too few template arguments for `Symfony\Component\Security\Core\User\UserProviderInterface`: expected at least 1, but found 0.'
 count = 1
 
 [[issues]]

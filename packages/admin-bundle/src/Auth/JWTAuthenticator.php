@@ -108,17 +108,28 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
             throw new AuthenticationException('Invalid token', Response::HTTP_UNAUTHORIZED);
         }
 
+        if ('access' !== self::stringClaim($tokenData, 'type')) {
+            $this->logger->warning('JWT token is not an access token', [
+                'type' => $tokenData['type'] ?? null,
+            ]);
+            throw new AuthenticationException('Invalid token', Response::HTTP_UNAUTHORIZED);
+        }
+
         $username = self::stringClaim($tokenData, 'username');
         if (null === $username || '' === $username) {
             $this->logger->error('JWT token missing username claim');
             throw new AuthenticationException('Invalid token', Response::HTTP_UNAUTHORIZED);
         }
 
-        $tokenTenantName = self::stringClaim($tokenData, 'tenantName');
-        if (array_key_exists('tenantName', $tokenData) && null === $tokenTenantName) {
+        // DefaultTokenClaimsProvider always sets 'tenantName' — null when no
+        // tenant is active — so only a present-but-non-string, non-null value
+        // (tampering) is invalid; a legitimate null just means "no tenant".
+        $rawTenantName = $tokenData['tenantName'] ?? null;
+        if (null !== $rawTenantName && !is_string($rawTenantName)) {
             $this->logger->error('JWT token contains an invalid tenantName claim');
             throw new AuthenticationException('Invalid token', Response::HTTP_UNAUTHORIZED);
         }
+        $tokenTenantName = is_string($rawTenantName) ? $rawTenantName : null;
         $currentTenantName = $this->tenantContext?->getTenantName();
         if (null !== $tokenTenantName && null !== $currentTenantName && $tokenTenantName !== $currentTenantName) {
             $this->logger->warning('JWT tenant mismatch: token belongs to a different tenant', [
