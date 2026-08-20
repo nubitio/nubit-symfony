@@ -18,24 +18,16 @@ final readonly class HeaderTenantResolver implements TenantResolverInterface
 
     public function resolve(Request $request, ?UserInterface $user): ?ResolvedTenant
     {
-        $raw = $request->headers->get($this->header);
-        if (null === $raw || '' === trim($raw)) {
+        $raw = trim((string) $request->headers->get($this->header, ''));
+        if ('' === $raw) {
             return null;
         }
 
-        if (ctype_digit($raw)) {
+        if (ctype_digit($raw) && (int) $raw > 0) {
             return new ResolvedTenant((int) $raw);
         }
 
         $tenant = $this->tenantRegistry->getTenantByName($raw);
-        if (null === $tenant || !isset($tenant['id'])) {
-            return null;
-        }
-
-        return new ResolvedTenant(
-            (int) $tenant['id'],
-            isset($tenant['name']) ? (string) $tenant['name'] : null,
-            isset($tenant['primary_domain']) ? (string) $tenant['primary_domain'] : null,
-        );
+        return null === $tenant ? null : ResolvedTenant::fromRegistryRecord($tenant);
     }
 }

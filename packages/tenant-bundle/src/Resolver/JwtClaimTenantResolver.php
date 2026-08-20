@@ -13,6 +13,7 @@ use Throwable;
 final readonly class JwtClaimTenantResolver implements TenantResolverInterface
 {
     public function __construct(
+        #[\SensitiveParameter]
         private string $jwtSecret,
         private string $idClaim = 'tenantId',
         private string $nameClaim = 'tenantName',

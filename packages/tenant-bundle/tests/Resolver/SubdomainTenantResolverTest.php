@@ -41,4 +41,23 @@ final class SubdomainTenantResolverTest extends TestCase
         self::assertSame(3, $tenant->id);
         self::assertSame('acme', $tenant->name);
     }
+
+    public function testResolvesAConfiguredCustomDomainWithoutSubdomain(): void
+    {
+        $registry = $this->createMock(TenantRegistryInterface::class);
+        $registry->expects(self::never())->method('getTenantByName');
+        $registry->expects(self::once())
+            ->method('getTenantByDomain')
+            ->with('acme.test')
+            ->willReturn(['id' => '8', 'name' => 'acme']);
+
+        $tenant = (new SubdomainTenantResolver($registry))->resolve(
+            Request::create('https://acme.test/api/me'),
+            null,
+        );
+
+        self::assertNotNull($tenant);
+        self::assertSame(8, $tenant->id);
+        self::assertSame('acme.test', $tenant->domain);
+    }
 }

@@ -24,28 +24,16 @@ final readonly class SubdomainTenantResolver implements TenantResolverInterface
         }
 
         $slug = $this->extractSlug($host);
-        if (null === $slug) {
-            return null;
-        }
+        $tenant = null !== $slug ? $this->tenantRegistry->getTenantByName($slug) : null;
+        $tenant ??= $this->tenantRegistry->getTenantByDomain($host);
 
-        $tenant = $this->tenantRegistry->getTenantByName($slug)
-            ?? $this->tenantRegistry->getTenantByDomain($host);
-
-        if (null === $tenant || !isset($tenant['id'])) {
-            return null;
-        }
-
-        return new ResolvedTenant(
-            (int) $tenant['id'],
-            isset($tenant['name']) ? (string) $tenant['name'] : null,
-            isset($tenant['primary_domain']) ? (string) $tenant['primary_domain'] : ($host !== $slug ? $host : null),
-        );
+        return null === $tenant ? null : ResolvedTenant::fromRegistryRecord($tenant, $host);
     }
 
     private function extractSlug(string $host): ?string
     {
         if ('' !== $this->baseDomain && str_ends_with($host, '.'.$this->baseDomain)) {
-            $slug = substr($host, 0, -strlen('.'.$this->baseDomain));
+            $slug = substr($host, offset: 0, length: -strlen('.'.$this->baseDomain));
 
             return '' !== $slug ? $slug : null;
         }
@@ -55,6 +43,10 @@ final readonly class SubdomainTenantResolver implements TenantResolverInterface
             return null;
         }
 
-        return $parts[0] !== 'www' ? $parts[0] : ($parts[1] ?? null);
+        if ('www' !== $parts[0]) {
+            return $parts[0];
+        }
+
+        return $parts[1] ?? null;
     }
 }
