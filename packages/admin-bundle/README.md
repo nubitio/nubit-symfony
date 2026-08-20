@@ -172,6 +172,10 @@ nubit_admin:
         batch_size: 100
         maximum_retry_delay: 3600
         retention_days: 30
+        delivery_endpoint: ''        # HTTPS webhook; empty keeps fail-closed provider
+        delivery_token: ''           # use an env secret
+        delivery_timeout: 5.0
+        allow_insecure_http: false    # local tests only
     media:
         enabled: false                # true → media library (see below)
         storage:
@@ -218,6 +222,11 @@ exponential next-attempt time before being rethrown to Messenger. The built-in u
 provider fails closed until the application replaces the interface alias.
 Schedule `nubit:analytics:purge-outbox` daily to remove delivered rows past retention;
 undelivered rows are never purged by this command.
+
+Alternatively set `delivery_endpoint` to use the built-in webhook adapter. It sends a
+vendor-neutral JSON envelope with a bearer token, accepts HTTPS by default, never reads or
+stores provider response bodies, and reports only the HTTP status on failure. A small gateway
+can translate this envelope to PostHog, Segment or an internal warehouse API.
 
 ## Audit trail (opt-in)
 

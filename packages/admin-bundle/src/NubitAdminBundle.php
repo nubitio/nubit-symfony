@@ -211,6 +211,20 @@ final class NubitAdminBundle extends AbstractBundle
             ->min(1)
             ->defaultValue(30)
             ->end()
+            ->scalarNode('delivery_endpoint')
+            ->defaultValue('')
+            ->end()
+            ->scalarNode('delivery_token')
+            ->defaultValue('')
+            ->end()
+            ->floatNode('delivery_timeout')
+            ->min(0.1)
+            ->max(30.0)
+            ->defaultValue(5.0)
+            ->end()
+            ->booleanNode('allow_insecure_http')
+            ->defaultFalse()
+            ->end()
             ->end()
             ->end()
             ->arrayNode('media')
@@ -375,7 +389,7 @@ final class NubitAdminBundle extends AbstractBundle
             ObservabilityModule::load($observabilityConfig, $services);
         }
 
-        /** @var array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int, batch_size: int, maximum_retry_delay: int, retention_days: int} $analyticsConfig */
+        /** @var array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int, batch_size: int, maximum_retry_delay: int, retention_days: int, delivery_endpoint: string, delivery_token: string, delivery_timeout: float, allow_insecure_http: bool} $analyticsConfig */
         $analyticsConfig = $config['analytics'];
         if ($analyticsConfig['enabled']) {
             AnalyticsModule::load($analyticsConfig, $services);

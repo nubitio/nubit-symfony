@@ -7,6 +7,7 @@ namespace Nubit\AdminBundle\DependencyInjection;
 use Nubit\AdminBundle\Analytics\DeliverAnalyticsOutboxHandler;
 use Nubit\AdminBundle\Analytics\DoctrineOutboxAnalyticsProvider;
 use Nubit\AdminBundle\Analytics\UnavailableAnalyticsDeliveryProvider;
+use Nubit\AdminBundle\Analytics\WebhookAnalyticsDeliveryProvider;
 use Nubit\AdminBundle\Command\DispatchAnalyticsOutboxCommand;
 use Nubit\AdminBundle\Command\PurgeAnalyticsOutboxCommand;
 use Nubit\Platform\Analytics\AnalyticsPublisher;
@@ -26,7 +27,7 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 final class AnalyticsModule
 {
-    /** @param array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int, batch_size: int, maximum_retry_delay: int, retention_days: int} $config */
+    /** @param array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int, batch_size: int, maximum_retry_delay: int, retention_days: int, delivery_endpoint: string, delivery_token: string, delivery_timeout: float, allow_insecure_http: bool} $config */
     public static function load(array $config, DefaultsConfigurator $services): void
     {
         $services->set(SensitiveDataMetadataReader::class);
@@ -45,8 +46,19 @@ final class AnalyticsModule
         $services->alias(AnalyticsProviderInterface::class, DoctrineOutboxAnalyticsProvider::class);
         $services->set(AnalyticsPublisher::class)->arg('$redactor', service('nubit.analytics.redactor'));
 
-        $services->set(UnavailableAnalyticsDeliveryProvider::class);
-        $services->alias(AnalyticsDeliveryProviderInterface::class, UnavailableAnalyticsDeliveryProvider::class);
+        if ('' !== trim($config['delivery_endpoint'])) {
+            $services->set(WebhookAnalyticsDeliveryProvider::class)->arg(
+                '$endpoint',
+                $config['delivery_endpoint'],
+            )->arg('$token', $config['delivery_token'])->arg('$timeout', $config['delivery_timeout'])->arg(
+                '$allowInsecureHttp',
+                $config['allow_insecure_http'],
+            );
+            $services->alias(AnalyticsDeliveryProviderInterface::class, WebhookAnalyticsDeliveryProvider::class);
+        } else {
+            $services->set(UnavailableAnalyticsDeliveryProvider::class);
+            $services->alias(AnalyticsDeliveryProviderInterface::class, UnavailableAnalyticsDeliveryProvider::class);
+        }
         $services->set(DeliverAnalyticsOutboxHandler::class)->arg(
             '$maximumDelaySeconds',
             $config['maximum_retry_delay'],
