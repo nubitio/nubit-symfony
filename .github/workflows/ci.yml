@@ -88,4 +88,4 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Run package tests
-        run: vendor/bin/phpunit --fail-on-phpunit-deprecation --fail-on-phpunit-notice
+        run: vendor/bin/phpunit tests --fail-on-phpunit-deprecation --fail-on-phpunit-notice
