@@ -8,6 +8,7 @@ use LogicException;
 use Monolog\LogRecord;
 use Nubit\Platform\Observability\Logging\SensitiveDataProcessor;
 use Nubit\Platform\Observability\Logging\TenantLogProcessor;
+use Nubit\Platform\Observability\Tracing\HttpRequestTracingListener;
 use Nubit\Platform\Observability\Tracing\TenantTracer;
 use Nubit\Platform\Observability\Tracing\TenantTracerFactory;
 use Nubit\Platform\Observability\Tracing\TraceAttributeSanitizer;
@@ -43,5 +44,32 @@ final class ObservabilityModule
         $services->set(TraceAttributeSanitizer::class);
         $services->set(TenantTracerFactory::class);
         $services->set(TenantTracer::class)->factory([service(TenantTracerFactory::class), 'create']);
+        $services->set('nubit.observability.tracer', TracerInterface::class)->factory([
+            service(TenantTracerFactory::class),
+            'createTracer',
+        ]);
+        $services
+            ->set(HttpRequestTracingListener::class)
+            ->arg('$tracer', service('nubit.observability.tracer'))
+            ->tag('kernel.event_listener', [
+                'event' => 'kernel.request',
+                'method' => 'onRequest',
+                'priority' => 2048,
+            ])
+            ->tag('kernel.event_listener', [
+                'event' => 'kernel.exception',
+                'method' => 'onException',
+                'priority' => -2048,
+            ])
+            ->tag('kernel.event_listener', [
+                'event' => 'kernel.finish_request',
+                'method' => 'onFinishRequest',
+                'priority' => -2048,
+            ])
+            ->tag('kernel.event_listener', [
+                'event' => 'kernel.response',
+                'method' => 'onResponse',
+                'priority' => -2048,
+            ]);
     }
 }

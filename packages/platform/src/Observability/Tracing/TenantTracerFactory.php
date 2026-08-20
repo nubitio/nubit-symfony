@@ -6,6 +6,7 @@ namespace Nubit\Platform\Observability\Tracing;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
 use OpenTelemetry\API\Globals;
+use OpenTelemetry\API\Trace\TracerInterface;
 
 final readonly class TenantTracerFactory
 {
@@ -16,10 +17,11 @@ final readonly class TenantTracerFactory
 
     public function create(): TenantTracer
     {
-        return new TenantTracer(
-            Globals::tracerProvider()->getTracer('nubitio/platform'),
-            $this->tenantContext,
-            $this->attributeSanitizer,
-        );
+        return new TenantTracer($this->createTracer(), $this->tenantContext, $this->attributeSanitizer);
+    }
+
+    public function createTracer(): TracerInterface
+    {
+        return Globals::tracerProvider()->getTracer('nubitio/platform');
     }
 }
