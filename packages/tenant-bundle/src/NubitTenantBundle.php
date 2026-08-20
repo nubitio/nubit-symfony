@@ -114,13 +114,13 @@ final class NubitTenantBundle extends AbstractBundle
             ->end();
     }
 
-    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function prependExtension(ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        if (!$this->isEnabled($builder) || !$builder->hasExtension('doctrine')) {
+        if (!$this->isEnabled($container) || !$container->hasExtension('doctrine')) {
             return;
         }
 
-        $builder->prependExtensionConfig('doctrine', [
+        $container->prependExtensionConfig('doctrine', [
             'orm' => [
                 'filters' => [
                     TenantFilter::NAME => [
@@ -145,20 +145,20 @@ final class NubitTenantBundle extends AbstractBundle
         return false;
     }
 
-    public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function loadExtension(array $config, ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        $container->parameters()->set('nubit_tenant.enabled', $config['enabled']);
+        $configurator->parameters()->set('nubit_tenant.enabled', $config['enabled']);
 
         if (!$config['enabled']) {
             return;
         }
 
-        $services = $container->services();
+        $services = $configurator->services();
         $services->defaults()
             ->autowire()
             ->autoconfigure();
 
-        $builder->registerForAutoconfiguration(QuotaUsageProviderInterface::class)
+        $container->registerForAutoconfiguration(QuotaUsageProviderInterface::class)
             ->addTag('nubit.quota_usage_provider');
 
         /** @var array{
@@ -171,7 +171,7 @@ final class NubitTenantBundle extends AbstractBundle
          * } $config
          */
         $this->registerResolvers($config, $services);
-        $this->registerCoreServices($config, $services, $builder);
+        $this->registerCoreServices($config, $services, $container);
     }
 
     /**

@@ -19,13 +19,13 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 final class NubitSequenceBundle extends AbstractBundle
 {
-    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function prependExtension(ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        if (!$builder->hasExtension('doctrine')) {
+        if (!$container->hasExtension('doctrine')) {
             return;
         }
 
-        $builder->prependExtensionConfig('doctrine', [
+        $container->prependExtensionConfig('doctrine', [
             'orm' => [
                 'mappings' => [
                     'NubitSequenceBundle' => [
@@ -51,15 +51,15 @@ final class NubitSequenceBundle extends AbstractBundle
             ->end();
     }
 
-    public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function loadExtension(array $config, ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        $container->parameters()->set('nubit_sequence.enabled', $config['enabled']);
+        $configurator->parameters()->set('nubit_sequence.enabled', $config['enabled']);
 
         if (!$config['enabled']) {
             return;
         }
 
-        $services = $container->services();
+        $services = $configurator->services();
         $services->defaults()
             ->autowire()
             ->autoconfigure();

@@ -27,10 +27,10 @@ final class WorkflowDocumentationNormalizer implements NormalizerInterface
     }
 
     /** @return array<mixed> */
-    public function normalize(mixed $object, ?string $format = null, array $context = []): array
+    public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         /** @var array<mixed> $doc */
-        $doc = $this->inner->normalize($object, $format, $context);
+        $doc = $this->inner->normalize($data, $format, $context);
 
         foreach (['hydra:', ''] as $prefix) {
             $classesKey = $prefix . 'supportedClass';

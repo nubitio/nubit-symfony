@@ -66,10 +66,10 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
     }
 
     /** @return array<mixed> */
-    public function normalize(mixed $object, ?string $format = null, array $context = []): array
+    public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         /** @var array<mixed> $doc */
-        $doc = $this->inner->normalize($object, $format, $context);
+        $doc = $this->inner->normalize($data, $format, $context);
 
         $locale = $this->resolveLocale();
 

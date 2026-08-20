@@ -37,15 +37,15 @@ final class NubitWorkflowBundle extends AbstractBundle
             ->end();
     }
 
-    public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function loadExtension(array $config, ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        $container->parameters()->set('nubit_workflow.enabled', $config['enabled']);
+        $configurator->parameters()->set('nubit_workflow.enabled', $config['enabled']);
 
         if (!$config['enabled']) {
             return;
         }
 
-        $services = $container->services();
+        $services = $configurator->services();
         $services->defaults()
             ->autowire()
             ->autoconfigure();

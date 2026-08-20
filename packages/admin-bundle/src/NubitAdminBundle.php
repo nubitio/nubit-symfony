@@ -289,17 +289,17 @@ final class NubitAdminBundle extends AbstractBundle
     /**
      * @param array<array-key, mixed> $config
      */
-    public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function loadExtension(array $config, ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        $container->parameters()->set('nubit_admin.api.default_docs_locale', 'en');
+        $configurator->parameters()->set('nubit_admin.api.default_docs_locale', 'en');
 
-        $services = $container->services()->defaults()->autowire()->autoconfigure();
+        $services = $configurator->services()->defaults()->autowire()->autoconfigure();
 
         // ── Extension-point autoconfiguration ────────────────────────────────
-        $builder
+        $container
             ->registerForAutoconfiguration(GridVirtualFieldInterface::class)
             ->addTag('nubit.api_platform.grid_virtual_field');
-        $builder
+        $container
             ->registerForAutoconfiguration(LoginResponseDecoratorInterface::class)
             ->addTag('nubit.admin.login_response_decorator');
         // ── nubitio/api-platform bridge ──────────────────────────────────────
@@ -378,10 +378,10 @@ final class NubitAdminBundle extends AbstractBundle
         }
 
         if ($config['media']['enabled']) {
-            MediaModule::load($config['media'], $container, $services);
+            MediaModule::load($config['media'], $configurator, $services);
         }
 
-        RuntimeConfigModule::load($config['runtime_config'], $container, $services);
+        RuntimeConfigModule::load($config['runtime_config'], $configurator, $services);
 
         /** @var array{enabled: bool, redaction_hmac_key: string} $observabilityConfig */
         $observabilityConfig = $config['observability'];
@@ -443,13 +443,13 @@ final class NubitAdminBundle extends AbstractBundle
         }
     }
 
-    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function prependExtension(ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
         // The Nubit HTTP client (@nubitio/core) sends plain application/json
         // request bodies. Prepend the formats so consumers get JSON support
         // out of the box — application-level api_platform.yaml still wins.
-        if ($builder->hasExtension('api_platform')) {
-            $builder->prependExtensionConfig('api_platform', [
+        if ($container->hasExtension('api_platform')) {
+            $container->prependExtensionConfig('api_platform', [
                 'formats' => [
                     'json' => ['application/json'],
                     'jsonld' => ['application/ld+json'],
@@ -467,15 +467,15 @@ final class NubitAdminBundle extends AbstractBundle
         // ApiResource. Conditional on the raw config because an unconditional
         // mapping would surface the nubit_media table and /api/media routes
         // in apps that never enabled the feature.
-        if ($this->isFeatureEnabled($builder, 'media')) {
-            $this->prependMediaMappings($builder);
+        if ($this->isFeatureEnabled($container, 'media')) {
+            $this->prependMediaMappings($container);
         }
 
         // Audit trail (opt-in): same reasoning — only map nubit_audit_log
         // when the feature is on. AuditLog is not an ApiResource (the plain
         // route serves it), so only the Doctrine mapping is needed.
-        if ($this->isFeatureEnabled($builder, 'audit') && $builder->hasExtension('doctrine')) {
-            $builder->prependExtensionConfig('doctrine', [
+        if ($this->isFeatureEnabled($container, 'audit') && $container->hasExtension('doctrine')) {
+            $container->prependExtensionConfig('doctrine', [
                 'orm' => [
                     'mappings' => [
                         'NubitAdminAuditBundle' => [
@@ -490,8 +490,8 @@ final class NubitAdminBundle extends AbstractBundle
             ]);
         }
 
-        if ($this->isFeatureEnabled($builder, 'analytics') && $builder->hasExtension('doctrine')) {
-            $builder->prependExtensionConfig('doctrine', [
+        if ($this->isFeatureEnabled($container, 'analytics') && $container->hasExtension('doctrine')) {
+            $container->prependExtensionConfig('doctrine', [
                 'orm' => [
                     'mappings' => [
                         'NubitAdminAnalyticsBundle' => [
@@ -506,13 +506,13 @@ final class NubitAdminBundle extends AbstractBundle
             ]);
         }
 
-        if (!$builder->hasExtension('doctrine')) {
+        if (!$container->hasExtension('doctrine')) {
             return;
         }
 
         // Soft-delete filter for #[SoftDeletable] entities (no-op without the
         // attribute). Apps can disable via nubit_admin.soft_delete: false.
-        $builder->prependExtensionConfig('doctrine', [
+        $container->prependExtensionConfig('doctrine', [
             'orm' => [
                 'filters' => [
                     'nubit_soft_delete' => [
@@ -524,7 +524,7 @@ final class NubitAdminBundle extends AbstractBundle
         ]);
 
         // Map the bundle's RefreshToken entity.
-        $builder->prependExtensionConfig('doctrine', [
+        $container->prependExtensionConfig('doctrine', [
             'orm' => [
                 'mappings' => [
                     'NubitAdminBundle' => [
