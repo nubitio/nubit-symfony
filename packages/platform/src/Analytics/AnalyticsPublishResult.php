@@ -7,6 +7,7 @@ namespace Nubit\Platform\Analytics;
 enum AnalyticsPublishResult: string
 {
     case Captured = 'captured';
+    case Disabled = 'disabled';
     case ConsentDenied = 'consent_denied';
     case Duplicate = 'duplicate';
     case InvalidPayload = 'invalid_payload';

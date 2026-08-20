@@ -21,10 +21,15 @@ final readonly class AnalyticsPublisher
         private AnalyticsDeduplicatorInterface $deduplicator,
         private DataRedactor $redactor,
         private TenantContext $tenantContext,
+        private bool $enabled = true,
     ) {}
 
     public function publish(AnalyticsEvent $event): AnalyticsPublishResult
     {
+        if (!$this->enabled) {
+            return AnalyticsPublishResult::Disabled;
+        }
+
         $tenantId = $this->tenantContext->getTenantId();
         if (!$this->consentChecker->allows($event->purpose, $tenantId)) {
             return AnalyticsPublishResult::ConsentDenied;

@@ -391,9 +391,11 @@ final class NubitAdminBundle extends AbstractBundle
 
         /** @var array{enabled: bool, redaction_hmac_key: string, deduplication_capacity: int, batch_size: int, maximum_retry_delay: int, retention_days: int, delivery_endpoint: string, delivery_token: string, delivery_timeout: float, allow_insecure_http: bool} $analyticsConfig */
         $analyticsConfig = $config['analytics'];
-        if ($analyticsConfig['enabled']) {
-            AnalyticsModule::load($analyticsConfig, $services);
-        }
+        // 'enabled' may be an unresolved %env(bool:...)% placeholder (always
+        // truthy in plain PHP) — always register the services and let
+        // AnalyticsPublisher check the resolved value at runtime, so the
+        // env var actually gets consumed by the container.
+        AnalyticsModule::load($analyticsConfig, $services);
 
         if ($config['audit']['enabled']) {
             $services->set(AuditTrailListener::class)->arg(

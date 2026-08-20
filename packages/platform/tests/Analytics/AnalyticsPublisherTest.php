@@ -97,6 +97,26 @@ final class AnalyticsPublisherTest extends TestCase
         self::assertSame(AnalyticsPublishResult::Duplicate, $publisher->publish($event));
         self::assertSame(1, $provider->captures);
     }
+
+    public function testDisabledPublisherSkipsEverything(): void
+    {
+        $provider = new RecordingAnalyticsProvider();
+        $deduplicator = new InMemoryAnalyticsDeduplicator();
+        $publisher = new AnalyticsPublisher(
+            $provider,
+            new AllowAllAnalyticsConsentChecker(),
+            $deduplicator,
+            new DataRedactor(),
+            new TenantContext(),
+            enabled: false,
+        );
+        $event = new AnalyticsEvent('order-created-1', 'order.created', 1, AnalyticsPurpose::Product, new \stdClass());
+
+        self::assertSame(AnalyticsPublishResult::Disabled, $publisher->publish($event));
+        self::assertNull($provider->lastEvent);
+        // Not even the deduplicator is touched when disabled.
+        self::assertTrue($deduplicator->claim($event->id));
+    }
 }
 
 /** @internal */
