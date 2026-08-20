@@ -6,6 +6,7 @@ namespace Nubit\AdminBundle\DependencyInjection;
 
 use LogicException;
 use Monolog\LogRecord;
+use Nubit\Platform\Messenger\TracingMiddleware;
 use Nubit\Platform\Observability\Logging\SensitiveDataProcessor;
 use Nubit\Platform\Observability\Logging\TenantLogProcessor;
 use Nubit\Platform\Observability\Tracing\HttpRequestTracingListener;
@@ -71,5 +72,9 @@ final class ObservabilityModule
                 'method' => 'onResponse',
                 'priority' => -2048,
             ]);
+        $services->set(TracingMiddleware::class)->arg(
+            '$tracer',
+            service('nubit.observability.tracer'),
+        )->tag('messenger.middleware', ['priority' => 1000]);
     }
 }
