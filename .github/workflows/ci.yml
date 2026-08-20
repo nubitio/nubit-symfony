@@ -43,3 +43,46 @@ jobs:
 
       - name: PHPUnit
         run: vendor/bin/phpunit
+
+  package-isolation:
+    name: Package isolation (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - platform
+          - api-platform
+          - admin-bundle
+          - sequence-bundle
+          - tenant-bundle
+          - workflow-bundle
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: gd, zip, intl
+          coverage: none
+
+      - name: Validate package manifest
+        run: composer validate --strict
+
+      - name: Wire current sibling packages
+        run: |
+          composer config repositories.local-platform '{"type":"path","url":"../platform","options":{"versions":{"nubitio/platform":"0.12.x-dev"}}}'
+          composer config repositories.local-api-platform '{"type":"path","url":"../api-platform","options":{"versions":{"nubitio/api-platform":"0.12.x-dev"}}}'
+          composer config repositories.local-admin-bundle '{"type":"path","url":"../admin-bundle","options":{"versions":{"nubitio/admin-bundle":"0.12.x-dev"}}}'
+          composer config repositories.local-sequence-bundle '{"type":"path","url":"../sequence-bundle","options":{"versions":{"nubitio/sequence-bundle":"0.12.x-dev"}}}'
+          composer config repositories.local-tenant-bundle '{"type":"path","url":"../tenant-bundle","options":{"versions":{"nubitio/tenant-bundle":"0.12.x-dev"}}}'
+          composer config repositories.local-workflow-bundle '{"type":"path","url":"../workflow-bundle","options":{"versions":{"nubitio/workflow-bundle":"0.12.x-dev"}}}'
+
+      - name: Install package in isolation
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run package tests
+        run: vendor/bin/phpunit

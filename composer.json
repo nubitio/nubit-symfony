@@ -69,6 +69,11 @@
     },
     "scripts": {
         "test": "phpunit",
+        "check": [
+            "@test",
+            "@stan",
+            "@cs"
+        ],
         "stan": "mago analyze",
         "cs": "mago lint && mago fmt --dry-run",
         "cs-fix": "mago lint --fix && mago fmt"
