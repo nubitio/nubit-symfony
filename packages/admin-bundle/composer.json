@@ -47,7 +47,11 @@
     },
     "require-dev": {
         "league/flysystem-memory": "^3.0",
+        "phpoffice/phpspreadsheet": "^5.8.1",
         "phpunit/phpunit": "^11.5 || ^12.0",
+        "symfony/cache": "^7.4 || ^8.0",
+        "symfony/http-client": "^7.4 || ^8.0",
+        "symfony/mailer": "^7.4 || ^8.0",
         "symfony/mercure": "^0.6"
     },
     "autoload": {
@@ -66,8 +70,12 @@
     },
     "suggest": {
         "monolog/monolog": "Privacy-safe structured log processors when nubit_admin.observability.enabled is true",
+        "phpoffice/phpspreadsheet": "Required by the \"xlsx\" export format when nubit_admin.export.enabled is true (also needs ext-zip)",
         "open-telemetry/api": "Tenant-aware tracing when nubit_admin.observability.enabled is true",
         "symfony/mercure-bundle": "Live grid updates; the bundle adds a fail-safe hub decorator and the subscriber cookie",
+        "symfony/mailer": "Email notification channel when nubit_admin.notification.enabled is true",
+        "symfony/http-client": "OIDC discovery/JWKS fetching and token exchange when nubit_admin.oidc.enabled is true",
+        "symfony/cache": "Caches OIDC discovery/JWKS lookups when nubit_admin.oidc.enabled is true",
         "nubitio/tenant-bundle": "Column-mode multi-tenancy: TenantScoped attribute, Doctrine filter, registry, and resolvers"
     }
 }

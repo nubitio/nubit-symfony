@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use Nubit\AdminBundle\Auth\Oidc\Controller\OidcCallbackController;
+use Nubit\AdminBundle\Auth\Oidc\Controller\OidcRedirectController;
+use Nubit\AdminBundle\Auth\Oidc\OidcAuthenticator;
 use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
@@ -46,6 +49,15 @@ return static function (RoutingConfigurator $routes): void {
 
     $routes->add('nubit_admin_media_file', '/api/media/{id}/file')
         ->controller(MediaFileController::class)
+        ->methods(['GET']);
+
+    // OIDC/SSO (only functional with nubit_admin.oidc.enabled).
+    $routes->add('nubit_admin_oidc_redirect', '/api/auth/oidc/{provider}/redirect')
+        ->controller(OidcRedirectController::class)
+        ->methods(['GET']);
+
+    $routes->add(OidcAuthenticator::CALLBACK_ROUTE, '/api/auth/oidc/{provider}/callback')
+        ->controller(OidcCallbackController::class)
         ->methods(['GET']);
 
     // Audit trail (only functional with nubit_admin.audit.enabled).

@@ -22,13 +22,18 @@ use Nubit\AdminBundle\Auth\TokenGenerator;
 use Nubit\AdminBundle\Command\DiscoverCommand;
 use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
+use Nubit\AdminBundle\Command\SecurityAuditCommand;
 use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\MeController;
 use Nubit\AdminBundle\Controller\RefreshController;
 use Nubit\AdminBundle\DependencyInjection\AnalyticsModule;
+use Nubit\AdminBundle\DependencyInjection\BackupModule;
+use Nubit\AdminBundle\DependencyInjection\ExportModule;
 use Nubit\AdminBundle\DependencyInjection\MediaModule;
+use Nubit\AdminBundle\DependencyInjection\NotificationModule;
+use Nubit\AdminBundle\DependencyInjection\OidcModule;
 use Nubit\AdminBundle\DependencyInjection\ObservabilityModule;
 use Nubit\AdminBundle\DependencyInjection\RuntimeConfigModule;
 use Nubit\AdminBundle\EmbeddedLines\Controller\EmbeddedLinesController;
@@ -36,6 +41,8 @@ use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRegistry;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRouteLoader;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRowSerializer;
 use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
+use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
+use Nubit\AdminBundle\Export\XlsxEncoder;
 use Nubit\AdminBundle\Mercure\FailSafeHub;
 use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\Session\AppProfile;
@@ -53,6 +60,7 @@ use Nubit\ApiPlatform\Http\ExceptionListener;
 use Nubit\ApiPlatform\Http\GridSummaryCalculator;
 use Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer;
 use Nubit\Platform\Feature\Contract\FeatureCheckerInterface;
+use Nubit\Platform\Notification\Contract\NotificationChannelInterface;
 use Nubit\Platform\Quota\Contract\QuotaEnforcerInterface;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
@@ -148,6 +156,46 @@ final class NubitAdminBundle extends AbstractBundle
                 'Decorate the default hub so a dead Mercure never turns a successful write into a 500. HTTP requests log-and-continue; workers/console rethrow so async retries still work. Applies whenever MercureBundle is installed, regardless of "enabled".',
             )
             ->defaultTrue()
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('oidc')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Register GET /api/auth/oidc/{provider}/redirect and /callback (authorization code + PKCE). Works against any OpenID Connect-compliant IdP (Okta, Azure AD, Google Workspace, Auth0, Keycloak…) via issuer discovery — no per-provider SDK. Requires an app-provided OidcUserResolverInterface, and OidcAuthenticator added to the firewall\'s custom_authenticators.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->arrayNode('providers')
+            ->useAttributeAsKey('name')
+            ->arrayPrototype()
+            ->children()
+            ->scalarNode('issuer')
+            ->info('OIDC issuer base URL — {issuer}/.well-known/openid-configuration must resolve.')
+            ->isRequired()
+            ->cannotBeEmpty()
+            ->end()
+            ->scalarNode('client_id')->isRequired()->cannotBeEmpty()->end()
+            ->scalarNode('client_secret')->isRequired()->cannotBeEmpty()->end()
+            ->arrayNode('scopes')
+            ->scalarPrototype()->end()
+            ->defaultValue(['openid', 'email', 'profile'])
+            ->end()
+            ->scalarNode('redirect_uri')
+            ->info('Must exactly match the redirect URI registered with the IdP — usually {api_base_url}/api/auth/oidc/{name}/callback.')
+            ->isRequired()
+            ->cannotBeEmpty()
+            ->end()
+            ->scalarNode('post_login_redirect_uri')
+            ->info('Frontend URL the browser lands on after a successful (or failed, with ?error=) login.')
+            ->isRequired()
+            ->cannotBeEmpty()
+            ->end()
+            ->end()
+            ->end()
+            ->defaultValue([])
             ->end()
             ->end()
             ->end()
@@ -271,6 +319,72 @@ final class NubitAdminBundle extends AbstractBundle
             ->end()
             ->end()
             ->end()
+            ->arrayNode('notification')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Register NotificationDispatcherInterface (dispatched through Messenger) and an email channel (symfony/mailer). Domain code (e.g. a workflow transition listener) calls dispatch(); app services tagged nubit.admin.notification_channel add more channels.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->scalarNode('from_address')
+            ->info('"From" address for the built-in email channel.')
+            ->defaultValue('')
+            ->end()
+            ->arrayNode('in_app')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Register the Notification entity (GET /api/notifications, mercure: true) and an "in_app" channel. Maps a new table — run doctrine:migrations:diff after enabling.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('backup')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Register a PostgreSQL TenantBackupRunnerInterface (pg_dump) and bin/console nubit:tenant:backup. Requires pg_dump on PATH.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->arrayNode('storage')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->scalarNode('filesystem')
+            ->info('Service id of a League\\Flysystem FilesystemOperator to store dumps in. Overrides local_directory.')
+            ->defaultNull()
+            ->end()
+            ->scalarNode('local_directory')
+            ->defaultValue('%kernel.project_dir%/var/backups')
+            ->end()
+            ->end()
+            ->end()
+            ->scalarNode('pg_dump_binary')
+            ->defaultValue('pg_dump')
+            ->end()
+            ->integerNode('timeout_seconds')
+            ->defaultValue(300)
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('export')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Register the "xlsx" format on every ApiResource: GET ?_format=xlsx (or Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) streams the same collection/item data as a spreadsheet. Pairs with the frontend toolbar export button gated by permissions.canExport.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->end()
+            ->end()
             ->booleanNode('runtime_config')
             ->info('Expose GET /api/runtime-config (opt-in; payload from RuntimeConfigProviderInterface).')
             ->defaultFalse()
@@ -302,6 +416,9 @@ final class NubitAdminBundle extends AbstractBundle
         $container
             ->registerForAutoconfiguration(LoginResponseDecoratorInterface::class)
             ->addTag('nubit.admin.login_response_decorator');
+        $container
+            ->registerForAutoconfiguration(NotificationChannelInterface::class)
+            ->addTag('nubit.admin.notification_channel');
         // ── nubitio/api-platform bridge ──────────────────────────────────────
         $services->set(DataGridFilter::class);
         $services->set(GridSummaryCalculator::class);
@@ -322,12 +439,15 @@ final class NubitAdminBundle extends AbstractBundle
         }
 
         // ── Auth ─────────────────────────────────────────────────────────────
-        $services->set(JWTManager::class)->arg('$secret', $config['auth']['secret']);
+        /** @var array{secret: string, access_token_ttl: int, refresh_token_ttl: int, cookie_secure: bool} $authConfig */
+        $authConfig = $config['auth'];
+
+        $services->set(JWTManager::class)->arg('$secret', $authConfig['secret']);
         $services->alias(JWTManagerInterface::class, JWTManager::class);
 
         $services->set(ResponseModeResolver::class);
 
-        $services->set(CookieFactory::class)->arg('$cookieSecure', $config['auth']['cookie_secure']);
+        $services->set(CookieFactory::class)->arg('$cookieSecure', $authConfig['cookie_secure']);
 
         $services->set(DefaultTokenClaimsProvider::class);
         $services->alias(TokenClaimsProviderInterface::class, DefaultTokenClaimsProvider::class);
@@ -335,15 +455,16 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(DoctrineRefreshTokenStore::class);
         $services->alias(RefreshTokenStoreInterface::class, DoctrineRefreshTokenStore::class);
 
-        $services->set(TokenGenerator::class)->arg('$accessTokenTtl', $config['auth']['access_token_ttl'])->arg(
+        $services->set(TokenGenerator::class)->arg('$accessTokenTtl', $authConfig['access_token_ttl'])->arg(
             '$refreshTokenTtl',
-            $config['auth']['refresh_token_ttl'],
+            $authConfig['refresh_token_ttl'],
         );
 
         $services->set(JWTAuthenticator::class);
 
         $services->set(PurgeRefreshTokensCommand::class);
         $services->set(DiscoverCommand::class);
+        $services->set(SecurityAuditCommand::class);
 
         if ($config['soft_delete']) {
             $services->set(SoftDeleteFilterListener::class);
@@ -369,7 +490,7 @@ final class NubitAdminBundle extends AbstractBundle
             $services->set(MercureSubscriberTokenService::class)->arg(
                 '$mercureJwtSecret',
                 $config['mercure']['secret'],
-            )->arg('$tokenTtl', $config['auth']['access_token_ttl']);
+            )->arg('$tokenTtl', $authConfig['access_token_ttl']);
             $services
                 ->set(MercureCookieDecorator::class)
                 ->arg('$topics', $config['mercure']['topics'])
@@ -379,6 +500,30 @@ final class NubitAdminBundle extends AbstractBundle
 
         if ($config['media']['enabled']) {
             MediaModule::load($config['media'], $configurator, $services);
+        }
+
+        /** @var array{enabled: bool} $exportConfig */
+        $exportConfig = $config['export'];
+        if ($exportConfig['enabled']) {
+            ExportModule::load($services);
+        }
+
+        /** @var array{enabled: bool, providers: array<string, array{issuer: string, client_id: string, client_secret: string, scopes: list<string>, redirect_uri: string, post_login_redirect_uri: string}>} $oidcConfig */
+        $oidcConfig = $config['oidc'];
+        if ($oidcConfig['enabled']) {
+            OidcModule::load($oidcConfig['providers'], $authConfig['secret'], $services);
+        }
+
+        /** @var array{enabled: bool, from_address: string, in_app: array{enabled: bool}} $notificationConfig */
+        $notificationConfig = $config['notification'];
+        if ($notificationConfig['enabled']) {
+            NotificationModule::load($notificationConfig, $services);
+        }
+
+        /** @var array{enabled: bool, storage: array{filesystem: ?string, local_directory: string}, pg_dump_binary: string, timeout_seconds: int} $backupConfig */
+        $backupConfig = $config['backup'];
+        if ($backupConfig['enabled']) {
+            BackupModule::load($backupConfig, $services);
         }
 
         RuntimeConfigModule::load($config['runtime_config'], $configurator, $services);
@@ -465,6 +610,17 @@ final class NubitAdminBundle extends AbstractBundle
             ]);
         }
 
+        // Export (opt-in): registering "xlsx" as an api_platform format turns
+        // it on for every ApiResource automatically — no per-resource config,
+        // same mechanism the "json"/"jsonld" formats above use.
+        if ($this->isFeatureEnabled($container, 'export') && $container->hasExtension('api_platform')) {
+            $container->prependExtensionConfig('api_platform', [
+                'formats' => [
+                    XlsxEncoder::FORMAT => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+                ],
+            ]);
+        }
+
         // Media library (opt-in): map the entity and expose it as an
         // ApiResource. Conditional on the raw config because an unconditional
         // mapping would surface the nubit_media table and /api/media routes
@@ -490,6 +646,27 @@ final class NubitAdminBundle extends AbstractBundle
                     ],
                 ],
             ]);
+        }
+
+        // In-app notifications (opt-in, nested under notification.in_app):
+        // Notification IS an ApiResource (unlike AuditLog), so it needs both
+        // the api_platform mapping path (for resource discovery) and the
+        // Doctrine mapping — same two-part treatment as prependMediaMappings.
+        if ($this->isFeatureEnabled($container, 'notification', 'in_app')) {
+            $this->prependNotificationMappings($container);
+
+            if ($container->hasExtension('doctrine')) {
+                $container->prependExtensionConfig('doctrine', [
+                    'orm' => [
+                        'filters' => [
+                            'nubit_notification_recipient' => [
+                                'class' => CurrentRecipientFilter::class,
+                                'enabled' => false, // enabled per-request by CurrentRecipientFilterListener
+                            ],
+                        ],
+                    ],
+                ]);
+            }
         }
 
         if ($this->isFeatureEnabled($container, 'analytics') && $container->hasExtension('doctrine')) {
@@ -544,51 +721,95 @@ final class NubitAdminBundle extends AbstractBundle
     /**
      * Reads the raw (pre-processing) bundle config: prependExtension runs
      * before configuration is processed, so this is the only signal available.
+     * Takes a path so nested toggles (`notification.in_app.enabled`) read the
+     * same way as top-level ones (`export.enabled`); the last config fragment
+     * that mentions the toggle wins, matching Symfony's own merge order.
      */
-    private function isFeatureEnabled(ContainerBuilder $builder, string $feature): bool
+    private function isFeatureEnabled(ContainerBuilder $builder, string ...$path): bool
     {
         $enabled = false;
         foreach ($builder->getExtensionConfig('nubit_admin') as $config) {
-            if (isset($config[$feature]['enabled'])) {
-                $enabled = (bool) $config[$feature]['enabled'];
+            $node = $config;
+            foreach ($path as $segment) {
+                if (!isset($node[$segment]) || !is_array($node[$segment])) {
+                    continue 2;
+                }
+                /** @var array<string, mixed> $node */
+                $node = $node[$segment];
+            }
+
+            if (isset($node['enabled'])) {
+                $enabled = (bool) $node['enabled'];
             }
         }
 
         return $enabled;
     }
 
-    private function prependMediaMappings(ContainerBuilder $builder): void
+    /**
+     * Adds one bundle-owned entity directory to api_platform.mapping.paths.
+     *
+     * API Platform skips its project-dir defaults (src/Entity,
+     * src/ApiResource, config/api_platform) as soon as mapping.paths is
+     * non-empty — our prepend must not displace the app's own entities, so
+     * re-add those defaults when the app relied on them.
+     */
+    private function prependApiPlatformMappingPath(ContainerBuilder $builder, string $entityDir): void
     {
-        if ($builder->hasExtension('api_platform')) {
-            $appPaths = [];
-            foreach ($builder->getExtensionConfig('api_platform') as $config) {
-                $appPaths = array_merge($appPaths, (array) ($config['mapping']['paths'] ?? []));
-            }
+        if (!$builder->hasExtension('api_platform')) {
+            return;
+        }
 
-            $paths = [__DIR__ . '/Media/Entity'];
+        $appPaths = [];
+        foreach ($builder->getExtensionConfig('api_platform') as $config) {
+            $appPaths = array_merge($appPaths, (array) ($config['mapping']['paths'] ?? []));
+        }
 
-            // API Platform skips its project-dir defaults (src/Entity,
-            // src/ApiResource, config/api_platform) as soon as mapping.paths
-            // is non-empty — our prepend must not displace the app's own
-            // entities, so re-add those defaults when the app relied on them.
-            if ($appPaths === []) {
-                /** @var string $projectDir */
-                $projectDir = $builder->getParameter('kernel.project_dir');
-                foreach ([
-                    "$projectDir/config/api_platform",
-                    "$projectDir/src/ApiResource",
-                    "$projectDir/src/Entity",
-                ] as $dir) {
-                    if (is_dir($dir)) {
-                        $paths[] = $dir;
-                    }
+        $paths = [$entityDir];
+
+        if ($appPaths === []) {
+            /** @var string $projectDir */
+            $projectDir = $builder->getParameter('kernel.project_dir');
+            foreach ([
+                "$projectDir/config/api_platform",
+                "$projectDir/src/ApiResource",
+                "$projectDir/src/Entity",
+            ] as $dir) {
+                if (is_dir($dir)) {
+                    $paths[] = $dir;
                 }
             }
+        }
 
-            $builder->prependExtensionConfig('api_platform', [
-                'mapping' => ['paths' => $paths],
+        $builder->prependExtensionConfig('api_platform', [
+            'mapping' => ['paths' => $paths],
+        ]);
+    }
+
+    private function prependNotificationMappings(ContainerBuilder $builder): void
+    {
+        $this->prependApiPlatformMappingPath($builder, __DIR__ . '/Notification/Entity');
+
+        if ($builder->hasExtension('doctrine')) {
+            $builder->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminNotificationBundle' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Notification/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Notification\\Entity',
+                            'alias' => 'NubitAdminNotification',
+                        ],
+                    ],
+                ],
             ]);
         }
+    }
+
+    private function prependMediaMappings(ContainerBuilder $builder): void
+    {
+        $this->prependApiPlatformMappingPath($builder, __DIR__ . '/Media/Entity');
 
         if ($builder->hasExtension('doctrine')) {
             $builder->prependExtensionConfig('doctrine', [

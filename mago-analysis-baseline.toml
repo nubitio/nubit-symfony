@@ -208,7 +208,7 @@ count = 1
 file = "packages/admin-bundle/src/NubitAdminBundle.php"
 code = "mixed-array-access"
 message = "Unsafe array access on type `mixed`."
-count = 16
+count = 11
 
 [[issues]]
 file = "packages/admin-bundle/src/NubitAdminBundle.php"
