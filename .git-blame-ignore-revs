@@ -1,0 +1,5 @@
+# Bulk reformats — noise in `git blame`. Enable once with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: apply mago fmt across the codebase
+bd0f308399ade4a5fb13032f7d3d84d1a6b8b08a
