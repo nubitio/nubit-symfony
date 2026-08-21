@@ -99,11 +99,15 @@ final class WorkflowRegistry
     {
         try {
             $collection = $this->resourceMetadataFactory->create($entityClass);
-            foreach ($collection as $operation) {
-                if ($operation instanceof GetCollection) {
-                    $template = $operation->getUriTemplate();
-                    if (\is_string($template) && $template !== '') {
-                        return $this->apiRoutePrefix . (str_starts_with($template, '/') ? $template : '/' . $template);
+            foreach ($collection as $resource) {
+                foreach ($resource->getOperations() ?? [] as $operation) {
+                    if ($operation instanceof GetCollection) {
+                        $template = $operation->getUriTemplate();
+                        if (\is_string($template) && $template !== '') {
+                            return (
+                                $this->apiRoutePrefix . (str_starts_with($template, '/') ? $template : '/' . $template)
+                            );
+                        }
                     }
                 }
             }

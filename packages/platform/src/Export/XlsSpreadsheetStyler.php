@@ -25,7 +25,6 @@ final class XlsSpreadsheetStyler
     ) {}
 
     /**
-     * @param list<string> $fields
      * @param array<string, XlsColumn> $columns
      */
     public function apply(

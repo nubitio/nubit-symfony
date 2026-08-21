@@ -64,7 +64,7 @@ final class DiscoverCommand extends Command
             $operations = [];
 
             foreach ($metadata as $resource) {
-                foreach ($resource->getOperations() as $operation) {
+                foreach ($resource->getOperations() ?? [] as $operation) {
                     $method = $operation->getMethod() ?? '?';
                     $operations[] = $method;
                     if ($operation instanceof GetCollection && $collectionPath === null) {

@@ -6,9 +6,6 @@ namespace Nubit\Platform\Export;
 
 final readonly class XlsValidationSpec
 {
-    /**
-     * @param list<string>|null $values
-     */
     public function __construct(
         public string $type,
         public XlsValidationRule $rule = new XlsValidationRule(),

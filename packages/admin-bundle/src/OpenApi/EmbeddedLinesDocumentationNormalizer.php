@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\OpenApi;
 
-use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
 use ApiPlatform\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRegistry;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -22,7 +21,6 @@ final class EmbeddedLinesDocumentationNormalizer implements NormalizerInterface
         private readonly NormalizerInterface $inner,
         private readonly EmbeddedLinesRegistry $registry,
         private readonly ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
-        private readonly ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
     ) {}
 
     /** @return array<mixed> */

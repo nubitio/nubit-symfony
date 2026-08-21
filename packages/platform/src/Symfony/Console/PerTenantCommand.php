@@ -180,10 +180,8 @@ abstract class PerTenantCommand extends Command
 
         while ($queue !== [] || $running !== []) {
             while (count($running) < $concurrency && $queue !== []) {
+                // The enclosing `while` guarantees a non-empty queue, so this is always a string.
                 $tenantName = array_shift($queue);
-                if ($tenantName == null) {
-                    break;
-                }
 
                 $process = new Process($this->buildParallelCommandArgs($input, $commandName, $tenantName));
                 $process->setTimeout(null);
