@@ -26,15 +26,10 @@ final readonly class MercureCookieDecorator implements LoginResponseDecoratorInt
         private CookieFactory $cookieFactory,
         private array $topics = ['*'],
         private string $hubPath = '/.well-known/mercure',
-    ) {
-    }
+    ) {}
 
-    public function decorate(
-        JsonResponse $response,
-        UserInterface $user,
-        TokenPair $tokenPair,
-        Request $request,
-    ): void {
+    public function decorate(JsonResponse $response, UserInterface $user, TokenPair $tokenPair, Request $request): void
+    {
         $response->headers->setCookie($this->cookieFactory->createSecureCookie(
             self::MERCURE_COOKIE,
             $this->tokenService->generateSubscriberToken($this->topics),

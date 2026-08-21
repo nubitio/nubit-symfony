@@ -25,8 +25,7 @@ final readonly class WorkflowTransitionController
         private EntityManagerInterface $entityManager,
         private ResourceMetadataCollectionFactoryInterface $resourceMetadataFactory,
         private SerializerInterface&NormalizerInterface $serializer,
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request, string $id, string $transition): Response
     {

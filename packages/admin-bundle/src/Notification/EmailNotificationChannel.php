@@ -16,8 +16,7 @@ final readonly class EmailNotificationChannel implements NotificationChannelInte
     public function __construct(
         private MailerInterface $mailer,
         private string $fromAddress,
-    ) {
-    }
+    ) {}
 
     public function getIdentifier(): string
     {
@@ -32,7 +31,11 @@ final readonly class EmailNotificationChannel implements NotificationChannelInte
             ->subject($message->subject)
             ->text($message->body);
 
-        if (isset($message->context['html']) && \is_string($message->context['html']) && $message->context['html'] !== '') {
+        if (
+            isset($message->context['html'])
+            && \is_string($message->context['html'])
+            && $message->context['html'] !== ''
+        ) {
             $email->html($message->context['html']);
         }
 

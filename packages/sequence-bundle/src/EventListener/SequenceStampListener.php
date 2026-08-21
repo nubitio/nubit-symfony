@@ -18,8 +18,7 @@ final class SequenceStampListener
         private readonly SequenceAllocator $allocator,
         private readonly SequenceMetadata $metadata,
         private readonly PropertyAccessorInterface $propertyAccessor,
-    ) {
-    }
+    ) {}
 
     public function prePersist(PrePersistEventArgs $args): void
     {

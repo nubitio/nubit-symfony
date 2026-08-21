@@ -26,16 +26,16 @@ final class GridFilterApplier
      * @var array<string, string>
      */
     private const OPERATOR_MAP = [
-        '='           => '=',
-        '<>'          => '<>',
-        '>'           => '>',
-        '>='          => '>=',
-        '<'           => '<',
-        '<='          => '<=',
-        'contains'    => 'LIKE',
+        '=' => '=',
+        '<>' => '<>',
+        '>' => '>',
+        '>=' => '>=',
+        '<' => '<',
+        '<=' => '<=',
+        'contains' => 'LIKE',
         'notcontains' => 'NOT LIKE',
-        'startswith'  => 'LIKE',
-        'endswith'    => 'LIKE',
+        'startswith' => 'LIKE',
+        'endswith' => 'LIKE',
     ];
 
     /**
@@ -61,7 +61,7 @@ final class GridFilterApplier
         }
 
         $conditions = [];
-        $index      = count($params);
+        $index = count($params);
 
         foreach ($this->flattenRules($filter) as $rule) {
             if (count($rule) < 3) {
@@ -84,9 +84,9 @@ final class GridFilterApplier
                 continue;
             }
 
-            $paramName              = sprintf('grid_filter_%d', $index++);
-            $conditions[]           = sprintf('%s %s :%s', $expression, $sqlOperator, $paramName);
-            $params[$paramName]     = $this->normalizeValue($operator, $value);
+            $paramName = sprintf('grid_filter_%d', $index++);
+            $conditions[] = sprintf('%s %s :%s', $expression, $sqlOperator, $paramName);
+            $params[$paramName] = $this->normalizeValue($operator, $value);
         }
 
         if ($conditions === []) {
@@ -132,9 +132,9 @@ final class GridFilterApplier
 
         return match ($operator) {
             'contains', 'notcontains' => sprintf('%%%s%%', $value),
-            'startswith'              => $value . '%',
-            'endswith'                => '%' . $value,
-            default                   => is_scalar($value) || $value === null ? $value : (string) $value,
+            'startswith' => $value . '%',
+            'endswith' => '%' . $value,
+            default => is_scalar($value) || $value === null ? $value : (string) $value,
         };
     }
 

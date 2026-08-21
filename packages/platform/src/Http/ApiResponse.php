@@ -42,7 +42,7 @@ class ApiResponse extends JsonResponse
         return [
             'success' => $this->success,
             'message' => $this->message,
-            'data'    => $this->payload,
+            'data' => $this->payload,
         ];
     }
 }

@@ -13,8 +13,8 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 final class CurrentRecipientFilterListenerTest extends TestCase
@@ -58,14 +58,18 @@ final class CurrentRecipientFilterListenerTest extends TestCase
         // setParameter() is final on SQLFilter, so it can't be stubbed on a
         // mock — use the real filter and assert on its resulting state.
         $connection = $this->createStub(Connection::class);
-        $connection->method('quote')->willReturnCallback(static fn (string $v) => "'" . $v . "'");
+        $connection->method('quote')->willReturnCallback(static fn(string $v) => "'" . $v . "'");
         $filterEntityManager = $this->createStub(EntityManagerInterface::class);
         $filterEntityManager->method('getConnection')->willReturn($connection);
         $realFilter = new CurrentRecipientFilter($filterEntityManager);
 
         $filters = $this->createMock(FilterCollection::class);
         $filters->method('has')->with('nubit_notification_recipient')->willReturn(true);
-        $filters->expects(static::once())->method('enable')->with('nubit_notification_recipient')->willReturn($realFilter);
+        $filters
+            ->expects(static::once())
+            ->method('enable')
+            ->with('nubit_notification_recipient')
+            ->willReturn($realFilter);
 
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getFilters')->willReturn($filters);

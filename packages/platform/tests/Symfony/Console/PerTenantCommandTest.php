@@ -35,15 +35,18 @@ final class PerTenantCommandTest extends TestCase
 
         self::assertSame(Command::SUCCESS, $exitCode);
         self::assertSame(['acme'], $switcher->tenants);
-        self::assertSame([
-            'tenantId' => 7,
-            'tenantName' => 'acme',
-            'tenantDomain' => 'acme.example.test',
-            'actorIdentifier' => 'cli:app:test-tenants',
-            'channel' => 'cli',
-            'commandName' => 'app:test-tenants',
-            'currentTenantName' => 'acme',
-        ], $command->capturedContext);
+        self::assertSame(
+            [
+                'tenantId' => 7,
+                'tenantName' => 'acme',
+                'tenantDomain' => 'acme.example.test',
+                'actorIdentifier' => 'cli:app:test-tenants',
+                'channel' => 'cli',
+                'commandName' => 'app:test-tenants',
+                'currentTenantName' => 'acme',
+            ],
+            $command->capturedContext,
+        );
         self::assertNull($context->getTenantId());
         self::assertNull($context->getTenantName());
         self::assertNull($context->getActorIdentifier());
@@ -56,8 +59,9 @@ final class RecordingPerTenantCommand extends PerTenantCommand
     /** @var array<string, mixed> */
     public array $capturedContext = [];
 
-    public function __construct(private readonly TenantContext $tenantContext)
-    {
+    public function __construct(
+        private readonly TenantContext $tenantContext,
+    ) {
         parent::__construct();
     }
 
@@ -87,9 +91,9 @@ final readonly class StaticTenantRegistry implements TenantRegistryInterface
     /**
      * @param array<int, array<string, mixed>> $tenants
      */
-    public function __construct(private array $tenants)
-    {
-    }
+    public function __construct(
+        private array $tenants,
+    ) {}
 
     public function getTenants(): array
     {

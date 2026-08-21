@@ -25,10 +25,10 @@ final class AuditTrailListenerTest extends TestCase
 
     protected function setUp(): void
     {
-        $config = ORMSetup::createAttributeMetadataConfiguration(
-            [__DIR__ . '/Fixture', \dirname(__DIR__, 2) . '/src/Audit/Entity'],
-            true,
-        );
+        $config = ORMSetup::createAttributeMetadataConfiguration([
+            __DIR__ . '/Fixture',
+            \dirname(__DIR__, 2) . '/src/Audit/Entity',
+        ], true);
         if (PHP_VERSION_ID >= 80400) {
             $config->enableNativeLazyObjects(true);
         }
@@ -127,8 +127,12 @@ final class AuditTrailListenerTest extends TestCase
     /** @return list<AuditLog> */
     private function allLogs(): array
     {
-        return $this->em->createQueryBuilder()
-            ->select('a')->from(AuditLog::class, 'a')->orderBy('a.id', 'ASC')
-            ->getQuery()->getResult();
+        return $this->em
+            ->createQueryBuilder()
+            ->select('a')
+            ->from(AuditLog::class, 'a')
+            ->orderBy('a.id', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 }

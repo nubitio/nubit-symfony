@@ -55,7 +55,8 @@ final class PurgeMediaCommand extends Command
         $cutoff = (new DateTimeImmutable())->sub(new DateInterval(sprintf('P%dD', max(0, $days))));
 
         /** @var list<Media> $expired */
-        $expired = $this->entityManager->createQueryBuilder()
+        $expired = $this->entityManager
+            ->createQueryBuilder()
             ->select('m')
             ->from(Media::class, 'm')
             ->where('m.deletedAt IS NOT NULL')

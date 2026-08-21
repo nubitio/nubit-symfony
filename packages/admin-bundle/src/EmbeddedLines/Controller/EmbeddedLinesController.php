@@ -21,8 +21,7 @@ final readonly class EmbeddedLinesController
         private EmbeddedLinesRegistry $registry,
         private ManagerRegistry $managerRegistry,
         private EmbeddedLinesRowSerializer $rowSerializer,
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
@@ -44,10 +43,7 @@ final readonly class EmbeddedLinesController
         /** @var class-string $entityClass */
         $entityClass = $definition->entityClass;
         $repository = $manager->getRepository($entityClass);
-        $rows = $repository->findBy(
-            [$definition->parentProperty => $parentId],
-            ['id' => 'ASC'],
-        );
+        $rows = $repository->findBy([$definition->parentProperty => $parentId], ['id' => 'ASC']);
 
         return new JsonResponse($this->rowSerializer->serializeRows($rows, $definition));
     }

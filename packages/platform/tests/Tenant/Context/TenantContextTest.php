@@ -106,6 +106,7 @@ final class TenantContextTest extends TestCase
         self::assertNull($context->getChannel());
         self::assertNull($context->getCommandName());
     }
+
     public function testLegacyCoreContextRemainsCompatibleWithPlatformContext(): void
     {
         $context = new LegacyTenantContext();

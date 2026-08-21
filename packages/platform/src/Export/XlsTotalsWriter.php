@@ -14,10 +14,10 @@ final class XlsTotalsWriter
      */
     public function write(Worksheet $sheet, XlsSheetLayout $layout, array $columns): void
     {
-        $sheet->setCellValue(
-            [$this->firstTextColumn($layout->fields, $columns), $layout->totalsRow],
-            $this->totalsLabel($columns),
-        );
+        $sheet->setCellValue([
+            $this->firstTextColumn($layout->fields, $columns),
+            $layout->totalsRow,
+        ], $this->totalsLabel($columns));
 
         if ($layout->rowCount === 0) {
             return;

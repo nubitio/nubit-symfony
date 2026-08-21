@@ -24,7 +24,8 @@ final class EmailNotificationChannelTest extends TestCase
     {
         $sent = null;
         $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects(static::once())
+        $mailer
+            ->expects(static::once())
             ->method('send')
             ->with(static::callback(function (RawMessage $email) use (&$sent) {
                 $sent = $email;
@@ -51,9 +52,11 @@ final class EmailNotificationChannelTest extends TestCase
     {
         $sent = null;
         $mailer = $this->createStub(MailerInterface::class);
-        $mailer->method('send')->willReturnCallback(function (RawMessage $email) use (&$sent): void {
-            $sent = $email;
-        });
+        $mailer
+            ->method('send')
+            ->willReturnCallback(function (RawMessage $email) use (&$sent): void {
+                $sent = $email;
+            });
 
         $channel = new EmailNotificationChannel($mailer, 'no-reply@nubit.io');
         $channel->send(new NotificationMessage(

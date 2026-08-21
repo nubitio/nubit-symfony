@@ -8,18 +8,25 @@ use Doctrine\DBAL\Connection;
 use Doctrine\Persistence\ConnectionRegistry;
 use Nubit\Platform\Exception\ServiceException;
 use Nubit\TenantBundle\Switcher\PostgresSchemaTenantConnectionSwitcher;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 
 final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
 {
     public function testBuildsSchemaFromPositiveTenantIdAndQuotesEveryIdentifier(): void
     {
         $connection = $this->connection(false);
-        $connection->expects(self::once())->method('executeStatement')
+        $connection
+            ->expects(self::once())
+            ->method('executeStatement')
             ->with('SET search_path TO "tenant_42", "public", "extensions"');
 
-        $switcher = new PostgresSchemaTenantConnectionSwitcher($this->registry($connection), 'tenant', 'tenant_', ['public', 'extensions']);
+        $switcher = new PostgresSchemaTenantConnectionSwitcher(
+            $this->registry($connection),
+            'tenant',
+            'tenant_',
+            ['public', 'extensions'],
+        );
         $switcher->switchToTenantId(42);
 
         self::assertSame('tenant_42', $switcher->schemaForTenantId(42));
@@ -28,10 +35,15 @@ final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
     public function testResetUsesConfiguredBaseSchemasInsteadOfReset(): void
     {
         $connection = $this->connection(false);
-        $connection->expects(self::once())->method('executeStatement')
+        $connection
+            ->expects(self::once())
+            ->method('executeStatement')
             ->with('SET search_path TO "public", "extensions"');
 
-        (new PostgresSchemaTenantConnectionSwitcher($this->registry($connection), baseSchemas: ['public', 'extensions']))->resetSearchPath();
+        (new PostgresSchemaTenantConnectionSwitcher(
+            $this->registry($connection),
+            baseSchemas: ['public', 'extensions'],
+        ))->resetSearchPath();
     }
 
     public function testRejectsSwitchAndResetDuringTransaction(): void
@@ -41,8 +53,8 @@ final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
         $switcher = new PostgresSchemaTenantConnectionSwitcher($this->registry($connection));
 
         foreach ([
-            static fn () => $switcher->switchToTenantId(1),
-            static fn () => $switcher->resetSearchPath(),
+            static fn() => $switcher->switchToTenantId(1),
+            static fn() => $switcher->resetSearchPath(),
         ] as $operation) {
             try {
                 $operation();
@@ -72,7 +84,10 @@ final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
 
     public function testRejectsNonPositiveIdsAndFinalNamesOverPostgresLimit(): void
     {
-        $switcher = new PostgresSchemaTenantConnectionSwitcher($this->registry($this->stubConnection()), schemaPrefix: str_repeat('a', 63));
+        $switcher = new PostgresSchemaTenantConnectionSwitcher(
+            $this->registry($this->stubConnection()),
+            schemaPrefix: str_repeat('a', 63),
+        );
 
         try {
             $switcher->switchToTenantId(0);

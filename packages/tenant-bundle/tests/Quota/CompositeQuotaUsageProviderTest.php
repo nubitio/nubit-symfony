@@ -14,10 +14,12 @@ final class CompositeQuotaUsageProviderTest extends TestCase
     public function testDelegatesToSupportingProvider(): void
     {
         $primary = $this->createStub(QuotaUsageProviderInterface::class);
-        $primary->method('supports')->willReturnMap([
-            ['team_users', true],
-            ['orders', false],
-        ]);
+        $primary
+            ->method('supports')
+            ->willReturnMap([
+                ['team_users', true],
+                ['orders', false],
+            ]);
         $primary->method('count')->willReturn(4);
 
         $secondary = $this->createStub(QuotaUsageProviderInterface::class);

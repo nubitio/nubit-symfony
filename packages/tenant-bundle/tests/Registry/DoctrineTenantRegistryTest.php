@@ -14,7 +14,8 @@ final class DoctrineTenantRegistryTest extends TestCase
     public function testFindByNameMapsAnEntityReturnedByDoctrine(): void
     {
         $repository = $this->createMock(EntityRepository::class);
-        $repository->expects(self::once())
+        $repository
+            ->expects(self::once())
             ->method('findOneBy')
             ->with(['slug' => 'acme'])
             ->willReturn(new TenantEntityFixture(42, 'Acme Inc.', 'acme'));
@@ -50,8 +51,7 @@ final readonly class TenantEntityFixture
         private int $id,
         private string $name,
         private string $slug,
-    ) {
-    }
+    ) {}
 
     public function getId(): int
     {

@@ -23,8 +23,7 @@ final class WorkflowDocumentationNormalizer implements NormalizerInterface
         private readonly WorkflowRegistry $registry,
         private readonly ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
         private readonly ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
-    ) {
-    }
+    ) {}
 
     /** @return array<mixed> */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array

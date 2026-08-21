@@ -38,12 +38,7 @@ final class WorkflowMetadataTest extends TestCase
     }
 }
 
-#[Workflow(
-    field: 'status',
-    transitions: [
-        'approve' => ['from' => ['draft'], 'to' => 'approved'],
-    ],
-)]
-final class WorkflowEntity
-{
-}
+#[Workflow(field: 'status', transitions: [
+    'approve' => ['from' => ['draft'], 'to' => 'approved'],
+])]
+final class WorkflowEntity {}

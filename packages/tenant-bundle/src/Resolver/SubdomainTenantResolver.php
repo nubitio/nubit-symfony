@@ -13,8 +13,7 @@ final readonly class SubdomainTenantResolver implements TenantResolverInterface
     public function __construct(
         private TenantRegistryInterface $tenantRegistry,
         private string $baseDomain = '',
-    ) {
-    }
+    ) {}
 
     public function resolve(Request $request, ?UserInterface $user): ?ResolvedTenant
     {
@@ -32,8 +31,8 @@ final readonly class SubdomainTenantResolver implements TenantResolverInterface
 
     private function extractSlug(string $host): ?string
     {
-        if ('' !== $this->baseDomain && str_ends_with($host, '.'.$this->baseDomain)) {
-            $slug = substr($host, offset: 0, length: -strlen('.'.$this->baseDomain));
+        if ('' !== $this->baseDomain && str_ends_with($host, '.' . $this->baseDomain)) {
+            $slug = substr($host, offset: 0, length: -strlen('.' . $this->baseDomain));
 
             return '' !== $slug ? $slug : null;
         }

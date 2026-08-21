@@ -80,23 +80,23 @@ final class TenantMiddlewareTest extends TestCase
             ];
         });
 
-        (new TenantContextMiddleware($context, $switcher))->handle(
-            new Envelope(new \stdClass(), [
-                new TenantStamp(42, 'acme', 'acme.example.test', 'req-42'),
-                new ActorStamp('user:99', 'http', 'invoice:create'),
-            ]),
-            $stack,
-        );
+        (new TenantContextMiddleware($context, $switcher))->handle(new Envelope(new \stdClass(), [
+            new TenantStamp(42, 'acme', 'acme.example.test', 'req-42'),
+            new ActorStamp('user:99', 'http', 'invoice:create'),
+        ]), $stack);
 
-        self::assertSame([
-            'tenantId' => 42,
-            'tenantName' => 'acme',
-            'tenantDomain' => 'acme.example.test',
-            'requestId' => 'req-42',
-            'actorIdentifier' => 'user:99',
-            'channel' => 'messenger',
-            'commandName' => 'invoice:create',
-        ], $captured);
+        self::assertSame(
+            [
+                'tenantId' => 42,
+                'tenantName' => 'acme',
+                'tenantDomain' => 'acme.example.test',
+                'requestId' => 'req-42',
+                'actorIdentifier' => 'user:99',
+                'channel' => 'messenger',
+                'commandName' => 'invoice:create',
+            ],
+            $captured,
+        );
         self::assertNull($context->getTenantName());
         self::assertNull($context->getActorIdentifier());
         self::assertNull($context->getChannel());
@@ -108,10 +108,12 @@ final class TenantMiddlewareTest extends TestCase
         $switcher = new RecordingTenantConnectionSwitcher();
 
         try {
-            (new TenantContextMiddleware($context, $switcher))->handle(
-                new Envelope(new \stdClass(), [new TenantStamp(42, 'acme', null, null)]),
-                $this->throwingStack(new \RuntimeException('handler failed')),
-            );
+            (new TenantContextMiddleware($context, $switcher))->handle(new Envelope(new \stdClass(), [new TenantStamp(
+                42,
+                'acme',
+                null,
+                null,
+            )]), $this->throwingStack(new \RuntimeException('handler failed')));
             self::fail('Expected handler exception to bubble.');
         } catch (\RuntimeException $exception) {
             self::assertSame('handler failed', $exception->getMessage());
@@ -125,7 +127,7 @@ final class TenantMiddlewareTest extends TestCase
 
     private function passthroughStack(): StackInterface
     {
-        return $this->stackReturning(new class () implements MiddlewareInterface {
+        return $this->stackReturning(new class() implements MiddlewareInterface {
             public function handle(Envelope $envelope, StackInterface $stack): Envelope
             {
                 return $envelope;
@@ -135,10 +137,10 @@ final class TenantMiddlewareTest extends TestCase
 
     private function capturingStack(\Closure $callback): StackInterface
     {
-        return $this->stackReturning(new class ($callback) implements MiddlewareInterface {
-            public function __construct(private readonly \Closure $callback)
-            {
-            }
+        return $this->stackReturning(new class($callback) implements MiddlewareInterface {
+            public function __construct(
+                private readonly \Closure $callback,
+            ) {}
 
             public function handle(Envelope $envelope, StackInterface $stack): Envelope
             {
@@ -151,10 +153,10 @@ final class TenantMiddlewareTest extends TestCase
 
     private function throwingStack(\Throwable $throwable): StackInterface
     {
-        return $this->stackReturning(new class ($throwable) implements MiddlewareInterface {
-            public function __construct(private readonly \Throwable $throwable)
-            {
-            }
+        return $this->stackReturning(new class($throwable) implements MiddlewareInterface {
+            public function __construct(
+                private readonly \Throwable $throwable,
+            ) {}
 
             public function handle(Envelope $envelope, StackInterface $stack): Envelope
             {
@@ -172,9 +174,9 @@ final class TenantMiddlewareTest extends TestCase
 /** @internal */
 final readonly class SingleMiddlewareStack implements StackInterface
 {
-    public function __construct(private MiddlewareInterface $middleware)
-    {
-    }
+    public function __construct(
+        private MiddlewareInterface $middleware,
+    ) {}
 
     public function next(): MiddlewareInterface
     {

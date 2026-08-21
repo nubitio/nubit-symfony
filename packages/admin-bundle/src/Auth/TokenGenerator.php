@@ -20,8 +20,7 @@ final readonly class TokenGenerator
         private RefreshTokenStoreInterface $refreshTokenStore,
         private int $accessTokenTtl,
         private int $refreshTokenTtl,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<string, mixed> $previousClaims Claims of the rotated token on refresh.

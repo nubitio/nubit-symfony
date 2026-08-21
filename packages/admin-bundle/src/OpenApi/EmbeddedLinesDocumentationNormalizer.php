@@ -23,8 +23,7 @@ final class EmbeddedLinesDocumentationNormalizer implements NormalizerInterface
         private readonly EmbeddedLinesRegistry $registry,
         private readonly ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
         private readonly ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
-    ) {
-    }
+    ) {}
 
     /** @return array<mixed> */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array

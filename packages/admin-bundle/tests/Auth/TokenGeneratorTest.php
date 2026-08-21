@@ -6,8 +6,8 @@ namespace Nubit\AdminBundle\Tests\Auth;
 
 use Nubit\AdminBundle\Auth\DefaultTokenClaimsProvider;
 use Nubit\AdminBundle\Auth\JWTManager;
-use Nubit\AdminBundle\Tests\Support\InMemoryRefreshTokenStore;
 use Nubit\AdminBundle\Auth\TokenGenerator;
+use Nubit\AdminBundle\Tests\Support\InMemoryRefreshTokenStore;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Security\Core\User\InMemoryUser;

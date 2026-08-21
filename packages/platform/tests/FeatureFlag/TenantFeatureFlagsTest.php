@@ -15,15 +15,22 @@ final class TenantFeatureFlagsTest extends TestCase
     public function testBuildsTenantAwareEvaluationContext(): void
     {
         $provider = $this->createMock(FeatureFlagProviderInterface::class);
-        $provider->expects(self::once())->method('boolean')->with(
-            'new-grid',
-            false,
-            self::callback(static fn (FeatureFlagContext $context): bool =>
-                '42' === $context->targetingKey
-                && 42 === $context->tenantId
-                && 'acme' === $context->tenantName
-                && 'acme.example.test' === $context->attributes['tenant_domain']),
-        )->willReturn(true);
+        $provider
+            ->expects(self::once())
+            ->method('boolean')
+            ->with(
+                'new-grid',
+                false,
+                self::callback(
+                    static fn(FeatureFlagContext $context): bool => (
+                        '42' === $context->targetingKey
+                        && 42 === $context->tenantId
+                        && 'acme' === $context->tenantName
+                        && 'acme.example.test' === $context->attributes['tenant_domain']
+                    ),
+                ),
+            )
+            ->willReturn(true);
         $tenantContext = new TenantContext();
         $tenantContext->setTenant(42, 'acme', 'acme.example.test', 'req-42');
 

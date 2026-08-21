@@ -14,9 +14,9 @@ final class FakeChannel implements NotificationChannelInterface
     /** @var list<NotificationMessage> */
     public array $sent = [];
 
-    public function __construct(private readonly string $identifier)
-    {
-    }
+    public function __construct(
+        private readonly string $identifier,
+    ) {}
 
     public function getIdentifier(): string
     {
@@ -38,7 +38,7 @@ final class SendNotificationHandlerTest extends TestCase
         $handler = new SendNotificationHandler([$email, $slack]);
 
         $message = new NotificationMessage('ops@acme.test', 'Subject', 'Body');
-        ($handler)($message);
+        $handler($message);
 
         static::assertSame([$message], $email->sent);
         static::assertSame([$message], $slack->sent);
@@ -51,7 +51,7 @@ final class SendNotificationHandlerTest extends TestCase
         $handler = new SendNotificationHandler([$email, $slack]);
 
         $message = new NotificationMessage('ops@acme.test', 'Subject', 'Body', channels: ['slack']);
-        ($handler)($message);
+        $handler($message);
 
         static::assertSame([], $email->sent);
         static::assertSame([$message], $slack->sent);
@@ -63,7 +63,7 @@ final class SendNotificationHandlerTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
 
-        ($handler)(new NotificationMessage('ops@acme.test', 'Subject', 'Body', channels: ['sms']));
+        $handler(new NotificationMessage('ops@acme.test', 'Subject', 'Body', channels: ['sms']));
     }
 
     public function testThrowsWhenNoChannelsAreRegisteredAtAll(): void
@@ -72,6 +72,6 @@ final class SendNotificationHandlerTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
 
-        ($handler)(new NotificationMessage('ops@acme.test', 'Subject', 'Body'));
+        $handler(new NotificationMessage('ops@acme.test', 'Subject', 'Body'));
     }
 }

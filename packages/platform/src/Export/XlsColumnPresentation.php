@@ -8,7 +8,7 @@ final readonly class XlsColumnPresentation
 {
     public function __construct(
         public ?string $format = null,
-        public null|float|string $width = null,
+        public float|string|null $width = null,
         public ?string $alignment = null,
         public ?XlsValidationSpec $validation = null,
     ) {}

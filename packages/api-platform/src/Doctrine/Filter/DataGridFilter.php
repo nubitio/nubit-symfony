@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Nubit\ApiPlatform\Doctrine\Filter;
 
-use Override;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
@@ -125,13 +125,13 @@ class DataGridFilter extends AbstractFilter
      * Resolves a (possibly virtual) field name to its DQL expression.
      * Virtual fields may add their own joins to the QueryBuilder.
      */
-    private function resolveFieldExpression(
-        QueryBuilder $queryBuilder,
-        string $resourceClass,
-        string $field,
-    ): string {
-        $expression = $this->findVirtualField($resourceClass, $field)
-            ?->expression($queryBuilder, $resourceClass, $field);
+    private function resolveFieldExpression(QueryBuilder $queryBuilder, string $resourceClass, string $field): string
+    {
+        $expression = $this->findVirtualField($resourceClass, $field)?->expression(
+            $queryBuilder,
+            $resourceClass,
+            $field,
+        );
 
         return $expression ?? sprintf('o.%s', $field);
     }
@@ -147,7 +147,7 @@ class DataGridFilter extends AbstractFilter
 
             $queryBuilder->addOrderBy(
                 $this->resolveFieldExpression($queryBuilder, $resourceClass, $field),
-                $isDesc ? 'DESC' : 'ASC'
+                $isDesc ? 'DESC' : 'ASC',
             );
         }
     }
@@ -168,11 +168,8 @@ class DataGridFilter extends AbstractFilter
     /**
      * @param array<int, mixed> $filter
      */
-    private function applyFilter(
-        QueryBuilder $queryBuilder,
-        string $resourceClass,
-        array $filter,
-    ): void {
+    private function applyFilter(QueryBuilder $queryBuilder, string $resourceClass, array $filter): void
+    {
         foreach ($filter as $filterParam) {
             if (is_string($filterParam)) {
                 continue;
@@ -202,33 +199,26 @@ class DataGridFilter extends AbstractFilter
 
             if ('isnull' === $op || 'isnotnull' === $op) {
                 $operator = GridFilterHelper::dqlOperator($op);
-                $queryBuilder->andWhere(
-                    sprintf('o.%s %s', $field, $operator)
-                );
+                $queryBuilder->andWhere(sprintf('o.%s %s', $field, $operator));
             } elseif ('in' === $op) {
-                $uniqueParameterName = GridFilterHelper::uniqueParameterName(
-                    $queryBuilder,
-                    $field
-                );
-                $queryBuilder->andWhere(
-                    sprintf('o.%s IN (:%s)', $field, $uniqueParameterName)
-                )
-                    ->setParameter(
-                        $uniqueParameterName,
-                        array_map($this->normalizeRelationIdentifier(...), (array) $filterParam[2])
-                    );
+                $uniqueParameterName = GridFilterHelper::uniqueParameterName($queryBuilder, $field);
+                $queryBuilder->andWhere(sprintf(
+                    'o.%s IN (:%s)',
+                    $field,
+                    $uniqueParameterName,
+                ))->setParameter($uniqueParameterName, array_map(
+                    $this->normalizeRelationIdentifier(...),
+                    (array) $filterParam[2],
+                ));
             } else {
                 $operator = GridFilterHelper::dqlOperator($op);
                 $rawValue = $filterParam[2] ?? null;
                 $value = GridFilterHelper::valueForOperator($op, $this->normalizeRelationIdentifier($rawValue));
-                $uniqueParameterName = GridFilterHelper::uniqueParameterName(
-                    $queryBuilder,
-                    $field
+                $uniqueParameterName = GridFilterHelper::uniqueParameterName($queryBuilder, $field);
+                $queryBuilder->andWhere(sprintf('o.%s %s :%s', $field, $operator, $uniqueParameterName))->setParameter(
+                    $uniqueParameterName,
+                    $value,
                 );
-                $queryBuilder->andWhere(
-                    sprintf('o.%s %s :%s', $field, $operator, $uniqueParameterName)
-                )
-                    ->setParameter($uniqueParameterName, $value);
             }
         }
     }

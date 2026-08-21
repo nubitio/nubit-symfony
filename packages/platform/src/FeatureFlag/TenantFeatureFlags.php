@@ -12,8 +12,7 @@ final readonly class TenantFeatureFlags
     public function __construct(
         private FeatureFlagProviderInterface $provider,
         private TenantContext $tenantContext,
-    ) {
-    }
+    ) {}
 
     public function boolean(string $key, bool $default = false): bool
     {

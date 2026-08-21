@@ -24,8 +24,7 @@ final readonly class OidcRedirectController
         private OidcDiscoveryClient $discoveryClient,
         private OidcFlowStateCodec $flowStateCodec,
         private CookieFactory $cookieFactory,
-    ) {
-    }
+    ) {}
 
     public function __invoke(string $provider): Response
     {
@@ -42,16 +41,19 @@ final readonly class OidcRedirectController
 
         $flowState = new OidcFlowState($config->name, $state, $nonce, $codeVerifier, time());
 
-        $authorizationUrl = $discovery->authorizationEndpoint . '?' . http_build_query([
-            'response_type' => 'code',
-            'client_id' => $config->clientId,
-            'redirect_uri' => $config->redirectUri,
-            'scope' => implode(' ', $config->scopes),
-            'state' => $state,
-            'nonce' => $nonce,
-            'code_challenge' => Pkce::challengeFor($codeVerifier),
-            'code_challenge_method' => 'S256',
-        ]);
+        $authorizationUrl =
+            $discovery->authorizationEndpoint
+            . '?'
+            . http_build_query([
+                'response_type' => 'code',
+                'client_id' => $config->clientId,
+                'redirect_uri' => $config->redirectUri,
+                'scope' => implode(' ', $config->scopes),
+                'state' => $state,
+                'nonce' => $nonce,
+                'code_challenge' => Pkce::challengeFor($codeVerifier),
+                'code_challenge_method' => 'S256',
+            ]);
 
         $response = new RedirectResponse($authorizationUrl);
         // SameSite=Lax (not the codebase's usual Strict): the browser sends

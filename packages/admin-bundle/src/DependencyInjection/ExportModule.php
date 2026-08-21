@@ -12,9 +12,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurat
 
 final class ExportModule
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public static function load(DefaultsConfigurator $services): void
     {
@@ -23,7 +21,7 @@ final class ExportModule
         if (!class_exists(Spreadsheet::class)) {
             throw new LogicException(
                 'nubit_admin.export.enabled requires phpoffice/phpspreadsheet (and ext-zip). '
-                    . 'Run: composer require phpoffice/phpspreadsheet',
+                . 'Run: composer require phpoffice/phpspreadsheet',
             );
         }
 

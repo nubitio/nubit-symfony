@@ -11,10 +11,10 @@ use Nubit\Platform\Export\XlsSheetOptions;
 use Nubit\Platform\Export\XlsTableOptions;
 use Nubit\Platform\Export\XlsValidationSpec;
 use Nubit\Platform\Export\XlsWorkbookBuilder;
-use PhpOffice\PhpSpreadsheet\Settings;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Settings;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\CacheInterface;
 
@@ -41,7 +41,12 @@ final class XlsExporterTest extends TestCase
             'document' => 'Comprobante',
             'customer_name' => 'Cliente',
             'quantity' => ['label' => 'Cantidad', 'type' => 'number'],
-            'unit_price' => ['label' => 'Precio unit.', 'type' => 'number', 'format' => '#,##0.00', 'summary' => 'none'],
+            'unit_price' => [
+                'label' => 'Precio unit.',
+                'type' => 'number',
+                'format' => '#,##0.00',
+                'summary' => 'none',
+            ],
             'total' => ['label' => 'Total', 'type' => 'number', 'format' => '#,##0.00'],
         ]);
 
@@ -151,10 +156,12 @@ final class XlsExporterTest extends TestCase
                     'status' => XlsColumnSpec::text('Status')
                         ->withWidth(16)
                         ->withValidation(XlsValidationSpec::list(['paid', 'void'])),
-                    'quantity' => XlsColumnSpec::integer('Qty')
-                        ->withSummary(XlsColumn::SUMMARY_MAX),
-                    'amount' => XlsColumnSpec::number('Amount', '#,##0.00')
-                        ->withSummary(XlsColumn::SUMMARY_CUSTOM, '=SUM({range})/2', 'TOTAL'),
+                    'quantity' => XlsColumnSpec::integer('Qty')->withSummary(XlsColumn::SUMMARY_MAX),
+                    'amount' => XlsColumnSpec::number('Amount', '#,##0.00')->withSummary(
+                        XlsColumn::SUMMARY_CUSTOM,
+                        '=SUM({range})/2',
+                        'TOTAL',
+                    ),
                 ],
                 options: new XlsSheetOptions(
                     title: 'Sales',
@@ -226,7 +233,7 @@ final class XlsExporterTest extends TestCase
                 return $this->values[$key] ?? $default;
             }
 
-            public function set(string $key, mixed $value, null|int|\DateInterval $ttl = null): bool
+            public function set(string $key, mixed $value, int|\DateInterval|null $ttl = null): bool
             {
                 $this->values[$key] = $value;
 
@@ -254,7 +261,7 @@ final class XlsExporterTest extends TestCase
                 }
             }
 
-            public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool
+            public function setMultiple(iterable $values, int|\DateInterval|null $ttl = null): bool
             {
                 foreach ($values as $key => $value) {
                     $this->set((string) $key, $value, $ttl);

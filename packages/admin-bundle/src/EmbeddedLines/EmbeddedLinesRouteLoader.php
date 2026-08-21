@@ -15,8 +15,7 @@ final class EmbeddedLinesRouteLoader extends Loader
 
     public function __construct(
         private readonly EmbeddedLinesRegistry $registry,
-    ) {
-    }
+    ) {}
 
     public function load(mixed $resource, ?string $type = null): RouteCollection
     {
@@ -29,11 +28,7 @@ final class EmbeddedLinesRouteLoader extends Loader
         foreach ($this->registry->all() as $definition) {
             $collection->add(
                 $definition->routeName,
-                new Route(
-                    $definition->routePath,
-                    ['_controller' => EmbeddedLinesController::class],
-                    methods: ['GET'],
-                ),
+                new Route($definition->routePath, ['_controller' => EmbeddedLinesController::class], methods: ['GET']),
             );
         }
 

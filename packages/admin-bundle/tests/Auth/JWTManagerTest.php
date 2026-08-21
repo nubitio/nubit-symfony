@@ -60,11 +60,11 @@ final class JWTManagerTest extends TestCase
         $payload = self::base64UrlEncode(json_encode(['username' => 'jane', 'exp' => 'tomorrow'], JSON_THROW_ON_ERROR));
         $signature = self::base64UrlEncode(hash_hmac(
             'sha256',
-            $header.'.'.$payload,
+            $header . '.' . $payload,
             'test-secret-key-with-32-or-more-chars!',
             true,
         ));
-        $token = $header.'.'.$payload.'.'.$signature;
+        $token = $header . '.' . $payload . '.' . $signature;
 
         self::assertTrue($this->manager->isExpired($token));
     }

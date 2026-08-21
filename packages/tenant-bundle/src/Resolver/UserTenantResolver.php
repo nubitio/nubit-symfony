@@ -21,10 +21,6 @@ final class UserTenantResolver implements TenantResolverInterface
             return null;
         }
 
-        return new ResolvedTenant(
-            $tenantId,
-            $user->getTenantName(),
-            $user->getTenantDomain(),
-        );
+        return new ResolvedTenant($tenantId, $user->getTenantName(), $user->getTenantDomain());
     }
 }

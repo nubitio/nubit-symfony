@@ -11,8 +11,7 @@ final readonly class OidcDiscoveryDocument
         public string $authorizationEndpoint,
         public string $tokenEndpoint,
         public string $jwksUri,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<string, mixed> $document

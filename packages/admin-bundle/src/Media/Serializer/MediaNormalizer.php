@@ -20,8 +20,7 @@ final readonly class MediaNormalizer implements NormalizerInterface
 {
     public function __construct(
         private MediaUrlResolverInterface $urlResolver,
-    ) {
-    }
+    ) {}
 
     /**
      * @param Media $data

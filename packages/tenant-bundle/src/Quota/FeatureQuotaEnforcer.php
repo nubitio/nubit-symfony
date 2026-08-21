@@ -17,8 +17,7 @@ final readonly class FeatureQuotaEnforcer implements QuotaEnforcerInterface
     public function __construct(
         private FeatureCheckerInterface $featureChecker,
         private QuotaUsageProviderInterface $usageProvider,
-    ) {
-    }
+    ) {}
 
     public function enforce(string $resource): void
     {
@@ -43,7 +42,5 @@ final readonly class FeatureQuotaEnforcer implements QuotaEnforcerInterface
         }
     }
 
-    public function releaseLocks(): void
-    {
-    }
+    public function releaseLocks(): void {}
 }

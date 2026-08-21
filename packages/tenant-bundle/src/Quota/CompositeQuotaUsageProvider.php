@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\TenantBundle\Quota;
 
-use Nubit\TenantBundle\Contract\QuotaUsageProviderInterface;
 use Nubit\Platform\Exception\ServiceException;
+use Nubit\TenantBundle\Contract\QuotaUsageProviderInterface;
 
 /**
  * @internal
@@ -15,8 +15,7 @@ final readonly class CompositeQuotaUsageProvider implements QuotaUsageProviderIn
     /** @param iterable<QuotaUsageProviderInterface> $providers */
     public function __construct(
         private iterable $providers,
-    ) {
-    }
+    ) {}
 
     public function supports(string $resource): bool
     {

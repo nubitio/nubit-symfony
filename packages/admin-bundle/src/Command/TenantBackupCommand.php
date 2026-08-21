@@ -29,8 +29,19 @@ final class TenantBackupCommand extends Command
     {
         $this
             ->addArgument('tenant', InputArgument::REQUIRED, 'Tenant name to back up.')
-            ->addOption('type', null, InputOption::VALUE_REQUIRED, 'Backup type label (e.g. full, incremental).', 'full')
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Run pg_dump but discard the result instead of persisting it.');
+            ->addOption(
+                'type',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Backup type label (e.g. full, incremental).',
+                'full',
+            )
+            ->addOption(
+                'dry-run',
+                null,
+                InputOption::VALUE_NONE,
+                'Run pg_dump but discard the result instead of persisting it.',
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

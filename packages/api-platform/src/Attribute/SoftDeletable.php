@@ -18,6 +18,5 @@ final readonly class SoftDeletable
 {
     public function __construct(
         public string $column = 'deleted_at',
-    ) {
-    }
+    ) {}
 }

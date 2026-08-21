@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Observability\Logging;
 
-use Nubit\Platform\Tenant\Context\TenantContext;
 use Monolog\LogRecord;
+use Nubit\Platform\Tenant\Context\TenantContext;
 use OpenTelemetry\API\Trace\Span;
 
 class TenantLogProcessor
 {
     public function __construct(
         private readonly TenantContext $tenantContext,
-    ) {
-    }
+    ) {}
 
     public function __invoke(LogRecord $record): LogRecord
     {

@@ -22,8 +22,7 @@ final readonly class WorkflowEngine
         private AuthorizationCheckerInterface $authorizationChecker,
         private ContainerInterface $guardLocator,
         private EventDispatcherInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function apply(object $entity, WorkflowDefinition $definition, string $transitionName): object
     {
@@ -40,7 +39,11 @@ final readonly class WorkflowEngine
 
         foreach ($transition->roles as $role) {
             if (!$this->authorizationChecker->isGranted($role)) {
-                throw new AccessDeniedException(sprintf('Role "%s" is required for transition "%s".', $role, $transitionName));
+                throw new AccessDeniedException(sprintf(
+                    'Role "%s" is required for transition "%s".',
+                    $role,
+                    $transitionName,
+                ));
             }
         }
 
@@ -64,12 +67,9 @@ final readonly class WorkflowEngine
         $this->entityManager->persist($entity);
         $this->entityManager->flush();
 
-        $this->eventDispatcher->dispatch(new WorkflowTransitionAppliedEvent(
-            $entity,
-            $definition,
-            $transition,
-            $current,
-        ));
+        $this->eventDispatcher->dispatch(
+            new WorkflowTransitionAppliedEvent($entity, $definition, $transition, $current),
+        );
 
         return $entity;
     }
@@ -88,7 +88,10 @@ final readonly class WorkflowEngine
 
         $instance = new $guardClass();
         if (!$instance instanceof WorkflowGuardInterface) {
-            throw new \InvalidArgumentException(sprintf('Guard "%s" must implement WorkflowGuardInterface.', $guardClass));
+            throw new \InvalidArgumentException(sprintf(
+                'Guard "%s" must implement WorkflowGuardInterface.',
+                $guardClass,
+            ));
         }
 
         return $instance;

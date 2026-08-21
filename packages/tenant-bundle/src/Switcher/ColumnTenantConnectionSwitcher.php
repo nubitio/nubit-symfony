@@ -12,7 +12,5 @@ use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
  */
 final class ColumnTenantConnectionSwitcher implements TenantConnectionSwitcherInterface
 {
-    public function switchConnection(string $tenant): void
-    {
-    }
+    public function switchConnection(string $tenant): void {}
 }

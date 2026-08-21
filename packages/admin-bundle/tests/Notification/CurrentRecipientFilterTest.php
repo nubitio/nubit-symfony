@@ -7,8 +7,8 @@ namespace Nubit\AdminBundle\Tests\Notification;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use Nubit\AdminBundle\Notification\Entity\Notification;
+use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use PHPUnit\Framework\TestCase;
 
 final class CurrentRecipientFilterTest extends TestCase
@@ -32,7 +32,7 @@ final class CurrentRecipientFilterTest extends TestCase
     public function testConstrainsToTheRecipientParameterWhenSet(): void
     {
         $connection = $this->createStub(Connection::class);
-        $connection->method('quote')->willReturnCallback(static fn (string $value) => "'" . $value . "'");
+        $connection->method('quote')->willReturnCallback(static fn(string $value) => "'" . $value . "'");
 
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getConnection')->willReturn($connection);

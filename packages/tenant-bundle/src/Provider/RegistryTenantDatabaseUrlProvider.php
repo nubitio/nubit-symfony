@@ -13,14 +13,15 @@ use Nubit\TenantBundle\Isolation\TenantIsolationTarget;
 /**
  * Reads {@code databaseUrl} from the control-plane tenant entity (by slug or id).
  */
-final readonly class RegistryTenantDatabaseUrlProvider implements TenantDatabaseUrlProviderInterface, TenantIsolationTargetProviderInterface
+final readonly class RegistryTenantDatabaseUrlProvider implements
+    TenantDatabaseUrlProviderInterface,
+    TenantIsolationTargetProviderInterface
 {
     /** @param class-string $tenantEntityClass */
     public function __construct(
         private EntityManagerInterface $controlPlaneEntityManager,
         private string $tenantEntityClass,
-    ) {
-    }
+    ) {}
 
     public function resolveDatabaseUrl(string $tenantName, ?int $tenantId = null): ?string
     {
@@ -59,7 +60,10 @@ final readonly class RegistryTenantDatabaseUrlProvider implements TenantDatabase
         /** @var mixed $mode */
         $mode = $tenant->getIsolationMode();
         if (!is_string($mode)) {
-            throw new ServiceException(sprintf('Tenant entity "%s" returned an invalid isolation mode.', $this->tenantEntityClass));
+            throw new ServiceException(sprintf(
+                'Tenant entity "%s" returned an invalid isolation mode.',
+                $this->tenantEntityClass,
+            ));
         }
 
         if (TenantIsolationTarget::SCHEMA === $mode) {
@@ -84,8 +88,9 @@ final readonly class RegistryTenantDatabaseUrlProvider implements TenantDatabase
         $tenant = null !== $tenantId ? $repository->find($tenantId) : null;
 
         if (null === $tenant && '' !== $tenantName) {
-            $tenant = $repository->findOneBy(['slug' => $tenantName])
-                ?? $repository->findOneBy(['name' => $tenantName]);
+            $tenant = $repository->findOneBy(['slug' => $tenantName]) ?? $repository->findOneBy([
+                'name' => $tenantName,
+            ]);
         }
 
         return $tenant;

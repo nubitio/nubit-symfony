@@ -63,14 +63,7 @@ final class CookieFactoryTest extends TestCase
     public function testCreateSecureCookieAcceptsCustomSameSite(): void
     {
         $factory = new CookieFactory();
-        $cookie = $factory->createSecureCookie(
-            'token',
-            'v',
-            time() + 3600,
-            '/',
-            null,
-            Cookie::SAMESITE_LAX,
-        );
+        $cookie = $factory->createSecureCookie('token', 'v', time() + 3600, '/', null, Cookie::SAMESITE_LAX);
 
         self::assertSame(Cookie::SAMESITE_LAX, $cookie->getSameSite());
     }

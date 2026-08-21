@@ -22,18 +22,20 @@ final readonly class TransitionDefinition
         public array $roles = [],
         public ?string $guard = null,
         public array $set = [],
-    ) {
-    }
+    ) {}
 
     /** @return array<string, mixed> */
     public function toOpenApi(): array
     {
-        return array_filter([
-            'name' => $this->name,
-            'from' => $this->from,
-            'to' => $this->to,
-            'label' => $this->label,
-            'roles' => $this->roles !== [] ? $this->roles : null,
-        ], static fn (mixed $value): bool => $value !== null);
+        return array_filter(
+            [
+                'name' => $this->name,
+                'from' => $this->from,
+                'to' => $this->to,
+                'label' => $this->label,
+                'roles' => $this->roles !== [] ? $this->roles : null,
+            ],
+            static fn(mixed $value): bool => $value !== null,
+        );
     }
 }

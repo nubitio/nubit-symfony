@@ -44,9 +44,10 @@ final class AnalyticsModule
         $services->alias(AnalyticsDeduplicatorInterface::class, InMemoryAnalyticsDeduplicator::class);
         $services->set(DoctrineOutboxAnalyticsProvider::class);
         $services->alias(AnalyticsProviderInterface::class, DoctrineOutboxAnalyticsProvider::class);
-        $services->set(AnalyticsPublisher::class)
-            ->arg('$redactor', service('nubit.analytics.redactor'))
-            ->arg('$enabled', $config['enabled']);
+        $services->set(AnalyticsPublisher::class)->arg('$redactor', service('nubit.analytics.redactor'))->arg(
+            '$enabled',
+            $config['enabled'],
+        );
 
         if ('' !== trim($config['delivery_endpoint'])) {
             $services->set(WebhookAnalyticsDeliveryProvider::class)->arg(

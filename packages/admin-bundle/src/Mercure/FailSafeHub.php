@@ -33,8 +33,7 @@ final class FailSafeHub implements HubInterface
         private readonly HubInterface $inner,
         private readonly LoggerInterface $logger,
         private readonly RequestStack $requestStack,
-    ) {
-    }
+    ) {}
 
     public function publish(Update $update): string
     {

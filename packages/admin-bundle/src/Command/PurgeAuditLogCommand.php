@@ -19,10 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Deletes audit entries older than the retention window. Schedule it — the
  * log grows with every audited write.
  */
-#[AsCommand(
-    name: 'nubit:audit:purge',
-    description: 'Remove audit-trail entries older than the retention window.',
-)]
+#[AsCommand(name: 'nubit:audit:purge', description: 'Remove audit-trail entries older than the retention window.')]
 final class PurgeAuditLogCommand extends Command
 {
     public function __construct(
@@ -34,12 +31,7 @@ final class PurgeAuditLogCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption(
-            'days',
-            null,
-            InputOption::VALUE_REQUIRED,
-            'Override the configured retention window (days).',
-        );
+        $this->addOption('days', null, InputOption::VALUE_REQUIRED, 'Override the configured retention window (days).');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -49,7 +41,8 @@ final class PurgeAuditLogCommand extends Command
         $days = $input->getOption('days') !== null ? (int) $input->getOption('days') : $this->retentionDays;
         $cutoff = (new DateTimeImmutable())->sub(new DateInterval(sprintf('P%dD', max(0, $days))));
 
-        $removed = $this->entityManager->createQueryBuilder()
+        $removed = $this->entityManager
+            ->createQueryBuilder()
             ->delete(AuditLog::class, 'a')
             ->where('a.createdAt < :cutoff')
             ->setParameter('cutoff', $cutoff)

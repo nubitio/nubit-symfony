@@ -62,8 +62,7 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
         private readonly ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
         private readonly ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
         private readonly string $apiLocale = 'auto',
-    ) {
-    }
+    ) {}
 
     /** @return array<mixed> */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
@@ -89,9 +88,7 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
                 // PropertyMetadataFactoryInterface::create($fqcn, $propertyName).
                 // The "@id" is "#ShortName", e.g. "#Category".
                 $classId = $class['@id'] ?? null;
-                $fqcn = \is_string($classId)
-                    ? ($this->resolveShortNameToClass(\ltrim($classId, '#')) ?? null)
-                    : null;
+                $fqcn = \is_string($classId) ? $this->resolveShortNameToClass(\ltrim($classId, '#')) ?? null : null;
 
                 // ── Class-level x-crud (formLayout etc.) ────────────────────
                 if ($fqcn !== null) {
@@ -117,12 +114,7 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
                         && \is_string($supportedProperty[$descriptionKey])
                         && $this->looksLikeTranslationKey($supportedProperty[$descriptionKey])
                     ) {
-                        $translated = $this->translator->trans(
-                            $supportedProperty[$descriptionKey],
-                            [],
-                            'api',
-                            $locale,
-                        );
+                        $translated = $this->translator->trans($supportedProperty[$descriptionKey], [], 'api', $locale);
 
                         // Only overwrite hydra:title if the key was actually translated
                         // (trans() returns the key itself when no translation is found).

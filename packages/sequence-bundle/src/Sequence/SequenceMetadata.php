@@ -23,6 +23,6 @@ final class SequenceMetadata
             ? str_pad((string) $value, $sequence->padding, '0', \STR_PAD_LEFT)
             : (string) $value;
 
-        return $sequence->prefix.$numeric;
+        return $sequence->prefix . $numeric;
     }
 }

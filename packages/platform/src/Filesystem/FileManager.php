@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Filesystem;
 
-use Nubit\Platform\Tenant\Context\TenantContext;
-use Nubit\Platform\Tenant\Scope\TenantScope;
 use League\Flysystem\DirectoryListing;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
+use Nubit\Platform\Tenant\Context\TenantContext;
+use Nubit\Platform\Tenant\Scope\TenantScope;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
@@ -66,10 +66,7 @@ readonly class FileManager
 
         $stream = fopen($file->getPathname(), 'r');
 
-        $this->defaultFilesystem->writeStream(
-            $this->prefixPath($targetDir . '/' . $fileName),
-            $stream,
-        );
+        $this->defaultFilesystem->writeStream($this->prefixPath($targetDir . '/' . $fileName), $stream);
 
         if (is_resource($stream)) {
             fclose($stream);

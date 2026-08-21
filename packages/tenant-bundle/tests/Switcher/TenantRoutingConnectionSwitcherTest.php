@@ -20,7 +20,11 @@ final class TenantRoutingConnectionSwitcherTest extends TestCase
     public function testSchemaRouteResolvesTenantIdThenResetsSearchPath(): void
     {
         $registry = $this->createMock(TenantDescriptorRegistryInterface::class);
-        $registry->expects(self::once())->method('findByName')->with('acme')->willReturn(new TenantDescriptor(42, 'acme'));
+        $registry
+            ->expects(self::once())
+            ->method('findByName')
+            ->with('acme')
+            ->willReturn(new TenantDescriptor(42, 'acme'));
         $schema = $this->createMock(TenantSchemaConnectionSwitcherInterface::class);
         $schema->expects(self::once())->method('switchToTenantId')->with(42);
         $schema->expects(self::once())->method('resetSearchPath');
@@ -34,7 +38,10 @@ final class TenantRoutingConnectionSwitcherTest extends TestCase
     {
         $registry = $this->registry();
         $targets = $this->createMock(TenantIsolationTargetProviderInterface::class);
-        $targets->expects(self::once())->method('resolveTarget')->with('acme', 42)
+        $targets
+            ->expects(self::once())
+            ->method('resolveTarget')
+            ->with('acme', 42)
             ->willReturn(new TenantIsolationTarget(TenantIsolationTarget::DATABASE, 'pgsql://tenant'));
         $database = new RecordingDatabaseConnectionSwitcher();
 
@@ -54,11 +61,14 @@ final class TenantRoutingConnectionSwitcherTest extends TestCase
         $column = $this->createMock(TenantConnectionSwitcherInterface::class);
         $column->expects(self::once())->method('switchConnection')->with('column-tenant');
         $targets = $this->createMock(TenantIsolationTargetProviderInterface::class);
-        $targets->expects(self::exactly(2))->method('resolveTarget')->willReturnCallback(
-            static fn (string $name): TenantIsolationTarget => new TenantIsolationTarget(
-                'acme' === $name ? TenantIsolationTarget::SCHEMA : TenantIsolationTarget::COLUMN,
-            ),
-        );
+        $targets
+            ->expects(self::exactly(2))
+            ->method('resolveTarget')
+            ->willReturnCallback(
+                static fn(string $name): TenantIsolationTarget => new TenantIsolationTarget(
+                    'acme' === $name ? TenantIsolationTarget::SCHEMA : TenantIsolationTarget::COLUMN,
+                ),
+            );
 
         $switcher = new TenantRoutingConnectionSwitcher('hybrid', $this->registry(), $schema, $targets, null, $column);
         $switcher->switchConnection('acme');
@@ -75,16 +85,19 @@ final class TenantRoutingConnectionSwitcherTest extends TestCase
         $this->expectException(ServiceException::class);
         $this->expectExceptionMessage('No tenant descriptor found');
 
-        (new TenantRoutingConnectionSwitcher('schema', $registry, $this->createStub(TenantSchemaConnectionSwitcherInterface::class)))
-            ->switchConnection('missing');
+        (new TenantRoutingConnectionSwitcher(
+            'schema',
+            $registry,
+            $this->createStub(TenantSchemaConnectionSwitcherInterface::class),
+        ))->switchConnection('missing');
     }
 
     private function registry(): TenantDescriptorRegistryInterface
     {
         $registry = $this->createStub(TenantDescriptorRegistryInterface::class);
-        $registry->method('findByName')->willReturnCallback(
-            static fn (string $name): TenantDescriptor => new TenantDescriptor(42, $name),
-        );
+        $registry
+            ->method('findByName')
+            ->willReturnCallback(static fn(string $name): TenantDescriptor => new TenantDescriptor(42, $name));
 
         return $registry;
     }

@@ -6,8 +6,8 @@ namespace Nubit\Platform\Tests\Cache;
 
 use Nubit\Platform\Cache\CacheManager;
 use Nubit\Platform\Tenant\Context\TenantContext;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -44,17 +44,18 @@ final class CacheManagerTest extends TestCase
         return new CacheManager($this->pool, $tenantContext);
     }
 
-    private function stubPoolItem(string $expectedKey, bool $isHit = false, mixed $value = null): CacheItemInterface&MockObject
-    {
+    private function stubPoolItem(
+        string $expectedKey,
+        bool $isHit = false,
+        mixed $value = null,
+    ): CacheItemInterface&MockObject {
         $item = $this->createMock(CacheItemInterface::class);
         $item->method('isHit')->willReturn($isHit);
         $item->method('get')->willReturn($value);
         $item->method('set')->willReturnSelf();
         $item->method('expiresAfter')->willReturnSelf();
 
-        $this->pool->method('getItem')
-            ->with($expectedKey)
-            ->willReturn($item);
+        $this->pool->method('getItem')->with($expectedKey)->willReturn($item);
 
         return $item;
     }
@@ -94,10 +95,7 @@ final class CacheManagerTest extends TestCase
         $item->expects(self::once())->method('set')->with('hello')->willReturnSelf();
         $item->expects(self::once())->method('expiresAfter')->with(60)->willReturnSelf();
 
-        $this->pool->expects(self::once())
-            ->method('getItem')
-            ->with('t.tenant_x.greet')
-            ->willReturn($item);
+        $this->pool->expects(self::once())->method('getItem')->with('t.tenant_x.greet')->willReturn($item);
 
         $this->pool->expects(self::once())->method('save')->with($item);
 
@@ -109,10 +107,7 @@ final class CacheManagerTest extends TestCase
     {
         $manager = $this->makeCacheManager('abc');
 
-        $this->pool->expects(self::once())
-            ->method('hasItem')
-            ->with('t.abc.some_key')
-            ->willReturn(true);
+        $this->pool->expects(self::once())->method('hasItem')->with('t.abc.some_key')->willReturn(true);
 
         self::assertTrue($manager->has('some_key'));
     }
@@ -122,9 +117,7 @@ final class CacheManagerTest extends TestCase
     {
         $manager = $this->makeCacheManager('myco');
 
-        $this->pool->expects(self::once())
-            ->method('deleteItem')
-            ->with('t.myco.cache_key');
+        $this->pool->expects(self::once())->method('deleteItem')->with('t.myco.cache_key');
 
         $manager->forget('cache_key');
     }
@@ -136,10 +129,14 @@ final class CacheManagerTest extends TestCase
         $this->stubPoolItem('t.demo.computed', true, 42);
 
         $callbackInvoked = false;
-        $result = $manager->remember('computed', function () use (&$callbackInvoked): int {
-            $callbackInvoked = true;
-            return 99;
-        }, 120);
+        $result = $manager->remember(
+            'computed',
+            function () use (&$callbackInvoked): int {
+                $callbackInvoked = true;
+                return 99;
+            },
+            120,
+        );
 
         self::assertSame(42, $result);
         self::assertFalse($callbackInvoked);
@@ -155,13 +152,11 @@ final class CacheManagerTest extends TestCase
         $item->method('set')->willReturnSelf();
         $item->method('expiresAfter')->willReturnSelf();
 
-        $this->pool->method('getItem')
-            ->with('t.demo.computed')
-            ->willReturn($item);
+        $this->pool->method('getItem')->with('t.demo.computed')->willReturn($item);
 
         $this->pool->expects(self::once())->method('save')->with($item);
 
-        $result = $manager->remember('computed', fn (): int => 99, 30);
+        $result = $manager->remember('computed', fn(): int => 99, 30);
 
         self::assertSame(99, $result);
     }
@@ -171,9 +166,7 @@ final class CacheManagerTest extends TestCase
     {
         $manager = $this->makeCacheManager(null);
 
-        $this->pool->expects(self::once())
-            ->method('deleteItem')
-            ->with('bare_key');
+        $this->pool->expects(self::once())->method('deleteItem')->with('bare_key');
 
         $manager->delete('bare_key');
     }
@@ -217,6 +210,7 @@ final class CacheManagerTest extends TestCase
         self::assertSame('global-value', $manager->get('global-key'));
         self::assertTrue($cache->hasItem('global-key'));
     }
+
     public function testRememberReusesCachedTenantScopedValue(): void
     {
         $context = new TenantContext();

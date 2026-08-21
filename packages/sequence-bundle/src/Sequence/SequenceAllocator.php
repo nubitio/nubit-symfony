@@ -18,8 +18,7 @@ final readonly class SequenceAllocator
         private EntityManagerInterface $entityManager,
         private SequenceScopeResolver $scopeResolver,
         private SequenceMetadata $metadata,
-    ) {
-    }
+    ) {}
 
     public function allocateFormatted(object $entity, Sequence $sequence): string
     {
@@ -84,9 +83,11 @@ final readonly class SequenceAllocator
             );
 
             if (false === $nextValue) {
-                throw new SequenceAllocationException(
-                    sprintf('Sequence counter row for scope "%s" / name "%s" vanished before it could be locked.', $scopeKey, $name),
-                );
+                throw new SequenceAllocationException(sprintf(
+                    'Sequence counter row for scope "%s" / name "%s" vanished before it could be locked.',
+                    $scopeKey,
+                    $name,
+                ));
             }
 
             $allocated = (int) $nextValue;

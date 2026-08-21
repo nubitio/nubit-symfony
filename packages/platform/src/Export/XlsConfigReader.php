@@ -21,15 +21,13 @@ final class XlsConfigReader
     /**
      * @param array<string, mixed> $config
      */
-    public function width(array $config): null|float|string
+    public function width(array $config): float|string|null
     {
         $value = $config['width'] ?? null;
         if ($value === null) {
             return null;
         }
 
-        return is_float($value) || is_int($value)
-            ? (float) $value
-            : (string) $value;
+        return is_float($value) || is_int($value) ? (float) $value : (string) $value;
     }
 }

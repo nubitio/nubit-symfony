@@ -61,17 +61,15 @@ final class SecurityAuditCommand extends Command
             return Command::SUCCESS;
         }
 
-        $io->table(
-            ['Resource', 'Method', 'URI template'],
-            array_map(
-                static fn ($finding) => [$finding->resourceShortName, $finding->method, $finding->uriTemplate ?? '—'],
-                $findings,
-            ),
-        );
+        $io->table(['Resource', 'Method', 'URI template'], array_map(static fn($finding) => [
+            $finding->resourceShortName,
+            $finding->method,
+            $finding->uriTemplate ?? '—',
+        ], $findings));
 
         $io->note(sprintf(
             '%d write operation(s) rely on the default firewall access_control (ROLE_USER) with no per-operation '
-                . 'role check. Add security: "is_granted(\'ROLE_...\')" if that\'s not intentional.',
+            . 'role check. Add security: "is_granted(\'ROLE_...\')" if that\'s not intentional.',
             \count($findings),
         ));
 

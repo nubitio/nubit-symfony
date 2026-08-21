@@ -19,8 +19,7 @@ final readonly class JwtClaimTenantResolver implements TenantResolverInterface
         private string $nameClaim = 'tenantName',
         private string $authHeader = 'Authorization',
         private string $authCookie = 'AUTH_TOKEN',
-    ) {
-    }
+    ) {}
 
     public function resolve(Request $request, ?UserInterface $user): ?ResolvedTenant
     {
@@ -43,10 +42,7 @@ final readonly class JwtClaimTenantResolver implements TenantResolverInterface
 
         $name = self::claim($claims, $this->nameClaim);
 
-        return new ResolvedTenant(
-            (int) $tenantId,
-            is_string($name) ? $name : null,
-        );
+        return new ResolvedTenant((int) $tenantId, is_string($name) ? $name : null);
     }
 
     private function extractToken(Request $request): ?string

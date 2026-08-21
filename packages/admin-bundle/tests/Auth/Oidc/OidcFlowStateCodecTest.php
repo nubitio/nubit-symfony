@@ -37,8 +37,9 @@ final class OidcFlowStateCodecTest extends TestCase
 
     public function testRejectsATokenSignedWithADifferentSecret(): void
     {
-        $token = (new OidcFlowStateCodec('secret-one-at-least-32-bytes-long'))
-            ->encode(new OidcFlowState('okta', 'state-123', 'nonce-456', 'verifier-789', time()));
+        $token = (new OidcFlowStateCodec('secret-one-at-least-32-bytes-long'))->encode(
+            new OidcFlowState('okta', 'state-123', 'nonce-456', 'verifier-789', time()),
+        );
 
         static::assertNull((new OidcFlowStateCodec('secret-two-at-least-32-bytes-long'))->decode($token));
     }

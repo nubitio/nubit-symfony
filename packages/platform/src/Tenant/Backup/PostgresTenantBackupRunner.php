@@ -41,8 +41,7 @@ final readonly class PostgresTenantBackupRunner implements TenantBackupRunnerInt
         private FileManager $fileManager,
         private string $pgDumpBinary = 'pg_dump',
         private int $timeoutSeconds = 300,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{id: int, filename: string, storage_path: string, size_bytes: int, storage_type: string}
@@ -91,7 +90,7 @@ final readonly class PostgresTenantBackupRunner implements TenantBackupRunnerInt
         if (!str_contains($driver, 'pgsql')) {
             throw new \RuntimeException(sprintf(
                 'PostgresTenantBackupRunner only supports PostgreSQL connections (pg_dump), got driver "%s". '
-                    . 'Implement TenantBackupRunnerInterface with an engine-appropriate tool for other drivers.',
+                . 'Implement TenantBackupRunnerInterface with an engine-appropriate tool for other drivers.',
                 $driver !== '' ? $driver : 'unknown',
             ));
         }
@@ -128,10 +127,9 @@ final readonly class PostgresTenantBackupRunner implements TenantBackupRunnerInt
      */
     private function runPgDump(array $params, string $outputPath): void
     {
-        $process = new Process(
-            $this->buildPgDumpCommand($params, $outputPath),
-            env: ['PGPASSWORD' => (string) ($params['password'] ?? '')],
-        );
+        $process = new Process($this->buildPgDumpCommand($params, $outputPath), env: [
+            'PGPASSWORD' => (string) ($params['password'] ?? ''),
+        ]);
         $process->setTimeout($this->timeoutSeconds);
         $process->run();
 

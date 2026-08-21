@@ -21,9 +21,12 @@ final class RuntimeConfigProviderTest extends TestCase
             }
         };
 
-        self::assertSame([
-            'ui' => ['compact' => true],
-            'defaults' => ['locale' => 'es'],
-        ], $provider->getConfig());
+        self::assertSame(
+            [
+                'ui' => ['compact' => true],
+                'defaults' => ['locale' => 'es'],
+            ],
+            $provider->getConfig(),
+        );
     }
 }

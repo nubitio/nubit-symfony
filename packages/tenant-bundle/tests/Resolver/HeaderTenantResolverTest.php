@@ -14,7 +14,8 @@ final class HeaderTenantResolverTest extends TestCase
     public function testNormalizesTenantNameFromHeader(): void
     {
         $registry = $this->createMock(TenantRegistryInterface::class);
-        $registry->expects(self::once())
+        $registry
+            ->expects(self::once())
             ->method('getTenantByName')
             ->with('acme')
             ->willReturn(['id' => 7, 'name' => 'acme']);

@@ -46,7 +46,10 @@ final class MediaStorageTest extends TestCase
 
     public function testStoreCapturesUploadMetadata(): void
     {
-        $contents = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', true);
+        $contents = base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=',
+            true,
+        );
         self::assertNotFalse($contents);
 
         $media = $this->storage->store($this->makeUpload('photo.png', $contents));

@@ -22,6 +22,7 @@ use Nubit\TenantBundle\Entity\TenantOwnedTrait;
 class AuditLog implements TenantOwnedInterface
 {
     use TenantOwnedTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -51,13 +52,8 @@ class AuditLog implements TenantOwnedInterface
      * @param 'create'|'update'|'delete' $action
      * @param array<string, array{before: mixed, after: mixed}> $changes
      */
-    public function __construct(
-        string $resource,
-        string $resourceId,
-        string $action,
-        array $changes,
-        string $username,
-    ) {
+    public function __construct(string $resource, string $resourceId, string $action, array $changes, string $username)
+    {
         $this->resource = $resource;
         $this->resourceId = $resourceId;
         $this->action = $action;

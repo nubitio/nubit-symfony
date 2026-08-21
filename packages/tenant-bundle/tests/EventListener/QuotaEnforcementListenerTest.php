@@ -37,12 +37,7 @@ final class QuotaEnforcementListenerTest extends TestCase
         $enforcer = $this->createMock(QuotaEnforcerInterface::class);
         $enforcer->expects(self::never())->method('enforce');
 
-        $listener = new QuotaEnforcementListener(
-            $enforcer,
-            new TenantContext(),
-            new QuotaResourceRegistry(),
-            true,
-        );
+        $listener = new QuotaEnforcementListener($enforcer, new TenantContext(), new QuotaResourceRegistry(), true);
 
         $listener->prePersist($this->lifecycleArgs(new QuotaListenerEntityStub()));
     }
@@ -52,12 +47,7 @@ final class QuotaEnforcementListenerTest extends TestCase
         $enforcer = $this->createMock(QuotaEnforcerInterface::class);
         $enforcer->expects(self::once())->method('enforce')->with('team_users');
 
-        $listener = new QuotaEnforcementListener(
-            $enforcer,
-            $this->tenantContext(1),
-            new QuotaResourceRegistry(),
-            true,
-        );
+        $listener = new QuotaEnforcementListener($enforcer, $this->tenantContext(1), new QuotaResourceRegistry(), true);
 
         $listener->prePersist($this->lifecycleArgs(new QuotaListenerEntityStub()));
     }
@@ -67,12 +57,7 @@ final class QuotaEnforcementListenerTest extends TestCase
         $enforcer = $this->createMock(QuotaEnforcerInterface::class);
         $enforcer->expects(self::once())->method('releaseLocks');
 
-        $listener = new QuotaEnforcementListener(
-            $enforcer,
-            new TenantContext(),
-            new QuotaResourceRegistry(),
-            true,
-        );
+        $listener = new QuotaEnforcementListener($enforcer, new TenantContext(), new QuotaResourceRegistry(), true);
 
         $listener->postFlush(new PostFlushEventArgs($this->createStub(EntityManagerInterface::class)));
     }
@@ -82,12 +67,7 @@ final class QuotaEnforcementListenerTest extends TestCase
         $enforcer = $this->createMock(QuotaEnforcerInterface::class);
         $enforcer->expects(self::once())->method('releaseLocks');
 
-        $listener = new QuotaEnforcementListener(
-            $enforcer,
-            new TenantContext(),
-            new QuotaResourceRegistry(),
-            true,
-        );
+        $listener = new QuotaEnforcementListener($enforcer, new TenantContext(), new QuotaResourceRegistry(), true);
 
         $listener->onClear(new OnClearEventArgs($this->createStub(EntityManagerInterface::class)));
     }
@@ -111,6 +91,4 @@ final class QuotaEnforcementListenerTest extends TestCase
 }
 
 #[QuotaResource('team_users')]
-final class QuotaListenerEntityStub
-{
-}
+final class QuotaListenerEntityStub {}

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nubit\ApiPlatform\Http;
 
-use Throwable;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Nubit\Platform\Exception\DomainProblemException;
 use Nubit\Platform\Exception\NotFoundException;
@@ -17,6 +16,7 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Throwable;
 
 #[AsEventListener]
 final readonly class ExceptionListener
@@ -25,8 +25,7 @@ final readonly class ExceptionListener
         private LoggerInterface $logger,
         #[Autowire(param: 'kernel.environment')]
         private string $environment,
-    ) {
-    }
+    ) {}
 
     public function __invoke(ExceptionEvent $event): void
     {
@@ -98,7 +97,7 @@ final readonly class ExceptionListener
 
         $code = $exception->getCode();
 
-        return ($code >= 400 && $code < 600) ? $code : Response::HTTP_BAD_REQUEST;
+        return $code >= 400 && $code < 600 ? $code : Response::HTTP_BAD_REQUEST;
     }
 
     /**
@@ -109,8 +108,10 @@ final readonly class ExceptionListener
      * with a message a client can display, still logging the original
      * exception (and, in dev, still exposing its detail) for diagnosis.
      */
-    private function handleForeignKeyConstraintViolation(ExceptionEvent $event, ForeignKeyConstraintViolationException $exception): void
-    {
+    private function handleForeignKeyConstraintViolation(
+        ExceptionEvent $event,
+        ForeignKeyConstraintViolationException $exception,
+    ): void {
         $this->logger->warning('Rejected a write that would have violated a foreign key constraint.', [
             'exception' => $exception,
         ]);

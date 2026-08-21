@@ -39,11 +39,7 @@ final class ReportQueryBuilderTest extends TestCase
             }
         };
 
-        $query = (new ReportQueryBuilder())->build(
-            $report,
-            ['tenant' => 'acme'],
-            '["customer","contains","Ana"]',
-        );
+        $query = (new ReportQueryBuilder())->build($report, ['tenant' => 'acme'], '["customer","contains","Ana"]');
 
         self::assertSame(
             'select * from sales s left join customer c on c.id = s.customer_id where 1=1 AND c.name LIKE :grid_filter_1',

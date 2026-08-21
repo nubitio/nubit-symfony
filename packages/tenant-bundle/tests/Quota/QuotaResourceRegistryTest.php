@@ -26,6 +26,4 @@ final class QuotaResourceRegistryTest extends TestCase
 }
 
 #[QuotaResource('team_users')]
-final class QuotaEntityStub
-{
-}
+final class QuotaEntityStub {}

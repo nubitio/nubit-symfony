@@ -24,8 +24,7 @@ final readonly class GridSummaryCalculator
         private PropertyMetadataFactoryInterface $propertyMetadataFactory,
         private PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
         private ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, string|int|float>
@@ -44,7 +43,7 @@ final readonly class GridSummaryCalculator
         $alias = 'e';
         $selects = [];
         foreach ($fields as $property => $summaryType) {
-            $dqlField = $alias.'.'.$property;
+            $dqlField = $alias . '.' . $property;
             $selects[] = match ($summaryType) {
                 'count' => sprintf('COUNT(%s) AS %s_summary', $dqlField, $property),
                 'avg' => sprintf('AVG(%s) AS %s_summary', $dqlField, $property),
@@ -54,16 +53,14 @@ final readonly class GridSummaryCalculator
             };
         }
 
-        $qb = $this->entityManager->createQueryBuilder()
-            ->select(implode(', ', $selects))
-            ->from($resourceClass, $alias);
+        $qb = $this->entityManager->createQueryBuilder()->select(implode(', ', $selects))->from($resourceClass, $alias);
 
         /** @var array<string, mixed> $row */
         $row = $qb->getQuery()->getSingleResult();
 
         $summary = [];
         foreach ($fields as $property => $_) {
-            $value = $row[$property.'_summary'] ?? null;
+            $value = $row[$property . '_summary'] ?? null;
             if ($value === null) {
                 continue;
             }

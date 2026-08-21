@@ -10,8 +10,7 @@ final readonly class ResolvedTenant
         public int $id,
         public ?string $name = null,
         public ?string $domain = null,
-    ) {
-    }
+    ) {}
 
     /** @param array<string, mixed> $tenant */
     public static function fromRegistryRecord(array $tenant, ?string $fallbackDomain = null): ?self

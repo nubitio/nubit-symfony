@@ -19,10 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * Multi-tenant apps should run it once per tenant connection.
  */
-#[AsCommand(
-    name: 'nubit:auth:purge-refresh-tokens',
-    description: 'Deletes expired and long-revoked refresh tokens.',
-)]
+#[AsCommand(name: 'nubit:auth:purge-refresh-tokens', description: 'Deletes expired and long-revoked refresh tokens.')]
 final class PurgeRefreshTokensCommand extends Command
 {
     public function __construct(

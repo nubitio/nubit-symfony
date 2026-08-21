@@ -19,6 +19,4 @@ use Attribute;
  *     private string $taxId;
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
-final class AuditMasked
-{
-}
+final class AuditMasked {}

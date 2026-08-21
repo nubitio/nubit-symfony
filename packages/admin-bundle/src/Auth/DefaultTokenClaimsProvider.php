@@ -15,8 +15,7 @@ final readonly class DefaultTokenClaimsProvider implements TokenClaimsProviderIn
 {
     public function __construct(
         private ?TenantContext $tenantContext = null,
-    ) {
-    }
+    ) {}
 
     public function claims(UserInterface $user, array $previousClaims = []): array
     {

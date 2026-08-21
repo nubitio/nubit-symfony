@@ -12,15 +12,10 @@ final readonly class DoctrineRefreshTokenStore implements RefreshTokenStoreInter
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-    ) {
-    }
+    ) {}
 
-    public function save(
-        string $jti,
-        string $tokenHash,
-        string $userIdentifier,
-        DateTimeImmutable $expiresAt,
-    ): void {
+    public function save(string $jti, string $tokenHash, string $userIdentifier, DateTimeImmutable $expiresAt): void
+    {
         $this->entityManager->persist(new RefreshToken($jti, $tokenHash, $userIdentifier, $expiresAt));
         $this->entityManager->flush();
     }
@@ -41,7 +36,8 @@ final readonly class DoctrineRefreshTokenStore implements RefreshTokenStoreInter
 
     public function revokeAllForUser(string $userIdentifier): int
     {
-        return (int) $this->entityManager->createQueryBuilder()
+        return (int) $this->entityManager
+            ->createQueryBuilder()
             ->update(RefreshToken::class, 'rt')
             ->set('rt.revokedAt', ':revokedAt')
             ->where('rt.userIdentifier = :userIdentifier')
@@ -54,7 +50,8 @@ final readonly class DoctrineRefreshTokenStore implements RefreshTokenStoreInter
 
     public function purgeExpired(): int
     {
-        return (int) $this->entityManager->createQueryBuilder()
+        return (int) $this->entityManager
+            ->createQueryBuilder()
             ->delete(RefreshToken::class, 'rt')
             ->where('rt.expiresAt < :now')
             ->orWhere('rt.revokedAt IS NOT NULL AND rt.revokedAt < :cleanupDate')
@@ -67,7 +64,8 @@ final readonly class DoctrineRefreshTokenStore implements RefreshTokenStoreInter
     private function findActiveByHash(string $tokenHash): ?RefreshToken
     {
         /** @var RefreshToken|null $token */
-        $token = $this->entityManager->createQueryBuilder()
+        $token = $this->entityManager
+            ->createQueryBuilder()
             ->select('rt')
             ->from(RefreshToken::class, 'rt')
             ->where('rt.tokenHash = :hash')

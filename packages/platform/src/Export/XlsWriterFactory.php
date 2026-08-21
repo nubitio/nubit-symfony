@@ -23,9 +23,7 @@ final readonly class XlsWriterFactory
         }
 
         $spreadsheet = new Spreadsheet();
-        $spreadsheet->getProperties()
-            ->setCreator($creator)
-            ->setTitle($title);
+        $spreadsheet->getProperties()->setCreator($creator)->setTitle($title);
 
         return $spreadsheet;
     }

@@ -20,7 +20,7 @@ final readonly class JWTManager implements JWTManagerInterface
     ) {
         if (strlen(trim($this->secret)) < 32) {
             throw new LogicException(
-                'JWT secret must be at least 32 bytes for HS256. Configure APP_SECRET (or nubit_admin.auth.secret) accordingly.'
+                'JWT secret must be at least 32 bytes for HS256. Configure APP_SECRET (or nubit_admin.auth.secret) accordingly.',
             );
         }
     }

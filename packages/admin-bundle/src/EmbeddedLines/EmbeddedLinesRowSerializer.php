@@ -16,8 +16,7 @@ final readonly class EmbeddedLinesRowSerializer
         private ManagerRegistry $managerRegistry,
         private SerializerInterface $serializer,
         private IriConverterInterface $iriConverter,
-    ) {
-    }
+    ) {}
 
     /**
      * @param list<object> $entities
@@ -44,12 +43,7 @@ final readonly class EmbeddedLinesRowSerializer
         $rows = [];
         foreach ($entities as $entity) {
             /** @var array<string, mixed> $row */
-            $row = json_decode(
-                $this->serializer->serialize($entity, 'json', $context),
-                true,
-                512,
-                JSON_THROW_ON_ERROR,
-            );
+            $row = json_decode($this->serializer->serialize($entity, 'json', $context), true, 512, JSON_THROW_ON_ERROR);
 
             foreach ($metadata->getAssociationNames() as $associationName) {
                 if ($associationName === $definition->parentProperty) {

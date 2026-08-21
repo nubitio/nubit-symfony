@@ -16,7 +16,10 @@ final class XlsTableApplier
             return;
         }
 
-        $table = new Table('A1:' . $layout->lastColumn . $layout->lastDataRow, $this->validTableName($options->table->name));
+        $table = new Table(
+            'A1:' . $layout->lastColumn . $layout->lastDataRow,
+            $this->validTableName($options->table->name),
+        );
         $table->setAllowFilter($options->autoFilter);
 
         $style = new TableStyle();

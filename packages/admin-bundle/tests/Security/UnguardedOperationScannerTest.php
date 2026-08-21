@@ -31,7 +31,10 @@ final class UnguardedOperationScannerTest extends TestCase
     public function testDoesNotFlagAnOperationWithASecurityExpression(): void
     {
         $findings = (new UnguardedOperationScanner())->scan([
-            ['resourceClass' => 'App\\Entity\\Invoice', 'operation' => new Delete(security: "is_granted('ROLE_ADMIN')")],
+            [
+                'resourceClass' => 'App\\Entity\\Invoice',
+                'operation' => new Delete(security: "is_granted('ROLE_ADMIN')"),
+            ],
         ]);
 
         static::assertSame([], $findings);

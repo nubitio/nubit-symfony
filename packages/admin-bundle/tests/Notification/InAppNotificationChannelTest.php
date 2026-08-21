@@ -23,7 +23,8 @@ final class InAppNotificationChannelTest extends TestCase
     {
         $persisted = null;
         $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->expects(static::once())
+        $entityManager
+            ->expects(static::once())
             ->method('persist')
             ->with(static::callback(function (Notification $notification) use (&$persisted) {
                 $persisted = $notification;

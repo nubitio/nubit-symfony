@@ -21,8 +21,7 @@ final readonly class MercureSubscriberTokenService
     public function __construct(
         private string $mercureJwtSecret,
         private int $tokenTtl,
-    ) {
-    }
+    ) {}
 
     /**
      * @param list<string> $subscribe Topic selectors (URI templates or '*').

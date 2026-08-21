@@ -14,9 +14,9 @@ use Nubit\SequenceBundle\Exception\SequenceAllocationException;
 use Nubit\SequenceBundle\Sequence\SequenceAllocator;
 use Nubit\SequenceBundle\Sequence\SequenceMetadata;
 use Nubit\SequenceBundle\Sequence\SequenceScopeResolver;
-use Symfony\Component\PropertyAccess\PropertyAccess;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 
 /**
  * Regression coverage for "creating a second record for any #[Sequence]
@@ -39,7 +39,10 @@ final class SequenceAllocatorTest extends TestCase
         $allocator = $this->allocator($connection);
 
         self::assertSame(1, $allocator->allocate('_global', 'invoice'));
-        self::assertSame(['INSERT INTO nubit_sequence_counter (scope_key, name, next_value) VALUES (?, ?, 1)'], $connection->insertStatements);
+        self::assertSame(
+            ['INSERT INTO nubit_sequence_counter (scope_key, name, next_value) VALUES (?, ?, 1)'],
+            $connection->insertStatements,
+        );
         self::assertTrue($connection->committed);
         self::assertFalse($connection->rolledBack);
     }
@@ -53,7 +56,10 @@ final class SequenceAllocatorTest extends TestCase
 
         self::assertSame(7, $allocator->allocate('_global', 'invoice'));
         self::assertSame([], $connection->insertStatements, 'must not re-insert a counter row that already exists');
-        self::assertSame(['UPDATE nubit_sequence_counter SET next_value = ? WHERE scope_key = ? AND name = ?'], $connection->updateStatements);
+        self::assertSame(
+            ['UPDATE nubit_sequence_counter SET next_value = ? WHERE scope_key = ? AND name = ?'],
+            $connection->updateStatements,
+        );
         self::assertSame([8, '_global', 'invoice'], $connection->updateParams[0] ?? null);
     }
 
@@ -67,7 +73,11 @@ final class SequenceAllocatorTest extends TestCase
         $entityManager->expects(self::never())->method('flush');
         $entityManager->expects(self::never())->method('find');
 
-        $allocator = new SequenceAllocator($entityManager, new SequenceScopeResolver(PropertyAccess::createPropertyAccessor()), new SequenceMetadata());
+        $allocator = new SequenceAllocator(
+            $entityManager,
+            new SequenceScopeResolver(PropertyAccess::createPropertyAccessor()),
+            new SequenceMetadata(),
+        );
 
         self::assertSame(3, $allocator->allocate('_global', 'invoice'));
     }
@@ -114,7 +124,11 @@ final class SequenceAllocatorTest extends TestCase
     #[Test]
     public function it_wraps_a_non_retryable_failure_and_rolls_back(): void
     {
-        $connection = new ScriptedConnectionStub(rowExists: true, lockedValue: '1', failLockingSelectWith: new \RuntimeException('connection lost'));
+        $connection = new ScriptedConnectionStub(
+            rowExists: true,
+            lockedValue: '1',
+            failLockingSelectWith: new \RuntimeException('connection lost'),
+        );
 
         $allocator = $this->allocator($connection);
 
@@ -131,7 +145,11 @@ final class SequenceAllocatorTest extends TestCase
 
     private function allocator(Connection $connection): SequenceAllocator
     {
-        return new SequenceAllocator($this->entityManagerMock($connection), new SequenceScopeResolver(PropertyAccess::createPropertyAccessor()), new SequenceMetadata());
+        return new SequenceAllocator(
+            $this->entityManagerMock($connection),
+            new SequenceScopeResolver(PropertyAccess::createPropertyAccessor()),
+            new SequenceMetadata(),
+        );
     }
 
     private function entityManagerMock(Connection $connection): EntityManagerInterface&\PHPUnit\Framework\MockObject\MockObject
@@ -176,8 +194,7 @@ final class ScriptedConnectionStub extends Connection
         private readonly bool $insertThrowsUniqueViolation = false,
         private readonly int $deadlockOnAttempt = 0,
         private readonly ?\Throwable $failLockingSelectWith = null,
-    ) {
-    }
+    ) {}
 
     public function fetchOne(string $sql, array $params = [], array $types = []): mixed
     {
@@ -192,11 +209,8 @@ final class ScriptedConnectionStub extends Connection
             throw $this->failLockingSelectWith;
         }
 
-        if ($this->lockingSelectAttempts === $this->deadlockOnAttempt
-            || $this->deadlockOnAttempt < 0
-        ) {
-            throw new class('deadlock detected') extends \RuntimeException implements RetryableException {
-            };
+        if ($this->lockingSelectAttempts === $this->deadlockOnAttempt || $this->deadlockOnAttempt < 0) {
+            throw new class('deadlock detected') extends \RuntimeException implements RetryableException {};
         }
 
         return $this->lockedValue;
@@ -206,7 +220,8 @@ final class ScriptedConnectionStub extends Connection
     {
         if (str_starts_with($sql, 'INSERT INTO')) {
             if ($this->insertThrowsUniqueViolation) {
-                throw new class('duplicate key value violates unique constraint') extends UniqueConstraintViolationException {
+                throw new class('duplicate key value violates unique constraint') extends
+                    UniqueConstraintViolationException {
                     public function __construct(string $message)
                     {
                         // Bypass DriverException::__construct(), which requires
@@ -233,9 +248,7 @@ final class ScriptedConnectionStub extends Connection
         return 0;
     }
 
-    public function beginTransaction(): void
-    {
-    }
+    public function beginTransaction(): void {}
 
     public function commit(): void
     {

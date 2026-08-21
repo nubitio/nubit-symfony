@@ -351,13 +351,13 @@ count = 2
 [[issues]]
 file = "packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php"
 code = "invalid-return-statement"
-message = "Invalid return type for function `{anonymous-class:packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php:132:16}::getUserIdentifier`: expected `non-empty-string`, but found `string`."
+message = "Invalid return type for function `{anonymous-class:packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php:126:16}::getUserIdentifier`: expected `non-empty-string`, but found `string`."
 count = 1
 
 [[issues]]
 file = "packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php"
 code = "less-specific-nested-return-statement"
-message = "Returned type `array<array-key, mixed>` is less specific than the declared return type `array<array-key, string>` for function `{anonymous-class:packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php:132:16}::getRoles` due to nested 'mixed'."
+message = "Returned type `array<array-key, mixed>` is less specific than the declared return type `array<array-key, string>` for function `{anonymous-class:packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php:126:16}::getRoles` due to nested 'mixed'."
 count = 1
 
 [[issues]]

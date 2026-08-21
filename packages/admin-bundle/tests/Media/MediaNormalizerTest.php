@@ -44,9 +44,13 @@ final class MediaNormalizerTest extends TestCase
     public function testNormalizeBuildsTheIriFromTheFixedUriTemplate(): void
     {
         $media = (new Media())->setPath('x.png');
-        \Closure::bind(function (Media $m): void {
-            $m->id = 'uuid-1';
-        }, null, Media::class)($media);
+        \Closure::bind(
+            function (Media $m): void {
+                $m->id = 'uuid-1';
+            },
+            null,
+            Media::class,
+        )($media);
 
         $normalized = $this->normalizer->normalize($media);
 
@@ -64,10 +68,8 @@ final class MediaNormalizerTest extends TestCase
     {
         // The whole point of the normalizer: embedding works without the
         // parent's serialization groups being declared on the bundle entity.
-        self::assertTrue($this->normalizer->supportsNormalization(
-            new Media(),
-            'jsonld',
-            ['groups' => ['product:read']],
-        ));
+        self::assertTrue($this->normalizer->supportsNormalization(new Media(), 'jsonld', ['groups' => [
+            'product:read',
+        ]]));
     }
 }

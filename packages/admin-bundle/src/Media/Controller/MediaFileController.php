@@ -23,8 +23,7 @@ final class MediaFileController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly MediaStorage $storage,
-    ) {
-    }
+    ) {}
 
     public function __invoke(string $id): Response
     {

@@ -14,8 +14,7 @@ final readonly class CompositeTenantResolver implements TenantResolverInterface
      */
     public function __construct(
         private array $resolvers,
-    ) {
-    }
+    ) {}
 
     public function resolve(Request $request, ?UserInterface $user): ?ResolvedTenant
     {

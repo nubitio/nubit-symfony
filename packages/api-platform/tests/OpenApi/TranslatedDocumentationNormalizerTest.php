@@ -87,11 +87,10 @@ final class TranslatedDocumentationNormalizerTest extends TestCase
             ],
         ];
 
-        $normalizer = $this->makeNormalizer(
-            innerDoc: $doc,
-            apiLocale: 'es',
-            translateFn: static fn (string $key) => $key === 'product.name.label' ? 'Nombre del producto' : $key,
-        );
+        $normalizer = $this->makeNormalizer(innerDoc: $doc, apiLocale: 'es', translateFn: static fn(string $key) => $key
+            === 'product.name.label'
+                ? 'Nombre del producto'
+                : $key);
 
         $result = $normalizer->normalize(new \stdClass());
 
@@ -160,10 +159,10 @@ final class TranslatedDocumentationNormalizerTest extends TestCase
             ],
         ];
 
-        $normalizer = $this->makeNormalizer(
-            innerDoc: $doc,
-            translateFn: static fn (string $k) => $k === 'sale.total.label' ? 'Total de venta' : $k,
-        );
+        $normalizer = $this->makeNormalizer(innerDoc: $doc, translateFn: static fn(string $k) => $k
+            === 'sale.total.label'
+                ? 'Total de venta'
+                : $k);
 
         $result = $normalizer->normalize(new \stdClass());
         $property = $result['supportedClass'][0]['supportedProperty'][0];
@@ -178,18 +177,23 @@ final class TranslatedDocumentationNormalizerTest extends TestCase
         $translatedLocale = null;
 
         $inner = $this->createStub(NormalizerInterface::class);
-        $inner->method('normalize')->willReturn([
-            'hydra:supportedClass' => [[
-                '@id' => '#X',
-                'hydra:supportedProperty' => [[
-                    'hydra:description' => 'x.label',
+        $inner
+            ->method('normalize')
+            ->willReturn([
+                'hydra:supportedClass' => [[
+                    '@id' => '#X',
+                    'hydra:supportedProperty' => [[
+                        'hydra:description' => 'x.label',
+                    ]],
                 ]],
-            ]],
-        ]);
+            ]);
 
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')
-            ->willReturnCallback(function (string $key, array $params, string $domain, string $locale) use (&$translatedLocale): string {
+        $translator
+            ->method('trans')
+            ->willReturnCallback(function (string $key, array $params, string $domain, string $locale) use (
+                &$translatedLocale,
+            ): string {
                 $translatedLocale = $locale;
 
                 return 'Translated';

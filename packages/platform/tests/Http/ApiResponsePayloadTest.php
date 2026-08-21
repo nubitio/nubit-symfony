@@ -72,15 +72,12 @@ final class ApiResponsePayloadTest extends TestCase
     {
         $r = new ApiResponse(true, 'msg', 42);
 
-        self::assertSame(
-            ['success' => true, 'message' => 'msg', 'data' => 42],
-            $r->toArray()
-        );
+        self::assertSame(['success' => true, 'message' => 'msg', 'data' => 42], $r->toArray());
     }
 
     public function testJsonContentMatchesToArray(): void
     {
-        $r    = ApiResponse::success('done', ['x' => 1]);
+        $r = ApiResponse::success('done', ['x' => 1]);
         $body = $this->decode($r);
 
         self::assertSame($r->toArray(), $body);

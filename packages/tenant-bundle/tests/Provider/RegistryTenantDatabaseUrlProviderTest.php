@@ -90,8 +90,14 @@ final class RegistryTenantDatabaseUrlProviderTest extends TestCase
 
     public function testRetainsColumnAndDatabaseTargetCompatibility(): void
     {
-        static::assertSame(TenantIsolationTarget::COLUMN, (new TenantIsolationTarget(TenantIsolationTarget::COLUMN))->mode);
-        static::assertSame(TenantIsolationTarget::DATABASE, (new TenantIsolationTarget(TenantIsolationTarget::DATABASE, 'postgresql://tenant'))->mode);
+        static::assertSame(
+            TenantIsolationTarget::COLUMN,
+            (new TenantIsolationTarget(TenantIsolationTarget::COLUMN))->mode,
+        );
+        static::assertSame(
+            TenantIsolationTarget::DATABASE,
+            (new TenantIsolationTarget(TenantIsolationTarget::DATABASE, 'postgresql://tenant'))->mode,
+        );
     }
 
     public function testFailsClosedWhenDatabaseTargetHasNoUrl(): void
@@ -115,9 +121,7 @@ final class TenantWithDatabaseUrl
     public function __construct(
         private string $databaseUrl,
         private string $isolationMode = TenantIsolationTarget::DATABASE,
-    )
-    {
-    }
+    ) {}
 
     public function getDatabaseUrl(): string
     {
@@ -130,6 +134,4 @@ final class TenantWithDatabaseUrl
     }
 }
 
-final class TenantWithoutDatabaseUrl
-{
-}
+final class TenantWithoutDatabaseUrl {}

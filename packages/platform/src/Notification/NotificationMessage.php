@@ -21,6 +21,5 @@ final readonly class NotificationMessage
         public string $body,
         public array $channels = [],
         public array $context = [],
-    ) {
-    }
+    ) {}
 }

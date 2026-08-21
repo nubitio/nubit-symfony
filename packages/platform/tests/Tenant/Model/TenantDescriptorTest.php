@@ -205,11 +205,10 @@ final class TenantDescriptorTest extends TestCase
     {
         // Build a descriptor where the raw attributes contain a stale 'name'
         // that differs from the canonical property – canonical must win.
-        $descriptor = new TenantDescriptor(
-            id: 7,
-            name: 'canonical-name',
-            attributes: ['id' => 999, 'name' => 'stale-name'],
-        );
+        $descriptor = new TenantDescriptor(id: 7, name: 'canonical-name', attributes: [
+            'id' => 999,
+            'name' => 'stale-name',
+        ]);
 
         $array = $descriptor->toArray();
 

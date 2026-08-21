@@ -19,8 +19,7 @@ final readonly class TokenPair
         public int $accessTokenExpiresAt,
         public int $refreshTokenExpiresAt,
         public array $userData,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>

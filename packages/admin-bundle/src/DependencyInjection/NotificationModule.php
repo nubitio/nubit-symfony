@@ -10,14 +10,12 @@ use Nubit\AdminBundle\Notification\InAppNotificationChannel;
 use Nubit\AdminBundle\Notification\MessengerNotificationDispatcher;
 use Nubit\AdminBundle\Notification\SendNotificationHandler;
 use Nubit\Platform\Notification\Contract\NotificationDispatcherInterface;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
+use Symfony\Component\Mailer\MailerInterface;
 
 final class NotificationModule
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * @param array{enabled: bool, from_address: string, in_app: array{enabled: bool}} $config
@@ -28,8 +26,7 @@ final class NotificationModule
         // turns notifications on for in-app delivery only must not be forced
         // to install a mailer just to boot the container.
         if (interface_exists(MailerInterface::class)) {
-            $services->set(EmailNotificationChannel::class)
-                ->arg('$fromAddress', $config['from_address']);
+            $services->set(EmailNotificationChannel::class)->arg('$fromAddress', $config['from_address']);
         }
 
         if ($config['in_app']['enabled']) {

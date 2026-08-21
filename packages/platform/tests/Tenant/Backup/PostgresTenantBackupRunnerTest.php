@@ -42,16 +42,19 @@ final class PostgresTenantBackupRunnerTest extends TestCase
         // concatenates these into a shell string), so no value here — not
         // even a maliciously crafted tenant/db name — can break out into a
         // second command.
-        static::assertSame([
-            '/usr/bin/pg_dump',
-            '--host=db.internal',
-            '--port=5433',
-            '--username=nubit',
-            '--format=custom',
-            '--no-password',
-            '--file=/tmp/dump-file',
-            'acme_prod',
-        ], $command);
+        static::assertSame(
+            [
+                '/usr/bin/pg_dump',
+                '--host=db.internal',
+                '--port=5433',
+                '--username=nubit',
+                '--format=custom',
+                '--no-password',
+                '--file=/tmp/dump-file',
+                'acme_prod',
+            ],
+            $command,
+        );
     }
 
     public function testBuildPgDumpCommandFallsBackToDefaultsForMissingParams(): void
@@ -76,9 +79,6 @@ final class PostgresTenantBackupRunnerTest extends TestCase
 
         // A run of non-alnum chars (the two spaces + slash around "/")
         // collapses to a single dash — "acme-corp-prod", not "acme-corp---prod".
-        static::assertMatchesRegularExpression(
-            '/^acme-corp-prod-incremental-\d{8}-\d{6}\.dump$/',
-            $filename,
-        );
+        static::assertMatchesRegularExpression('/^acme-corp-prod-incremental-\d{8}-\d{6}\.dump$/', $filename);
     }
 }

@@ -11,7 +11,9 @@ use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
 use Nubit\TenantBundle\Contract\TenantSchemaConnectionSwitcherInterface;
 
 /** Safely scopes a PostgreSQL connection through an explicitly configured search path. */
-final readonly class PostgresSchemaTenantConnectionSwitcher implements TenantSchemaConnectionSwitcherInterface, ResettableTenantConnectionSwitcherInterface
+final readonly class PostgresSchemaTenantConnectionSwitcher implements
+    TenantSchemaConnectionSwitcherInterface,
+    ResettableTenantConnectionSwitcherInterface
 {
     /** @var list<string> */
     private array $baseSchemas;
@@ -42,20 +44,20 @@ final readonly class PostgresSchemaTenantConnectionSwitcher implements TenantSch
         $schema = $this->schemaForTenantId($tenantId);
         $connection = $this->connection();
         $this->assertNoActiveTransaction($connection->isTransactionActive());
-        $connection->executeStatement(sprintf(
-            'SET search_path TO %s',
-            implode(', ', [self::quoteIdentifier($schema), ...array_map(self::quoteIdentifier(...), $this->baseSchemas)]),
-        ));
+        $connection->executeStatement(sprintf('SET search_path TO %s', implode(', ', [
+            self::quoteIdentifier($schema),
+            ...array_map(self::quoteIdentifier(...), $this->baseSchemas),
+        ])));
     }
 
     public function resetSearchPath(): void
     {
         $connection = $this->connection();
         $this->assertNoActiveTransaction($connection->isTransactionActive());
-        $connection->executeStatement(sprintf(
-            'SET search_path TO %s',
-            implode(', ', array_map(self::quoteIdentifier(...), $this->baseSchemas)),
-        ));
+        $connection->executeStatement(sprintf('SET search_path TO %s', implode(', ', array_map(
+            self::quoteIdentifier(...),
+            $this->baseSchemas,
+        ))));
     }
 
     public function resetConnection(): void
@@ -79,7 +81,10 @@ final readonly class PostgresSchemaTenantConnectionSwitcher implements TenantSch
     {
         $connection = $this->connectionRegistry->getConnection($this->tenantConnectionName);
         if (!$connection instanceof Connection) {
-            throw new ServiceException(sprintf('Connection "%s" must support Doctrine DBAL search_path switching.', $this->tenantConnectionName));
+            throw new ServiceException(sprintf(
+                'Connection "%s" must support Doctrine DBAL search_path switching.',
+                $this->tenantConnectionName,
+            ));
         }
 
         return $connection;
@@ -88,14 +93,19 @@ final readonly class PostgresSchemaTenantConnectionSwitcher implements TenantSch
     private function assertNoActiveTransaction(bool $active): void
     {
         if ($active) {
-            throw new ServiceException('Cannot switch or reset PostgreSQL schema search_path during an active transaction.');
+            throw new ServiceException(
+                'Cannot switch or reset PostgreSQL schema search_path during an active transaction.',
+            );
         }
     }
 
     private static function assertIdentifier(string $identifier, string $label): void
     {
         if ('' === $identifier || strlen($identifier) > 63 || !preg_match('/^[a-z_][a-z0-9_]*$/', $identifier)) {
-            throw new \InvalidArgumentException(sprintf('%s must be a lowercase PostgreSQL identifier no longer than 63 bytes.', $label));
+            throw new \InvalidArgumentException(sprintf(
+                '%s must be a lowercase PostgreSQL identifier no longer than 63 bytes.',
+                $label,
+            ));
         }
     }
 

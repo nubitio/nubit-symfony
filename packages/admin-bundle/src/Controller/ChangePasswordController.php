@@ -16,8 +16,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
-use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -45,8 +45,7 @@ final readonly class ChangePasswordController
         private JWTAuthenticator $authenticator,
         private TranslatorInterface $translator,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request): Response
     {
@@ -106,9 +105,6 @@ final readonly class ChangePasswordController
      */
     private function error(string $key, int $status, array $params = []): JsonResponse
     {
-        return new JsonResponse(
-            ['message' => $this->translator->trans($key, $params, 'nubit_admin')],
-            $status,
-        );
+        return new JsonResponse(['message' => $this->translator->trans($key, $params, 'nubit_admin')], $status);
     }
 }

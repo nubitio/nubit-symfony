@@ -15,8 +15,7 @@ final class SequenceRegistry
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
         private readonly SequenceMetadata $metadata,
-    ) {
-    }
+    ) {}
 
     public function getByEntityClass(string $entityClass): ?Sequence
     {

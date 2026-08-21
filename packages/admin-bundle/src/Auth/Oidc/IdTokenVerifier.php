@@ -16,8 +16,7 @@ final readonly class IdTokenVerifier
 {
     public function __construct(
         private JwksKeyProviderInterface $jwksKeyProvider,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed> The verified claims.
@@ -53,7 +52,11 @@ final readonly class IdTokenVerifier
 
         // Anti-replay: this is what stops an attacker who intercepts one
         // valid ID token from replaying it against a different login attempt.
-        if (!isset($claims['nonce']) || !is_string($claims['nonce']) || !hash_equals($expectedNonce, $claims['nonce'])) {
+        if (
+            !isset($claims['nonce'])
+            || !is_string($claims['nonce'])
+            || !hash_equals($expectedNonce, $claims['nonce'])
+        ) {
             throw new OidcAuthenticationException('ID token nonce does not match this login attempt.');
         }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Symfony\Console;
 
+use Exception;
 use Nubit\Platform\Exception\ServiceException;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
@@ -11,7 +12,6 @@ use Nubit\Platform\Tenant\Contract\TenantRegistryInterface;
 use Nubit\Platform\Tenant\Model\TenantDescriptor;
 use Nubit\Platform\Tenant\Runtime\TenantRuntime;
 use Nubit\Platform\Tenant\Runtime\TenantRuntimeActor;
-use Exception;
 use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -53,7 +53,13 @@ abstract class PerTenantCommand extends Command
     {
         $this->setHelp('This command allows you to execute tenant command');
         $this->addOption('tenant', 't', InputOption::VALUE_REQUIRED, 'Execute command for a specific tenant');
-        $this->addOption('parallel', 'p', InputOption::VALUE_OPTIONAL, 'Run for all tenants in parallel (value = max concurrency, default 4)', false);
+        $this->addOption(
+            'parallel',
+            'p',
+            InputOption::VALUE_OPTIONAL,
+            'Run for all tenants in parallel (value = max concurrency, default 4)',
+            false,
+        );
     }
 
     #[Override]
@@ -86,9 +92,14 @@ abstract class PerTenantCommand extends Command
                     return Command::FAILURE;
                 }
 
-                $result = $this->executeForTenant($tenant, $input, $output, static function (TenantDescriptor $descriptor) use ($io): void {
-                    $io->title('Tenant: ' . $descriptor->name);
-                });
+                $result = $this->executeForTenant(
+                    $tenant,
+                    $input,
+                    $output,
+                    static function (TenantDescriptor $descriptor) use ($io): void {
+                        $io->title('Tenant: ' . $descriptor->name);
+                    },
+                );
                 if ($result === Command::SUCCESS) {
                     $io->success('Done!');
                 }
@@ -98,7 +109,7 @@ abstract class PerTenantCommand extends Command
 
             $parallel = $input->getOption('parallel');
             if ($parallel !== false) {
-                $concurrency = (int)($parallel ?: 4);
+                $concurrency = (int) ($parallel ?: 4);
                 if ($concurrency < 1) {
                     $io->warning('Invalid parallel value; using 1.');
                     $concurrency = 1;
@@ -119,16 +130,23 @@ abstract class PerTenantCommand extends Command
 
         foreach ($this->tenants as $tenant) {
             try {
-                $result = $this->executeForTenant($tenant, $input, $output, static function (TenantDescriptor $descriptor) use ($io): void {
-                    $io->title('Tenant: ' . $descriptor->name);
-                });
+                $result = $this->executeForTenant(
+                    $tenant,
+                    $input,
+                    $output,
+                    static function (TenantDescriptor $descriptor) use ($io): void {
+                        $io->title('Tenant: ' . $descriptor->name);
+                    },
+                );
                 if ($result !== Command::SUCCESS) {
-                    $failedTenants[] = (string)$tenant['name'];
+                    $failedTenants[] = (string) $tenant['name'];
                 }
-            } catch (ServiceException | \Doctrine\DBAL\Driver\Exception | \Doctrine\DBAL\Exception | Exception $e) {
-                $this->logger->error('An error occurred while executing command for tenant ' . $tenant['name'], ['exception' => $e]);
+            } catch (ServiceException|\Doctrine\DBAL\Driver\Exception|\Doctrine\DBAL\Exception|Exception $e) {
+                $this->logger->error('An error occurred while executing command for tenant ' . $tenant['name'], [
+                    'exception' => $e,
+                ]);
                 $io->error('An error occurred while executing command for tenant ' . $tenant['name']);
-                $failedTenants[] = (string)$tenant['name'];
+                $failedTenants[] = (string) $tenant['name'];
             }
         }
 
@@ -147,11 +165,16 @@ abstract class PerTenantCommand extends Command
     {
         /** @var string $commandName */
         $commandName = $this->getName();
-        $io->info(sprintf('Running "%s" for %d tenants (concurrency: %d)', $commandName, count($this->tenants), $concurrency));
+        $io->info(sprintf(
+            'Running "%s" for %d tenants (concurrency: %d)',
+            $commandName,
+            count($this->tenants),
+            $concurrency,
+        ));
 
         /** @var array<string, Process> $running */
         $running = [];
-        $queue = array_map(static fn (array $t): string => (string)$t['name'], $this->tenants);
+        $queue = array_map(static fn(array $t): string => (string) $t['name'], $this->tenants);
         $failed = [];
         $succeeded = [];
 
@@ -225,13 +248,13 @@ abstract class PerTenantCommand extends Command
 
             if ($argument->isArray() && is_array($value)) {
                 foreach ($value as $entry) {
-                    $args[] = (string)$entry;
+                    $args[] = (string) $entry;
                 }
 
                 continue;
             }
 
-            $args[] = (string)$value;
+            $args[] = (string) $value;
         }
 
         foreach ($this->getDefinition()->getOptions() as $optionName => $option) {
@@ -247,13 +270,13 @@ abstract class PerTenantCommand extends Command
             if ($option->acceptValue()) {
                 if (is_array($value)) {
                     foreach ($value as $entry) {
-                        $args[] = sprintf('--%s=%s', $optionName, (string)$entry);
+                        $args[] = sprintf('--%s=%s', $optionName, (string) $entry);
                     }
 
                     continue;
                 }
 
-                $args[] = sprintf('--%s=%s', $optionName, (string)$value);
+                $args[] = sprintf('--%s=%s', $optionName, (string) $value);
 
                 continue;
             }
@@ -275,8 +298,7 @@ abstract class PerTenantCommand extends Command
         InputInterface $input,
         OutputInterface $output,
         callable $beforeExecute,
-    ): int
-    {
+    ): int {
         return $this->tenantRuntime->run(
             $tenant,
             function (TenantDescriptor $descriptor) use ($input, $output, $beforeExecute): int {

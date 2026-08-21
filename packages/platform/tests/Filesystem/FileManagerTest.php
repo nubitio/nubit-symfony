@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Tests\Filesystem;
 
-use Nubit\Platform\Filesystem\FileManager;
-use Nubit\Platform\Tenant\Context\TenantContext;
 use League\Flysystem\DirectoryListing;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\UnableToCheckExistence;
+use Nubit\Platform\Filesystem\FileManager;
+use Nubit\Platform\Tenant\Context\TenantContext;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 
@@ -29,12 +29,15 @@ final class FileManagerTest extends TestCase
 
         $manager->delete('documents/invoice.txt');
 
-        self::assertSame([
-            ['write', 'acme/documents/invoice.txt', 'contents'],
-            ['read', 'acme/documents/invoice.txt'],
-            ['fileExists', 'acme/documents/invoice.txt'],
-            ['delete', 'acme/documents/invoice.txt'],
-        ], $filesystem->calls);
+        self::assertSame(
+            [
+                ['write', 'acme/documents/invoice.txt', 'contents'],
+                ['read', 'acme/documents/invoice.txt'],
+                ['fileExists', 'acme/documents/invoice.txt'],
+                ['delete', 'acme/documents/invoice.txt'],
+            ],
+            $filesystem->calls,
+        );
     }
 
     public function testMissingTenantPassesPathsThroughUnchanged(): void
@@ -45,10 +48,13 @@ final class FileManagerTest extends TestCase
         $manager->read('documents/invoice.txt');
         $manager->exists('documents/invoice.txt');
 
-        self::assertSame([
-            ['read', 'documents/invoice.txt'],
-            ['fileExists', 'documents/invoice.txt'],
-        ], $filesystem->calls);
+        self::assertSame(
+            [
+                ['read',       'documents/invoice.txt'],
+                ['fileExists', 'documents/invoice.txt'],
+            ],
+            $filesystem->calls,
+        );
     }
 
     public function testTenantPathUsesTenantScopeSanitization(): void
@@ -60,9 +66,12 @@ final class FileManagerTest extends TestCase
 
         $manager->write('/documents/invoice.txt', 'contents');
 
-        self::assertSame([
-            ['write', 'tenant_slash/documents/invoice.txt', 'contents'],
-        ], $filesystem->calls);
+        self::assertSame(
+            [
+                ['write', 'tenant_slash/documents/invoice.txt', 'contents'],
+            ],
+            $filesystem->calls,
+        );
     }
 }
 
@@ -73,9 +82,9 @@ final class RecordingFilesystemOperator implements FilesystemOperator
     public array $calls = [];
 
     /** @param array<string, string> $files */
-    public function __construct(private array $files = [])
-    {
-    }
+    public function __construct(
+        private array $files = [],
+    ) {}
 
     /** @throws FilesystemException */
     public function fileExists(string $location): bool

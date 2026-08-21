@@ -17,8 +17,7 @@ final readonly class RuntimeConfigController
     public function __construct(
         private bool $enabled,
         private RuntimeConfigProviderInterface $runtimeConfigProvider,
-    ) {
-    }
+    ) {}
 
     public function __invoke(): JsonResponse
     {

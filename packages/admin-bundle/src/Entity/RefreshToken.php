@@ -42,12 +42,8 @@ class RefreshToken
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
-    public function __construct(
-        string $jti,
-        string $tokenHash,
-        string $userIdentifier,
-        DateTimeImmutable $expiresAt,
-    ) {
+    public function __construct(string $jti, string $tokenHash, string $userIdentifier, DateTimeImmutable $expiresAt)
+    {
         $this->jti = $jti;
         $this->tokenHash = $tokenHash;
         $this->userIdentifier = $userIdentifier;

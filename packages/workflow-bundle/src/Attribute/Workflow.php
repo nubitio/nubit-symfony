@@ -51,6 +51,5 @@ final readonly class Workflow
         public array $transitions = [],
         /** Override the collection route path (e.g. /api/orders). Inferred from ApiPlatform when omitted. */
         public ?string $routePrefix = null,
-    ) {
-    }
+    ) {}
 }

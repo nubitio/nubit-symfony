@@ -9,10 +9,10 @@ use Nubit\Platform\Tenant\Context\TenantContext;
 use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\HttpFoundation\Exception\JsonException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Exception\JsonException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -62,8 +62,7 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
         #[AutowireIterator('nubit.admin.login_response_decorator')]
         private readonly iterable $responseDecorators = [],
         private readonly ?TenantContext $tenantContext = null,
-    ) {
-    }
+    ) {}
 
     #[Override]
     public function supports(Request $request): ?bool
@@ -73,7 +72,7 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
         $isLoginRoute = self::LOGIN_ROUTE === $request->attributes->get('_route');
         $isPostMethod = $request->isMethod('POST');
 
-        return (($isBearerHeaderPresent || $isAuthCookiePresent) && !$isLoginRoute) || ($isPostMethod && $isLoginRoute);
+        return ($isBearerHeaderPresent || $isAuthCookiePresent) && !$isLoginRoute || $isPostMethod && $isLoginRoute;
     }
 
     #[Override]
@@ -86,8 +85,8 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
             return $this->authenticateWithCredentials($request);
         }
 
-        $jwtToken = $this->extractBearerToken($request->headers->get(self::AUTH_HEADER))
-            ?? $request->cookies->get(self::AUTH_COOKIE);
+        $jwtToken =
+            $this->extractBearerToken($request->headers->get(self::AUTH_HEADER)) ?? $request->cookies->get(self::AUTH_COOKIE);
 
         if (null !== $jwtToken && '' !== $jwtToken) {
             return $this->authenticateWithJWT($jwtToken);
@@ -141,7 +140,7 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
         }
 
         $passport = new SelfValidatingPassport(
-            new UserBadge($username, $this->userProvider->loadUserByIdentifier(...))
+            new UserBadge($username, $this->userProvider->loadUserByIdentifier(...)),
         );
         $passport->setAttribute('is_login', false);
         $passport->setAttribute('token', $jwtToken);
@@ -203,12 +202,7 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
             throw new AuthenticationException('Could not generate tokens');
         }
 
-        $jwtToken = new JWTAuthenticationToken(
-            $user,
-            $firewallName,
-            $user->getRoles(),
-            $tokenPair->accessToken,
-        );
+        $jwtToken = new JWTAuthenticationToken($user, $firewallName, $user->getRoles(), $tokenPair->accessToken);
         $jwtToken->setAttribute('tokenPair', $tokenPair);
 
         return $jwtToken;
@@ -317,9 +311,7 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
 
     private static function tokenPair(JWTAuthenticationToken $token): ?TokenPair
     {
-        return $token->hasAttribute('tokenPair')
-            ? self::asTokenPair($token->getAttribute('tokenPair'))
-            : null;
+        return $token->hasAttribute('tokenPair') ? self::asTokenPair($token->getAttribute('tokenPair')) : null;
     }
 
     private static function asTokenPair(mixed $value): ?TokenPair

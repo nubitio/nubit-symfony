@@ -54,21 +54,18 @@ final class MeControllerTest extends TestCase
      */
     private function user(string $identifier, array $roles): UserInterface
     {
-        return new readonly class ($identifier, $roles) implements UserInterface {
+        return new readonly class($identifier, $roles) implements UserInterface {
             public function __construct(
                 private string $identifier,
                 private array $roles,
-            ) {
-            }
+            ) {}
 
             public function getRoles(): array
             {
                 return $this->roles;
             }
 
-            public function eraseCredentials(): void
-            {
-            }
+            public function eraseCredentials(): void {}
 
             public function getUserIdentifier(): string
             {

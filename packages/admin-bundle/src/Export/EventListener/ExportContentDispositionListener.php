@@ -45,12 +45,7 @@ final class ExportContentDispositionListener implements EventSubscriberInterface
 
         $resourceClass = $request->attributes->getString('_api_resource_class');
         $shortName = $resourceClass === '' ? 'export' : $this->shortName($resourceClass);
-        $filename = sprintf(
-            '%s-%s.%s',
-            $this->slug($shortName),
-            date('Y-m-d'),
-            $extension,
-        );
+        $filename = sprintf('%s-%s.%s', $this->slug($shortName), date('Y-m-d'), $extension);
 
         $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));
     }

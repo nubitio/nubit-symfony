@@ -14,8 +14,7 @@ final readonly class TenantScopedMetadata
         private ?string $tenantEntityClass,
         /** @var list<class-string> */
         private array $unscopedEntityClasses = [],
-    ) {
-    }
+    ) {}
 
     public function isGloballyUnscoped(string $entityClass): bool
     {

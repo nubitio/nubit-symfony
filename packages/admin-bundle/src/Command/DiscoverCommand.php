@@ -81,7 +81,7 @@ final class DiscoverCommand extends Command
             ];
         }
 
-        usort($rows, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
+        usort($rows, static fn(array $a, array $b): int => $a[0] <=> $b[0]);
 
         $io->section('API Platform resources (' . \count($rows) . ')');
         $io->table(['Short name', 'Class', 'Collection URL', 'Operations'], $rows);
@@ -110,8 +110,10 @@ final class DiscoverCommand extends Command
 
     private function renderSequences(SymfonyStyle $io): void
     {
-        if (!\class_exists('Nubit\SequenceBundle\Sequence\SequenceRegistry')
-            || !$this->container->has('Nubit\SequenceBundle\Sequence\SequenceRegistry')) {
+        if (
+            !\class_exists('Nubit\SequenceBundle\Sequence\SequenceRegistry')
+            || !$this->container->has('Nubit\SequenceBundle\Sequence\SequenceRegistry')
+        ) {
             $io->section('Sequences');
             $io->text('Sequence bundle not installed.');
 
@@ -145,8 +147,10 @@ final class DiscoverCommand extends Command
 
     private function renderWorkflows(SymfonyStyle $io): void
     {
-        if (!\class_exists('Nubit\WorkflowBundle\Workflow\WorkflowRegistry')
-            || !$this->container->has('Nubit\WorkflowBundle\Workflow\WorkflowRegistry')) {
+        if (
+            !\class_exists('Nubit\WorkflowBundle\Workflow\WorkflowRegistry')
+            || !$this->container->has('Nubit\WorkflowBundle\Workflow\WorkflowRegistry')
+        ) {
             $io->section('Workflows');
             $io->text('Workflow bundle not installed.');
 
@@ -160,7 +164,7 @@ final class DiscoverCommand extends Command
             $rows[] = [
                 $this->shortClassName($definition->entityClass),
                 $definition->routePrefix,
-                implode(', ', array_map(static fn ($t) => $t->name, $definition->transitions)),
+                implode(', ', array_map(static fn($t) => $t->name, $definition->transitions)),
             ];
         }
 

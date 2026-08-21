@@ -14,7 +14,5 @@ final class UnlimitedQuotaEnforcer implements QuotaEnforcerInterface
         // No quotas in single-tenant mode.
     }
 
-    public function releaseLocks(): void
-    {
-    }
+    public function releaseLocks(): void {}
 }

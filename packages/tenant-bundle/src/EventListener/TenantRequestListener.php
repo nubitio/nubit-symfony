@@ -7,8 +7,8 @@ namespace Nubit\TenantBundle\EventListener;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Nubit\Platform\Tenant\Context\TenantContext;
-use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
+use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\TenantBundle\Contract\TenantDatabaseConnectionSwitcherInterface;
 use Nubit\TenantBundle\Contract\TenantIsolationTargetProviderInterface;
 use Nubit\TenantBundle\Contract\TenantSchemaConnectionSwitcherInterface;
@@ -40,8 +40,7 @@ final class TenantRequestListener
         private readonly ?TenantIsolationTargetProviderInterface $targetProvider = null,
         private readonly ?TenantDatabaseConnectionSwitcherInterface $databaseConnectionSwitcher = null,
         private readonly ?TenantSchemaConnectionSwitcherInterface $schemaConnectionSwitcher = null,
-    ) {
-    }
+    ) {}
 
     public function __invoke(RequestEvent $event): void
     {
@@ -114,7 +113,11 @@ final class TenantRequestListener
         if (null !== $this->tenantEntityClass) {
             $filter->setParameter(TenantFilter::TENANT_ENTITY_PARAMETER, $this->tenantEntityClass, 'string');
         }
-        $filter->setParameter(TenantFilter::UNSCOPED_ENTITIES_PARAMETER, implode(',', $this->unscopedEntityClasses), 'string');
+        $filter->setParameter(
+            TenantFilter::UNSCOPED_ENTITIES_PARAMETER,
+            implode(',', $this->unscopedEntityClasses),
+            'string',
+        );
 
         if ($this->rlsEnabled) {
             $this->applyRls($this->entityManager->getConnection(), $resolved->id);
@@ -128,14 +131,20 @@ final class TenantRequestListener
         }
 
         try {
-            if (TenantIsolationTarget::SCHEMA === $this->activeConnectionTarget
-                && $this->schemaConnectionSwitcher instanceof TenantSchemaConnectionSwitcherInterface) {
+            if (
+                TenantIsolationTarget::SCHEMA === $this->activeConnectionTarget
+                && $this->schemaConnectionSwitcher instanceof TenantSchemaConnectionSwitcherInterface
+            ) {
                 $this->schemaConnectionSwitcher->resetSearchPath();
-            } elseif (TenantIsolationTarget::DATABASE === $this->activeConnectionTarget
-                && $this->databaseConnectionSwitcher instanceof ResettableTenantConnectionSwitcherInterface) {
+            } elseif (
+                TenantIsolationTarget::DATABASE === $this->activeConnectionTarget
+                && $this->databaseConnectionSwitcher instanceof ResettableTenantConnectionSwitcherInterface
+            ) {
                 $this->databaseConnectionSwitcher->resetConnection();
-            } elseif (TenantIsolationTarget::DATABASE === $this->activeConnectionTarget
-                && $this->connectionSwitcher instanceof ResettableTenantConnectionSwitcherInterface) {
+            } elseif (
+                TenantIsolationTarget::DATABASE === $this->activeConnectionTarget
+                && $this->connectionSwitcher instanceof ResettableTenantConnectionSwitcherInterface
+            ) {
                 $this->connectionSwitcher->resetConnection();
             }
         } finally {
@@ -146,10 +155,7 @@ final class TenantRequestListener
 
     private function applyRls(Connection $connection, int $tenantId): void
     {
-        $connection->executeStatement(
-            "SELECT set_config('app.tenant_id', ?, true)",
-            [(string) $tenantId],
-        );
+        $connection->executeStatement("SELECT set_config('app.tenant_id', ?, true)", [(string) $tenantId]);
     }
 
     private function resolveHybridTarget(string $tenantName, int $tenantId): TenantIsolationTarget

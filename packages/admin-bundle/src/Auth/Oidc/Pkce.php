@@ -7,9 +7,7 @@ namespace Nubit\AdminBundle\Auth\Oidc;
 /** RFC 7636 PKCE helpers — S256 only (plain is a needless downgrade). */
 final class Pkce
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /** 32 random bytes, base64url-encoded → 43 chars, within the spec's 43-128 range. */
     public static function generateVerifier(): string

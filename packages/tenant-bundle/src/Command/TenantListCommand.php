@@ -11,10 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(
-    name: 'nubit:tenant:list',
-    description: 'List provisioned tenants from the registry',
-)]
+#[AsCommand(name: 'nubit:tenant:list', description: 'List provisioned tenants from the registry')]
 final class TenantListCommand extends Command
 {
     public function __construct(

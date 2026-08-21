@@ -14,29 +14,22 @@ abstract class BaseController extends AbstractController
 {
     public function __construct(
         protected readonly SerializerInterface $serializer,
-    ) {
-    }
+    ) {}
 
     protected function success(
         string $message = 'Success',
         mixed $data = null,
-        int $status = Response::HTTP_OK
+        int $status = Response::HTTP_OK,
     ): JsonResponse {
-        return $this->json(
-            ApiResponse::success($message, $data)->toArray(),
-            $status
-        );
+        return $this->json(ApiResponse::success($message, $data)->toArray(), $status);
     }
 
     protected function error(
         string $message,
         mixed $data = null,
-        int $status = Response::HTTP_BAD_REQUEST
+        int $status = Response::HTTP_BAD_REQUEST,
     ): JsonResponse {
-        return $this->json(
-            ApiResponse::error($message, $data)->toArray(),
-            $status
-        );
+        return $this->json(ApiResponse::error($message, $data)->toArray(), $status);
     }
 
     protected function created(string $message = 'Created', mixed $data = null): JsonResponse

@@ -15,8 +15,7 @@ final readonly class WorkflowDefinition
         public string $routePrefix,
         public string $routeKey,
         public array $transitions,
-    ) {
-    }
+    ) {}
 
     public function findTransition(string $name): ?TransitionDefinition
     {
@@ -35,7 +34,7 @@ final readonly class WorkflowDefinition
         return [
             'field' => $this->field,
             'transitions' => array_map(
-                static fn (TransitionDefinition $transition): array => $transition->toOpenApi(),
+                static fn(TransitionDefinition $transition): array => $transition->toOpenApi(),
                 $this->transitions,
             ),
         ];

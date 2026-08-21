@@ -31,8 +31,7 @@ final readonly class Sequence
          * @var list<string>
          */
         public array $scope = [],
-    ) {
-    }
+    ) {}
 
     /** @return array<string, mixed> */
     public function toOpenApi(): array

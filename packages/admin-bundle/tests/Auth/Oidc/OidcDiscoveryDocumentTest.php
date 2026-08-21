@@ -32,7 +32,12 @@ final class OidcDiscoveryDocumentTest extends TestCase
         yield 'missing authorization_endpoint' => [['issuer' => 'a', 'token_endpoint' => 'b', 'jwks_uri' => 'c']];
         yield 'missing token_endpoint' => [['issuer' => 'a', 'authorization_endpoint' => 'b', 'jwks_uri' => 'c']];
         yield 'missing jwks_uri' => [['issuer' => 'a', 'authorization_endpoint' => 'b', 'token_endpoint' => 'c']];
-        yield 'empty issuer' => [['issuer' => '', 'authorization_endpoint' => 'b', 'token_endpoint' => 'c', 'jwks_uri' => 'd']];
+        yield 'empty issuer' => [[
+            'issuer' => '',
+            'authorization_endpoint' => 'b',
+            'token_endpoint' => 'c',
+            'jwks_uri' => 'd',
+        ]];
     }
 
     /**

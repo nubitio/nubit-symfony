@@ -19,8 +19,7 @@ final readonly class DefaultMeResponseBuilder implements MeResponseBuilderInterf
         private AppProfile $appProfile,
         private ?TenantContext $tenantContext = null,
         private ?FeatureCheckerInterface $featureChecker = null,
-    ) {
-    }
+    ) {}
 
     public function build(UserInterface $user): array
     {

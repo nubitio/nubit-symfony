@@ -30,12 +30,7 @@ final class WorkflowEngineTest extends TestCase
             routePrefix: '/api/orders',
             routeKey: 'api_orders',
             transitions: [
-                new TransitionDefinition(
-                    name: 'pay',
-                    from: ['open'],
-                    to: 'paid',
-                    set: ['paymentMethod' => 'cash'],
-                ),
+                new TransitionDefinition(name: 'pay', from: ['open'], to: 'paid', set: ['paymentMethod' => 'cash']),
             ],
         );
 
@@ -84,7 +79,10 @@ final class WorkflowEngineTest extends TestCase
     private function createEntityManagerStub(object $entity, bool $willPersist = true): EntityManagerInterface
     {
         $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects($willPersist ? self::once() : self::never())->method('persist')->with($entity);
+        $em
+            ->expects($willPersist ? self::once() : self::never())
+            ->method('persist')
+            ->with($entity);
         $em->expects($willPersist ? self::once() : self::never())->method('flush');
 
         return $em;

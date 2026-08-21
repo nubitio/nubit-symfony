@@ -33,13 +33,7 @@ final class SequenceMetadataTest extends TestCase
     #[Test]
     public function it_serializes_to_open_api(): void
     {
-        $sequence = new Sequence(
-            field: 'number',
-            name: 'order',
-            prefix: 'ORD-',
-            padding: 4,
-            scope: ['restaurant'],
-        );
+        $sequence = new Sequence(field: 'number', name: 'order', prefix: 'ORD-', padding: 4, scope: ['restaurant']);
 
         self::assertSame(
             [
@@ -55,6 +49,4 @@ final class SequenceMetadataTest extends TestCase
 }
 
 #[Sequence(field: 'code', name: 'invoice', prefix: 'INV-', padding: 3)]
-final class SequencedEntity
-{
-}
+final class SequencedEntity {}

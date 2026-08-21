@@ -17,10 +17,7 @@ final class MessengerNotificationDispatcherTest extends TestCase
         $message = new NotificationMessage('ops@acme.test', 'Subject', 'Body');
 
         $bus = $this->createMock(MessageBusInterface::class);
-        $bus->expects(static::once())
-            ->method('dispatch')
-            ->with($message)
-            ->willReturn(new Envelope($message));
+        $bus->expects(static::once())->method('dispatch')->with($message)->willReturn(new Envelope($message));
 
         (new MessengerNotificationDispatcher($bus))->dispatch($message);
     }

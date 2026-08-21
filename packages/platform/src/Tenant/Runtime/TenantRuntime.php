@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Nubit\Platform\Tenant\Runtime;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
-use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
+use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Model\TenantDescriptor;
 
 final readonly class TenantRuntime
@@ -32,11 +32,7 @@ final readonly class TenantRuntime
         );
 
         if ($actor !== null) {
-            $this->tenantContext->setActor(
-                $actor->actorIdentifier,
-                $actor->channel,
-                $actor->commandName,
-            );
+            $this->tenantContext->setActor($actor->actorIdentifier, $actor->channel, $actor->commandName);
         }
 
         return $descriptor;

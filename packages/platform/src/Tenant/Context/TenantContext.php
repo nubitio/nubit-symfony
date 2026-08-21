@@ -14,23 +14,16 @@ class TenantContext
     private ?string $channel = null;
     private ?string $commandName = null;
 
-    public function setTenant(
-        ?int $tenantId,
-        ?string $tenantName,
-        ?string $tenantDomain,
-        ?string $requestId,
-    ): void {
+    public function setTenant(?int $tenantId, ?string $tenantName, ?string $tenantDomain, ?string $requestId): void
+    {
         $this->tenantId = $tenantId;
         $this->tenantName = $tenantName;
         $this->tenantDomain = $tenantDomain;
         $this->requestId = $requestId;
     }
 
-    public function setActor(
-        ?string $actorIdentifier,
-        ?string $channel,
-        ?string $commandName = null,
-    ): void {
+    public function setActor(?string $actorIdentifier, ?string $channel, ?string $commandName = null): void
+    {
         $this->actorIdentifier = $actorIdentifier;
         $this->channel = $channel;
         $this->commandName = $commandName;

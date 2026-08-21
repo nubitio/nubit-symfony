@@ -34,19 +34,14 @@ use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
 #[SoftDeletable]
 #[ORM\Entity]
 #[ORM\Table(name: 'nubit_media')]
-#[ApiResource(
-    operations: [
-        new Get(uriTemplate: '/media/{id}'),
-        new Delete(
-            uriTemplate: '/media/{id}',
-            processor: MediaSoftDeleteProcessor::class,
-            output: false,
-        ),
-    ],
-)]
+#[ApiResource(operations: [
+    new Get(uriTemplate: '/media/{id}'),
+    new Delete(uriTemplate: '/media/{id}', processor: MediaSoftDeleteProcessor::class, output: false),
+])]
 class Media implements TenantOwnedInterface
 {
     use TenantOwnedTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]

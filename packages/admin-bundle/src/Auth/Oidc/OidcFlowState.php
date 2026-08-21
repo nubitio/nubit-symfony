@@ -13,6 +13,5 @@ final readonly class OidcFlowState
         public string $nonce,
         public string $codeVerifier,
         public int $issuedAt,
-    ) {
-    }
+    ) {}
 }

@@ -16,8 +16,7 @@ final class WorkflowRouteLoader extends Loader
 
     public function __construct(
         private readonly WorkflowRegistry $registry,
-    ) {
-    }
+    ) {}
 
     public function load(mixed $resource, ?string $type = null): RouteCollection
     {

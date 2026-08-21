@@ -13,8 +13,7 @@ class PdfExporter
 
     public function __construct(
         private readonly string $weasyprintBinary,
-    ) {
-    }
+    ) {}
 
     /**
      * Stream a PDF generated from an HTML string to the browser.

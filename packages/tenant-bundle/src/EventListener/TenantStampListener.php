@@ -19,8 +19,7 @@ final class TenantStampListener
         private readonly TenantContext $tenantContext,
         private readonly EntityManagerInterface $entityManager,
         private readonly ?string $tenantEntityClass,
-    ) {
-    }
+    ) {}
 
     public function prePersist(PrePersistEventArgs $args): void
     {
@@ -52,8 +51,8 @@ final class TenantStampListener
 
     private function stampRelation(object $entity, string $relation): void
     {
-        $getter = 'get'.ucfirst($relation);
-        $setter = 'set'.ucfirst($relation);
+        $getter = 'get' . ucfirst($relation);
+        $setter = 'set' . ucfirst($relation);
 
         if (!method_exists($entity, $getter) || !method_exists($entity, $setter)) {
             return;

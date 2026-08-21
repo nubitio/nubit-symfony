@@ -11,8 +11,7 @@ final readonly class Validator
 {
     public function __construct(
         private ValidatorInterface $validator,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<int, mixed> $constraints

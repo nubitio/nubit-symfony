@@ -37,9 +37,9 @@ final class ScopedEntity
 
 final class RestaurantStub
 {
-    public function __construct(private int $id)
-    {
-    }
+    public function __construct(
+        private int $id,
+    ) {}
 
     public function getId(): int
     {

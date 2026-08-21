@@ -26,8 +26,7 @@ final class MediaUploadController
         private readonly MediaStorage $storage,
         private readonly EntityManagerInterface $entityManager,
         private readonly MediaNormalizer $normalizer,
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request): JsonResponse
     {

@@ -15,6 +15,5 @@ final class WorkflowTransitionAppliedEvent extends Event
         public readonly WorkflowDefinition $workflow,
         public readonly TransitionDefinition $transition,
         public readonly string $previousState,
-    ) {
-    }
+    ) {}
 }

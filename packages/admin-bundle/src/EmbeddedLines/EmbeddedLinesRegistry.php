@@ -15,8 +15,7 @@ final class EmbeddedLinesRegistry
 
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, EmbeddedLinesDefinition>
@@ -114,8 +113,10 @@ final class EmbeddedLinesRegistry
     /**
      * @return array{parentEntityClass: string, collectionProperty: string}
      */
-    private function resolveParentBinding(\Doctrine\ORM\Mapping\ClassMetadata $lineMetadata, string $parentProperty): array
-    {
+    private function resolveParentBinding(
+        \Doctrine\ORM\Mapping\ClassMetadata $lineMetadata,
+        string $parentProperty,
+    ): array {
         if (!$lineMetadata->hasAssociation($parentProperty)) {
             return ['parentEntityClass' => '', 'collectionProperty' => $parentProperty];
         }

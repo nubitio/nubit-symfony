@@ -26,8 +26,7 @@ final readonly class OidcDiscoveryClient
     public function __construct(
         private HttpClientInterface $httpClient,
         private CacheInterface $cache,
-    ) {
-    }
+    ) {}
 
     public function discover(string $issuer): OidcDiscoveryDocument
     {
@@ -42,7 +41,10 @@ final readonly class OidcDiscoveryClient
             try {
                 return $this->httpClient->request('GET', $url)->toArray();
             } catch (TransportExceptionInterface $e) {
-                throw new \RuntimeException(sprintf('Unable to fetch OIDC discovery document from "%s".', $url), previous: $e);
+                throw new \RuntimeException(
+                    sprintf('Unable to fetch OIDC discovery document from "%s".', $url),
+                    previous: $e,
+                );
             }
         });
 

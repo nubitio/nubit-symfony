@@ -23,6 +23,5 @@ final readonly class Auditable
          * lowercased short class name (Product → "product").
          */
         public ?string $resource = null,
-    ) {
-    }
+    ) {}
 }

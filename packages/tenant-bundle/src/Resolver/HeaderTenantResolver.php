@@ -13,8 +13,7 @@ final readonly class HeaderTenantResolver implements TenantResolverInterface
     public function __construct(
         private TenantRegistryInterface $tenantRegistry,
         private string $header = 'X-Tenant-Id',
-    ) {
-    }
+    ) {}
 
     public function resolve(Request $request, ?UserInterface $user): ?ResolvedTenant
     {

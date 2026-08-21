@@ -12,6 +12,5 @@ final readonly class ActorStamp implements StampInterface
         public ?string $actorIdentifier,
         public ?string $channel,
         public ?string $commandName = null,
-    ) {
-    }
+    ) {}
 }

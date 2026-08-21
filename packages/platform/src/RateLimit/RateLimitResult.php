@@ -11,6 +11,5 @@ final readonly class RateLimitResult
         public int $limit,
         public int $remaining,
         public int $retryAfter,
-    ) {
-    }
+    ) {}
 }

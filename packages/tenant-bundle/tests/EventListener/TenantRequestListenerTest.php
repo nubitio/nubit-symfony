@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Nubit\TenantBundle\Tests\EventListener;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Nubit\Platform\Tenant\Context\TenantContext;
-use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
+use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\TenantBundle\Contract\TenantDatabaseConnectionSwitcherInterface;
 use Nubit\TenantBundle\Contract\TenantIsolationTargetProviderInterface;
 use Nubit\TenantBundle\Contract\TenantSchemaConnectionSwitcherInterface;
@@ -57,7 +57,9 @@ final class TenantRequestListenerTest extends TestCase
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::never())->method('getFilters');
         $targetProvider = $this->createMock(TenantIsolationTargetProviderInterface::class);
-        $targetProvider->expects(self::once())->method('resolveTarget')
+        $targetProvider
+            ->expects(self::once())
+            ->method('resolveTarget')
             ->with('acme', 42)
             ->willReturn(new TenantIsolationTarget(TenantIsolationTarget::DATABASE, 'postgresql://acme'));
         $databaseSwitcher = $this->createMock(TenantDatabaseConnectionSwitcherInterface::class);
@@ -73,7 +75,7 @@ final class TenantRequestListenerTest extends TestCase
         $resolver->method('resolve')->willReturn(new ResolvedTenant(42, 'acme'));
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $connection = $this->createStub(Connection::class);
-        $connection->method('quote')->willReturnCallback(static fn (string $value): string => "'{$value}'");
+        $connection->method('quote')->willReturnCallback(static fn(string $value): string => "'{$value}'");
         $entityManager->method('getConnection')->willReturn($connection);
         $filters = new RecordingFilterCollection();
         $filter = new TenantFilter($entityManager);
@@ -82,7 +84,12 @@ final class TenantRequestListenerTest extends TestCase
         $targetProvider = $this->createStub(TenantIsolationTargetProviderInterface::class);
         $targetProvider->method('resolveTarget')->willReturn(new TenantIsolationTarget(TenantIsolationTarget::COLUMN));
 
-        $listener = $this->listener($resolver, $entityManager, $targetProvider, $this->createStub(TenantDatabaseConnectionSwitcherInterface::class));
+        $listener = $this->listener(
+            $resolver,
+            $entityManager,
+            $targetProvider,
+            $this->createStub(TenantDatabaseConnectionSwitcherInterface::class),
+        );
         $listener($this->requestEvent());
 
         static::assertTrue($filters->enabled);
@@ -101,9 +108,22 @@ final class TenantRequestListenerTest extends TestCase
         $schemaSwitcher->expects(self::once())->method('switchToTenantId')->with(42);
         $schemaSwitcher->expects(self::once())->method('resetSearchPath');
 
-        $listener = $this->listener($resolver, $entityManager, $provider, $this->createStub(TenantDatabaseConnectionSwitcherInterface::class), $schemaSwitcher);
+        $listener = $this->listener(
+            $resolver,
+            $entityManager,
+            $provider,
+            $this->createStub(TenantDatabaseConnectionSwitcherInterface::class),
+            $schemaSwitcher,
+        );
         $listener($this->requestEvent());
-        $listener->onResponse(new ResponseEvent($this->createStub(HttpKernelInterface::class), new Request(), HttpKernelInterface::MAIN_REQUEST, new \Symfony\Component\HttpFoundation\Response()));
+        $listener->onResponse(
+            new ResponseEvent(
+                $this->createStub(HttpKernelInterface::class),
+                new Request(),
+                HttpKernelInterface::MAIN_REQUEST,
+                new \Symfony\Component\HttpFoundation\Response(),
+            ),
+        );
     }
 
     public function testUpdatesTenantFilterParametersWhenTheLongLivedFilterIsAlreadyEnabled(): void
@@ -112,7 +132,7 @@ final class TenantRequestListenerTest extends TestCase
         $resolver->method('resolve')->willReturn(new ResolvedTenant(42, 'acme'));
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $connection = $this->createStub(Connection::class);
-        $connection->method('quote')->willReturnCallback(static fn (string $value): string => "'{$value}'");
+        $connection->method('quote')->willReturnCallback(static fn(string $value): string => "'{$value}'");
         $entityManager->method('getConnection')->willReturn($connection);
         $filters = new RecordingFilterCollection();
         $filters->filter = new TenantFilter($entityManager);
@@ -122,7 +142,12 @@ final class TenantRequestListenerTest extends TestCase
         $provider = $this->createStub(TenantIsolationTargetProviderInterface::class);
         $provider->method('resolveTarget')->willReturn(new TenantIsolationTarget(TenantIsolationTarget::COLUMN));
 
-        $this->listener($resolver, $entityManager, $provider, $this->createStub(TenantDatabaseConnectionSwitcherInterface::class))($this->requestEvent());
+        $this->listener(
+            $resolver,
+            $entityManager,
+            $provider,
+            $this->createStub(TenantDatabaseConnectionSwitcherInterface::class),
+        )($this->requestEvent());
 
         static::assertSame('42', trim($filters->filter->getParameter(TenantFilter::PARAMETER), "'"));
     }
@@ -133,13 +158,15 @@ final class TenantRequestListenerTest extends TestCase
         $resolver->method('resolve')->willReturn(new ResolvedTenant(42, 'acme'));
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $provider = $this->createStub(TenantIsolationTargetProviderInterface::class);
-        $provider->method('resolveTarget')->willReturn(new TenantIsolationTarget(TenantIsolationTarget::DATABASE, 'postgresql://acme'));
-        $switcher = new class implements TenantDatabaseConnectionSwitcherInterface, ResettableTenantConnectionSwitcherInterface {
+        $provider
+            ->method('resolveTarget')
+            ->willReturn(new TenantIsolationTarget(TenantIsolationTarget::DATABASE, 'postgresql://acme'));
+        $switcher = new class implements
+            TenantDatabaseConnectionSwitcherInterface,
+            ResettableTenantConnectionSwitcherInterface {
             public int $resets = 0;
 
-            public function switchToDatabaseUrl(string $databaseUrl): void
-            {
-            }
+            public function switchToDatabaseUrl(string $databaseUrl): void {}
 
             public function resetConnection(): void
             {
@@ -149,7 +176,14 @@ final class TenantRequestListenerTest extends TestCase
 
         $listener = $this->listener($resolver, $entityManager, $provider, $switcher);
         $listener($this->requestEvent());
-        $listener->onResponse(new ResponseEvent($this->createStub(HttpKernelInterface::class), new Request(), HttpKernelInterface::MAIN_REQUEST, new \Symfony\Component\HttpFoundation\Response()));
+        $listener->onResponse(
+            new ResponseEvent(
+                $this->createStub(HttpKernelInterface::class),
+                new Request(),
+                HttpKernelInterface::MAIN_REQUEST,
+                new \Symfony\Component\HttpFoundation\Response(),
+            ),
+        );
 
         static::assertSame(1, $switcher->resets);
     }
@@ -184,6 +218,10 @@ final class TenantRequestListenerTest extends TestCase
 
     private function requestEvent(): RequestEvent
     {
-        return new RequestEvent($this->createStub(HttpKernelInterface::class), new Request(), HttpKernelInterface::MAIN_REQUEST);
+        return new RequestEvent(
+            $this->createStub(HttpKernelInterface::class),
+            new Request(),
+            HttpKernelInterface::MAIN_REQUEST,
+        );
     }
 }

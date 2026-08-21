@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Nubit\Platform\Messenger;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
-use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
+use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Model\TenantDescriptor;
 use Nubit\Platform\Tenant\Runtime\TenantRuntime;
 use Nubit\Platform\Tenant\Runtime\TenantRuntimeActor;
@@ -45,7 +45,7 @@ final readonly class TenantContextMiddleware implements MiddlewareInterface
 
             return $this->runtime()->run(
                 $tenant,
-                static fn () => $stack->next()->handle($envelope, $stack),
+                static fn() => $stack->next()->handle($envelope, $stack),
                 $runtimeActor,
             );
         }
@@ -61,11 +61,7 @@ final readonly class TenantContextMiddleware implements MiddlewareInterface
             $this->tenantConnectionSwitcher->switchConnection($stamp->tenantName);
         }
 
-        $this->tenantContext->setActor(
-            $actorStamp?->actorIdentifier,
-            'messenger',
-            $actorStamp?->commandName,
-        );
+        $this->tenantContext->setActor($actorStamp?->actorIdentifier, 'messenger', $actorStamp?->commandName);
 
         try {
             return $stack->next()->handle($envelope, $stack);

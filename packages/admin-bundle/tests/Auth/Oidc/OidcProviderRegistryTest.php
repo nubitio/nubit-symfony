@@ -40,8 +40,22 @@ final class OidcProviderRegistryTest extends TestCase
     public function testAllReturnsEveryConfiguredProvider(): void
     {
         $registry = new OidcProviderRegistry([
-            'okta' => ['issuer' => 'a', 'client_id' => 'b', 'client_secret' => 'c', 'scopes' => [], 'redirect_uri' => 'd', 'post_login_redirect_uri' => 'e'],
-            'azure' => ['issuer' => 'f', 'client_id' => 'g', 'client_secret' => 'h', 'scopes' => [], 'redirect_uri' => 'i', 'post_login_redirect_uri' => 'j'],
+            'okta' => [
+                'issuer' => 'a',
+                'client_id' => 'b',
+                'client_secret' => 'c',
+                'scopes' => [],
+                'redirect_uri' => 'd',
+                'post_login_redirect_uri' => 'e',
+            ],
+            'azure' => [
+                'issuer' => 'f',
+                'client_id' => 'g',
+                'client_secret' => 'h',
+                'scopes' => [],
+                'redirect_uri' => 'i',
+                'post_login_redirect_uri' => 'j',
+            ],
         ]);
 
         static::assertCount(2, $registry->all());

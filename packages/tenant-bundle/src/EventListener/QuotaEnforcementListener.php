@@ -23,8 +23,7 @@ final readonly class QuotaEnforcementListener
         private TenantContext $tenantContext,
         private QuotaResourceRegistry $quotaResourceRegistry,
         private bool $enabled,
-    ) {
-    }
+    ) {}
 
     /**
      * @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager> $args

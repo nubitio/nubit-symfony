@@ -11,6 +11,5 @@ final readonly class UnguardedOperation
         public string $resourceShortName,
         public string $method,
         public ?string $uriTemplate,
-    ) {
-    }
+    ) {}
 }

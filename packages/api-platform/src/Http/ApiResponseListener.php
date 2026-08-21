@@ -13,8 +13,7 @@ final readonly class ApiResponseListener
 {
     public function __construct(
         private GridSummaryCalculator $gridSummaryCalculator,
-    ) {
-    }
+    ) {}
 
     public function __invoke(ResponseEvent $event): void
     {

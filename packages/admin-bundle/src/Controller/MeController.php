@@ -18,8 +18,7 @@ final readonly class MeController
 {
     public function __construct(
         private MeResponseBuilderInterface $meResponseBuilder,
-    ) {
-    }
+    ) {}
 
     public function __invoke(#[CurrentUser] ?UserInterface $user): JsonResponse
     {

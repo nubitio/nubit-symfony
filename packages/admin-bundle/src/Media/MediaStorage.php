@@ -29,8 +29,7 @@ final readonly class MediaStorage
         private string $directory,
         private array $allowedMimes = [],
         private int $maxSize = 0,
-    ) {
-    }
+    ) {}
 
     /**
      * Validates, writes the upload, and returns an unpersisted Media row describing it.

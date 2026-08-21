@@ -19,9 +19,9 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
-use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
@@ -49,8 +49,7 @@ class OidcAuthenticator extends AbstractAuthenticator
         private readonly CookieFactory $cookieFactory,
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     #[Override]
     public function supports(Request $request): ?bool
@@ -86,7 +85,9 @@ class OidcAuthenticator extends AbstractAuthenticator
         $code = $request->query->get('code');
         if (!is_string($code) || $code === '') {
             $error = $request->query->get('error_description') ?? $request->query->get('error');
-            throw new OidcAuthenticationException(is_string($error) ? $error : 'OIDC provider did not return an authorization code.');
+            throw new OidcAuthenticationException(
+                is_string($error) ? $error : 'OIDC provider did not return an authorization code.',
+            );
         }
 
         $discovery = $this->discoveryClient->discover($config->issuer);
@@ -94,7 +95,7 @@ class OidcAuthenticator extends AbstractAuthenticator
         $claims = $this->idTokenVerifier->verify($idToken, $config, $discovery, $flowState->nonce);
         $user = $this->userResolver->resolve($claims, $config);
 
-        $passport = new SelfValidatingPassport(new UserBadge($user->getUserIdentifier(), fn () => $user));
+        $passport = new SelfValidatingPassport(new UserBadge($user->getUserIdentifier(), fn() => $user));
         $passport->setAttribute('oidc_provider', $config);
 
         return $passport;
@@ -196,7 +197,9 @@ class OidcAuthenticator extends AbstractAuthenticator
         $config = $this->providerRegistry->get($providerName);
         $target = $config?->postLoginRedirectUri ?? '/';
 
-        $response = new RedirectResponse($target . (str_contains($target, '?') ? '&' : '?') . 'error=' . urlencode($reason));
+        $response = new RedirectResponse(
+            $target . (str_contains($target, '?') ? '&' : '?') . 'error=' . urlencode($reason),
+        );
         $response->headers->clearCookie(OidcRedirectController::FLOW_COOKIE, sameSite: Cookie::SAMESITE_LAX);
 
         return $response;

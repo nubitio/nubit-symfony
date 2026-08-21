@@ -22,8 +22,7 @@ abstract readonly class AbstractEmbeddedLinesProcessor implements ProcessorInter
     /** @param ProcessorInterface<mixed, mixed> $persistProcessor */
     public function __construct(
         private readonly ProcessorInterface $persistProcessor,
-    ) {
-    }
+    ) {}
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
@@ -43,9 +42,7 @@ abstract readonly class AbstractEmbeddedLinesProcessor implements ProcessorInter
     /** @return non-empty-string */
     abstract protected function lineSetter(): string;
 
-    protected function afterLinesSynced(mixed $data): void
-    {
-    }
+    protected function afterLinesSynced(mixed $data): void {}
 
     private function syncLines(mixed $parent): void
     {

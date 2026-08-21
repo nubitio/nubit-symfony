@@ -16,8 +16,7 @@ final readonly class RouteMediaUrlResolver implements MediaUrlResolverInterface
 {
     public function __construct(
         private UrlGeneratorInterface $urlGenerator,
-    ) {
-    }
+    ) {}
 
     public function resolve(Media $media): string
     {

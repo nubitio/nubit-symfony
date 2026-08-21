@@ -24,15 +24,18 @@ final class ProblemDetailsTest extends TestCase
             extensions: ['resource' => 'sale'],
         );
 
-        self::assertSame([
-            'type' => 'https://example.test/problem',
-            'title' => 'Invalid state',
-            'status' => 409,
-            'detail' => 'Cannot continue.',
-            'code' => 'INVALID_STATE',
-            'action' => 'retry',
-            'extensions' => ['resource' => 'sale'],
-        ], $problem->toArray());
+        self::assertSame(
+            [
+                'type' => 'https://example.test/problem',
+                'title' => 'Invalid state',
+                'status' => 409,
+                'detail' => 'Cannot continue.',
+                'code' => 'INVALID_STATE',
+                'action' => 'retry',
+                'extensions' => ['resource' => 'sale'],
+            ],
+            $problem->toArray(),
+        );
     }
 
     public function testProblemResponseUsesProblemJsonContentTypeAndStatus(): void
@@ -60,14 +63,17 @@ final class ProblemDetailsTest extends TestCase
             statusCode: 409,
         );
 
-        self::assertSame([
-            'type' => 'https://docs.nubit.test/problems/cash-session-required',
-            'title' => 'Cash session required',
-            'status' => 409,
-            'detail' => 'Open a cash session first.',
-            'code' => 'SALE_CASH_SESSION_REQUIRED',
-            'action' => 'open_cash_session',
-            'extensions' => ['numericCode' => 1001],
-        ], $exception->toProblemDetails()->toArray());
+        self::assertSame(
+            [
+                'type' => 'https://docs.nubit.test/problems/cash-session-required',
+                'title' => 'Cash session required',
+                'status' => 409,
+                'detail' => 'Open a cash session first.',
+                'code' => 'SALE_CASH_SESSION_REQUIRED',
+                'action' => 'open_cash_session',
+                'extensions' => ['numericCode' => 1001],
+            ],
+            $exception->toProblemDetails()->toArray(),
+        );
     }
 }

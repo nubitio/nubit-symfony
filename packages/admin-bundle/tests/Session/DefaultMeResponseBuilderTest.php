@@ -19,19 +19,18 @@ final class DefaultMeResponseBuilderTest extends TestCase
         $tenantContext = new TenantContext();
         $tenantContext->setTenant(1, 'acme', 'acme.test', null);
 
-        $builder = new DefaultMeResponseBuilder(
-            AppProfile::Internal,
-            $tenantContext,
-            new AllowAllFeatureChecker(),
-        );
+        $builder = new DefaultMeResponseBuilder(AppProfile::Internal, $tenantContext, new AllowAllFeatureChecker());
 
         $response = $builder->build($this->user('admin@example.com', ['ROLE_ADMIN']));
 
-        self::assertSame([
-            'username' => 'admin@example.com',
-            'roles' => ['ROLE_ADMIN'],
-            'appProfile' => 'internal',
-        ], $response);
+        self::assertSame(
+            [
+                'username' => 'admin@example.com',
+                'roles' => ['ROLE_ADMIN'],
+                'appProfile' => 'internal',
+            ],
+            $response,
+        );
     }
 
     public function testSaasProfileIncludesTenantWhenContextIsSet(): void
@@ -39,30 +38,25 @@ final class DefaultMeResponseBuilderTest extends TestCase
         $tenantContext = new TenantContext();
         $tenantContext->setTenant(42, 'acme', 'acme.test', null);
 
-        $builder = new DefaultMeResponseBuilder(
-            AppProfile::Saas,
-            $tenantContext,
-            new AllowAllFeatureChecker(),
-        );
+        $builder = new DefaultMeResponseBuilder(AppProfile::Saas, $tenantContext, new AllowAllFeatureChecker());
 
         $response = $builder->build($this->user('jane@example.com', ['ROLE_USER']));
 
         self::assertSame('saas', $response['appProfile']);
-        self::assertSame([
-            'id' => 42,
-            'name' => 'acme',
-            'domain' => 'acme.test',
-        ], $response['tenant']);
+        self::assertSame(
+            [
+                'id' => 42,
+                'name' => 'acme',
+                'domain' => 'acme.test',
+            ],
+            $response['tenant'],
+        );
         self::assertArrayNotHasKey('features', $response);
     }
 
     public function testSaasProfileOmitsTenantWhenContextIsEmpty(): void
     {
-        $builder = new DefaultMeResponseBuilder(
-            AppProfile::Saas,
-            new TenantContext(),
-            new AllowAllFeatureChecker(),
-        );
+        $builder = new DefaultMeResponseBuilder(AppProfile::Saas, new TenantContext(), new AllowAllFeatureChecker());
 
         $response = $builder->build($this->user('jane@example.com', ['ROLE_USER']));
 
@@ -83,9 +77,7 @@ final class DefaultMeResponseBuilderTest extends TestCase
                 return [];
             }
 
-            public function requireFeature(string $featureKey): void
-            {
-            }
+            public function requireFeature(string $featureKey): void {}
 
             public function getEntitlements(): array
             {
@@ -95,17 +87,16 @@ final class DefaultMeResponseBuilderTest extends TestCase
             }
         };
 
-        $builder = new DefaultMeResponseBuilder(
-            AppProfile::Saas,
-            null,
-            $featureChecker,
-        );
+        $builder = new DefaultMeResponseBuilder(AppProfile::Saas, null, $featureChecker);
 
         $response = $builder->build($this->user('jane@example.com', ['ROLE_USER']));
 
-        self::assertSame([
-            'reports' => ['enabled' => true, 'config' => ['max' => 10]],
-        ], $response['features']);
+        self::assertSame(
+            [
+                'reports' => ['enabled' => true, 'config' => ['max' => 10]],
+            ],
+            $response['features'],
+        );
     }
 
     public function testHybridProfileIncludesTenantBlock(): void
@@ -118,10 +109,13 @@ final class DefaultMeResponseBuilderTest extends TestCase
         $response = $builder->build($this->user('ops@example.com', ['ROLE_USER']));
 
         self::assertSame('hybrid', $response['appProfile']);
-        self::assertSame([
-            'id' => 7,
-            'name' => 'hq',
-        ], $response['tenant']);
+        self::assertSame(
+            [
+                'id' => 7,
+                'name' => 'hq',
+            ],
+            $response['tenant'],
+        );
     }
 
     /**
@@ -129,21 +123,18 @@ final class DefaultMeResponseBuilderTest extends TestCase
      */
     private function user(string $identifier, array $roles): UserInterface
     {
-        return new readonly class ($identifier, $roles) implements UserInterface {
+        return new readonly class($identifier, $roles) implements UserInterface {
             public function __construct(
                 private string $identifier,
                 private array $roles,
-            ) {
-            }
+            ) {}
 
             public function getRoles(): array
             {
                 return $this->roles;
             }
 
-            public function eraseCredentials(): void
-            {
-            }
+            public function eraseCredentials(): void {}
 
             public function getUserIdentifier(): string
             {

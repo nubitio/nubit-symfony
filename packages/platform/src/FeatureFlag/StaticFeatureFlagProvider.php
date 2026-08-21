@@ -10,9 +10,9 @@ use Nubit\Platform\FeatureFlag\Contract\FeatureFlagProviderInterface;
 final readonly class StaticFeatureFlagProvider implements FeatureFlagProviderInterface
 {
     /** @param array<string, mixed> $flags */
-    public function __construct(private array $flags = [])
-    {
-    }
+    public function __construct(
+        private array $flags = [],
+    ) {}
 
     public function boolean(string $key, bool $default, FeatureFlagContext $context): bool
     {
@@ -36,9 +36,7 @@ final readonly class StaticFeatureFlagProvider implements FeatureFlagProviderInt
 
     public function object(string $key, array $default, FeatureFlagContext $context): array
     {
-        return is_array($this->flags[$key] ?? null)
-            ? self::stringKeyed($this->flags[$key])
-            : $default;
+        return is_array($this->flags[$key] ?? null) ? self::stringKeyed($this->flags[$key]) : $default;
     }
 
     /**
@@ -48,7 +46,7 @@ final readonly class StaticFeatureFlagProvider implements FeatureFlagProviderInt
     private static function stringKeyed(array $value): array
     {
         $normalized = array_combine(
-            array_map(static fn (int|string $key): string => (string) $key, array_keys($value)),
+            array_map(static fn(int|string $key): string => (string) $key, array_keys($value)),
             array_values($value),
         );
 

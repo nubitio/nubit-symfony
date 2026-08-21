@@ -10,8 +10,7 @@ final readonly class SequenceScopeResolver
 {
     public function __construct(
         private PropertyAccessorInterface $propertyAccessor,
-    ) {
-    }
+    ) {}
 
     /**
      * @param list<string> $scopePaths
@@ -25,7 +24,7 @@ final readonly class SequenceScopeResolver
         $parts = [];
         foreach ($scopePaths as $path) {
             $value = $this->readScopePart($entity, $path);
-            $parts[] = $path.':'.$value;
+            $parts[] = $path . ':' . $value;
         }
 
         return implode('|', $parts);

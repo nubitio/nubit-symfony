@@ -18,9 +18,21 @@ final class XlsCellWriter
         }
 
         match ($columnSpec->type) {
-            XlsColumn::TYPE_NUMBER => $sheet->setCellValueExplicit([$column, $row], (float) $value, DataType::TYPE_NUMERIC),
-            XlsColumn::TYPE_INTEGER => $sheet->setCellValueExplicit([$column, $row], (int) $value, DataType::TYPE_NUMERIC),
-            XlsColumn::TYPE_BOOLEAN => $sheet->setCellValueExplicit([$column, $row], (bool) $value, DataType::TYPE_BOOL),
+            XlsColumn::TYPE_NUMBER => $sheet->setCellValueExplicit(
+                [$column, $row],
+                (float) $value,
+                DataType::TYPE_NUMERIC,
+            ),
+            XlsColumn::TYPE_INTEGER => $sheet->setCellValueExplicit(
+                [$column, $row],
+                (int) $value,
+                DataType::TYPE_NUMERIC,
+            ),
+            XlsColumn::TYPE_BOOLEAN => $sheet->setCellValueExplicit(
+                [$column, $row],
+                (bool) $value,
+                DataType::TYPE_BOOL,
+            ),
             XlsColumn::TYPE_DATE, XlsColumn::TYPE_DATETIME => $this->writeDate($sheet, $column, $row, $value),
             default => $sheet->setCellValueExplicit([$column, $row], (string) $value, DataType::TYPE_STRING),
         };

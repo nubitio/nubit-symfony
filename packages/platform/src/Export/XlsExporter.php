@@ -100,9 +100,7 @@ class XlsExporter
         }
 
         foreach ($workbook->sheets as $index => $sheetSpec) {
-            $sheet = $index === 0
-                ? $spreadsheet->getActiveSheet()
-                : $spreadsheet->createSheet($index);
+            $sheet = $index === 0 ? $spreadsheet->getActiveSheet() : $spreadsheet->createSheet($index);
 
             $this->worksheetWriter->write($sheet, $sheetSpec);
         }

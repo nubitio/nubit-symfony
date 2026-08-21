@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Nubit\Platform\Tests\Observability\Logging;
 
-use Nubit\Platform\Observability\Logging\TenantLogProcessor;
-use Nubit\Platform\Tenant\Context\TenantContext;
 use Monolog\Level;
 use Monolog\LogRecord;
+use Nubit\Platform\Observability\Logging\TenantLogProcessor;
+use Nubit\Platform\Tenant\Context\TenantContext;
 use PHPUnit\Framework\TestCase;
 
 final class TenantLogProcessorTest extends TestCase

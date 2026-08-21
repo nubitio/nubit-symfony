@@ -25,13 +25,13 @@ final class AuditTrailController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-    ) {
-    }
+    ) {}
 
     public function __invoke(string $resource, string $id, Request $request): JsonResponse
     {
         /** @var list<AuditLog> $rows */
-        $rows = $this->entityManager->createQueryBuilder()
+        $rows = $this->entityManager
+            ->createQueryBuilder()
             ->select('a')
             ->from(AuditLog::class, 'a')
             ->where('a.resource = :resource')
@@ -44,7 +44,7 @@ final class AuditTrailController
             ->getQuery()
             ->getResult();
 
-        return new JsonResponse(array_map(static fn (AuditLog $log) => [
+        return new JsonResponse(array_map(static fn(AuditLog $log) => [
             'id' => $log->getId(),
             'timestamp' => $log->getCreatedAt()->format(\DateTimeInterface::ATOM),
             'user' => $log->getUsername(),

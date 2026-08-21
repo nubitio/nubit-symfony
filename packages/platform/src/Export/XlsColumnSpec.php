@@ -18,8 +18,11 @@ final readonly class XlsColumnSpec
         return new self(label: $label, type: XlsColumn::TYPE_STRING);
     }
 
-    public static function number(?string $label = null, ?string $format = '#,##0.###', ?string $summary = XlsColumn::SUMMARY_SUM): self
-    {
+    public static function number(
+        ?string $label = null,
+        ?string $format = '#,##0.###',
+        ?string $summary = XlsColumn::SUMMARY_SUM,
+    ): self {
         return new self(
             label: $label,
             type: XlsColumn::TYPE_NUMBER,
@@ -28,8 +31,11 @@ final readonly class XlsColumnSpec
         );
     }
 
-    public static function integer(?string $label = null, ?string $format = '#,##0', ?string $summary = XlsColumn::SUMMARY_SUM): self
-    {
+    public static function integer(
+        ?string $label = null,
+        ?string $format = '#,##0',
+        ?string $summary = XlsColumn::SUMMARY_SUM,
+    ): self {
         return new self(
             label: $label,
             type: XlsColumn::TYPE_INTEGER,
@@ -40,12 +46,20 @@ final readonly class XlsColumnSpec
 
     public static function date(?string $label = null, ?string $format = 'yyyy-mm-dd'): self
     {
-        return new self(label: $label, type: XlsColumn::TYPE_DATE, presentation: new XlsColumnPresentation(format: $format));
+        return new self(
+            label: $label,
+            type: XlsColumn::TYPE_DATE,
+            presentation: new XlsColumnPresentation(format: $format),
+        );
     }
 
     public static function datetime(?string $label = null, ?string $format = 'yyyy-mm-dd hh:mm'): self
     {
-        return new self(label: $label, type: XlsColumn::TYPE_DATETIME, presentation: new XlsColumnPresentation(format: $format));
+        return new self(
+            label: $label,
+            type: XlsColumn::TYPE_DATETIME,
+            presentation: new XlsColumnPresentation(format: $format),
+        );
     }
 
     public function withSummary(string $summary, ?string $formula = null, ?string $label = null): self

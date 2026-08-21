@@ -20,11 +20,6 @@ final class WorkflowTransitionException extends HttpException
 
     public static function invalidState(string $transition, string $current, string $field): self
     {
-        return new self(422, sprintf(
-            'Transition "%s" is not allowed when %s is "%s".',
-            $transition,
-            $field,
-            $current,
-        ));
+        return new self(422, sprintf('Transition "%s" is not allowed when %s is "%s".', $transition, $field, $current));
     }
 }

@@ -17,6 +17,5 @@ final readonly class QuotaResource
 {
     public function __construct(
         public string $resource,
-    ) {
-    }
+    ) {}
 }

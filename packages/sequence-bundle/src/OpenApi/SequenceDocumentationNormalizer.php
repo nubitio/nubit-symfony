@@ -23,8 +23,7 @@ final class SequenceDocumentationNormalizer implements NormalizerInterface
         private readonly SequenceRegistry $registry,
         private readonly ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
         private readonly ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
-    ) {
-    }
+    ) {}
 
     /** @return array<mixed> */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
@@ -33,7 +32,7 @@ final class SequenceDocumentationNormalizer implements NormalizerInterface
         $doc = $this->inner->normalize($data, $format, $context);
 
         foreach (['hydra:', ''] as $prefix) {
-            $classesKey = $prefix.'supportedClass';
+            $classesKey = $prefix . 'supportedClass';
             if (!isset($doc[$classesKey]) || !\is_array($doc[$classesKey])) {
                 continue;
             }

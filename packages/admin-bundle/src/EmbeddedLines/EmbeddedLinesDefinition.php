@@ -20,13 +20,12 @@ final readonly class EmbeddedLinesDefinition
         public array $normalizationGroups,
         public string $parentEntityClass,
         public string $collectionProperty,
-    ) {
-    }
+    ) {}
 
     /** @return array<string, mixed> */
     public function toOpenApi(): array
     {
-        $short = static fn (string $class): string => substr($class, strrpos($class, '\\') + 1);
+        $short = static fn(string $class): string => substr($class, strrpos($class, '\\') + 1);
 
         return [
             'propertyName' => $this->collectionProperty,

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Nubit\Platform\Tests\Tenant\Runtime;
 
 use Nubit\Platform\Tenant\Context\TenantContext;
-use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
+use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Model\TenantDescriptor;
 use Nubit\Platform\Tenant\Runtime\TenantRuntime;
 use Nubit\Platform\Tenant\Runtime\TenantRuntimeActor;
@@ -42,14 +42,15 @@ final class TenantRuntimeTest extends TestCase
         $switcher = new RecordingTenantConnectionSwitcher();
         $runtime = new TenantRuntime($switcher, $context);
 
-        $captured = $runtime->run(
-            ['id' => 3, 'name' => 'legacy', 'primary_domain' => 'legacy.example.test'],
-            static fn (TenantDescriptor $tenant): array => [
-                'id' => $tenant->id,
-                'name' => $tenant->name,
-                'domain' => $tenant->primaryDomain,
-            ],
-        );
+        $captured = $runtime->run([
+            'id' => 3,
+            'name' => 'legacy',
+            'primary_domain' => 'legacy.example.test',
+        ], static fn(TenantDescriptor $tenant): array => [
+            'id' => $tenant->id,
+            'name' => $tenant->name,
+            'domain' => $tenant->primaryDomain,
+        ]);
 
         self::assertSame(['id' => 3, 'name' => 'legacy', 'domain' => 'legacy.example.test'], $captured);
         self::assertSame(['legacy'], $switcher->tenants);
@@ -66,7 +67,7 @@ final class TenantRuntimeTest extends TestCase
         try {
             $runtime->run(
                 new TenantDescriptor(9, 'failing'),
-                static fn (): never => throw new \RuntimeException('failed'),
+                static fn(): never => throw new \RuntimeException('failed'),
             );
             self::fail('Expected runtime exception.');
         } catch (\RuntimeException $exception) {
@@ -81,7 +82,10 @@ final class TenantRuntimeTest extends TestCase
     public function testRunResetsResettableConnectionAfterCallback(): void
     {
         $switcher = new ResettableRecordingTenantConnectionSwitcher();
-        (new TenantRuntime($switcher, new TenantContext()))->run(new TenantDescriptor(9, 'acme'), static fn (): null => null);
+        (new TenantRuntime($switcher, new TenantContext()))->run(
+            new TenantDescriptor(9, 'acme'),
+            static fn(): null => null,
+        );
 
         self::assertSame(1, $switcher->resets);
     }
@@ -100,7 +104,8 @@ class RecordingTenantConnectionSwitcher implements TenantConnectionSwitcherInter
 }
 
 /** @internal */
-final class ResettableRecordingTenantConnectionSwitcher extends RecordingTenantConnectionSwitcher implements ResettableTenantConnectionSwitcherInterface
+final class ResettableRecordingTenantConnectionSwitcher extends RecordingTenantConnectionSwitcher implements
+    ResettableTenantConnectionSwitcherInterface
 {
     public int $resets = 0;
 

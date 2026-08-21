@@ -23,8 +23,7 @@ final class XlsxEncoder implements EncoderInterface
 
     public function __construct(
         private readonly XlsExporter $exporter = new XlsExporter(),
-    ) {
-    }
+    ) {}
 
     public function supportsEncoding(string $format): bool
     {
@@ -53,9 +52,7 @@ final class XlsxEncoder implements EncoderInterface
         }
 
         /** @var list<array<string, mixed>> $rows */
-        $rows = array_is_list($data)
-            ? array_values(array_filter($data, is_array(...)))
-            : [$data];
+        $rows = array_is_list($data) ? array_values(array_filter($data, is_array(...))) : [$data];
 
         return $rows;
     }

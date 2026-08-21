@@ -22,8 +22,7 @@ final readonly class CurrentRecipientFilterListener
     public function __construct(
         private EntityManagerInterface $entityManager,
         private TokenStorageInterface $tokenStorage,
-    ) {
-    }
+    ) {}
 
     public function __invoke(RequestEvent $event): void
     {

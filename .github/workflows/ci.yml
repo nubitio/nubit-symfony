@@ -44,6 +44,9 @@ jobs:
       - name: Mago lint
         run: vendor/bin/mago lint
 
+      - name: Mago format check
+        run: vendor/bin/mago fmt --dry-run
+
       - name: Static analysis (no new issues)
         run: composer stan
 

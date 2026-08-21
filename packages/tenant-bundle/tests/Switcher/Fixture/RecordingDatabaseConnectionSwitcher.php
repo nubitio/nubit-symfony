@@ -8,7 +8,9 @@ use Nubit\Platform\Tenant\Contract\ResettableTenantConnectionSwitcherInterface;
 use Nubit\TenantBundle\Contract\TenantDatabaseConnectionSwitcherInterface;
 
 /** @internal */
-final class RecordingDatabaseConnectionSwitcher implements TenantDatabaseConnectionSwitcherInterface, ResettableTenantConnectionSwitcherInterface
+final class RecordingDatabaseConnectionSwitcher implements
+    TenantDatabaseConnectionSwitcherInterface,
+    ResettableTenantConnectionSwitcherInterface
 {
     /** @var list<string> */
     public array $urls = [];

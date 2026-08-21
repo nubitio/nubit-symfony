@@ -45,9 +45,7 @@ final class TenantScopedMetadataTest extends TestCase
 }
 
 #[TenantScoped(field: 'restaurant_id', stampOnPersist: false)]
-final class CustomFieldFixture
-{
-}
+final class CustomFieldFixture {}
 
 final class OwnedFixture implements TenantOwnedInterface
 {
@@ -66,10 +64,6 @@ final class OwnedFixture implements TenantOwnedInterface
     }
 }
 
-final class TenantRootFixture
-{
-}
+final class TenantRootFixture {}
 
-final class GlobalInfrastructureFixture
-{
-}
+final class GlobalInfrastructureFixture {}

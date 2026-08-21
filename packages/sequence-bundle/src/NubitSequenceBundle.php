@@ -42,12 +42,13 @@ final class NubitSequenceBundle extends AbstractBundle
 
     public function configure(DefinitionConfigurator $definition): void
     {
-        $definition->rootNode()
+        $definition
+            ->rootNode()
             ->children()
-                ->booleanNode('enabled')
-                    ->info('Enable automatic sequence allocation on prePersist and x-sequence OpenAPI hints.')
-                    ->defaultTrue()
-                ->end()
+            ->booleanNode('enabled')
+            ->info('Enable automatic sequence allocation on prePersist and x-sequence OpenAPI hints.')
+            ->defaultTrue()
+            ->end()
             ->end();
     }
 
@@ -60,9 +61,7 @@ final class NubitSequenceBundle extends AbstractBundle
         }
 
         $services = $configurator->services();
-        $services->defaults()
-            ->autowire()
-            ->autoconfigure();
+        $services->defaults()->autowire()->autoconfigure();
 
         $services->set(SequenceMetadata::class);
         $services->set(SequenceScopeResolver::class);
@@ -70,7 +69,8 @@ final class NubitSequenceBundle extends AbstractBundle
         $services->set(SequenceAllocator::class);
         $services->set(SequenceStampListener::class);
 
-        $services->set(SequenceDocumentationNormalizer::class)
+        $services
+            ->set(SequenceDocumentationNormalizer::class)
             ->decorate('Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer')
             ->args([
                 '$inner' => service('.inner'),

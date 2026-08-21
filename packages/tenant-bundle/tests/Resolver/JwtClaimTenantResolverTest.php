@@ -14,13 +14,17 @@ final class JwtClaimTenantResolverTest extends TestCase
     public function testReadsTenantClaimFromBearerToken(): void
     {
         $secret = 'test-secret-test-secret-test-secret!!';
-        $token = JWT::encode([
-            'tenantId' => 99,
-            'tenantName' => 'acme',
-        ], $secret, 'HS256');
+        $token = JWT::encode(
+            [
+                'tenantId' => 99,
+                'tenantName' => 'acme',
+            ],
+            $secret,
+            'HS256',
+        );
 
         $resolver = new JwtClaimTenantResolver($secret);
-        $request = Request::create('/', 'GET', server: ['HTTP_AUTHORIZATION' => 'Bearer '.$token]);
+        $request = Request::create('/', 'GET', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
 
         $tenant = $resolver->resolve($request, null);
 
@@ -34,7 +38,7 @@ final class JwtClaimTenantResolverTest extends TestCase
         $secret = 'test-secret-test-secret-test-secret!!';
         $token = JWT::encode(['tenantId' => ['value' => 99]], $secret, 'HS256');
         $resolver = new JwtClaimTenantResolver($secret);
-        $request = Request::create('/', 'GET', server: ['HTTP_AUTHORIZATION' => 'Bearer '.$token]);
+        $request = Request::create('/', 'GET', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
 
         self::assertNull($resolver->resolve($request, null));
     }

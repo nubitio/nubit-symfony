@@ -22,8 +22,8 @@ use Nubit\AdminBundle\Auth\Oidc\OidcProviderRegistry;
 use Nubit\AdminBundle\Auth\Oidc\OidcUserResolverInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
 use Nubit\AdminBundle\Tests\Support\InMemoryRefreshTokenStore;
-use Psr\Log\NullLogger;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -94,18 +94,21 @@ final class OidcAuthenticatorTest extends TestCase
         $this->authenticator()->authenticate($request);
     }
 
-    private function callbackRequest(
-        string $returnedState = 'state-123',
-        string $cookieProvider = 'test',
-    ): Request {
+    private function callbackRequest(string $returnedState = 'state-123', string $cookieProvider = 'test'): Request
+    {
         $flowState = new OidcFlowState($cookieProvider, 'state-123', 'nonce-456', 'verifier-789', time());
 
-        $request = Request::create('/api/auth/oidc/test/callback', 'GET', [
-            'state' => $returnedState,
-            'code' => 'an-authorization-code',
-        ], [
-            OidcRedirectController::FLOW_COOKIE => (new OidcFlowStateCodec(self::SECRET))->encode($flowState),
-        ]);
+        $request = Request::create(
+            '/api/auth/oidc/test/callback',
+            'GET',
+            [
+                'state' => $returnedState,
+                'code' => 'an-authorization-code',
+            ],
+            [
+                OidcRedirectController::FLOW_COOKIE => (new OidcFlowStateCodec(self::SECRET))->encode($flowState),
+            ],
+        );
         $request->attributes->set('_route', OidcAuthenticator::CALLBACK_ROUTE);
         $request->attributes->set('provider', 'test');
 
@@ -120,14 +123,16 @@ final class OidcAuthenticatorTest extends TestCase
         ]);
 
         return new OidcAuthenticator(
-            new OidcProviderRegistry(['test' => [
-                'issuer' => self::ISSUER,
-                'client_id' => self::CLIENT_ID,
-                'client_secret' => 'a-client-secret',
-                'scopes' => ['openid'],
-                'redirect_uri' => 'https://app.example.com/api/auth/oidc/test/callback',
-                'post_login_redirect_uri' => 'https://app.example.com/',
-            ]]),
+            new OidcProviderRegistry([
+                'test' => [
+                    'issuer' => self::ISSUER,
+                    'client_id' => self::CLIENT_ID,
+                    'client_secret' => 'a-client-secret',
+                    'scopes' => ['openid'],
+                    'redirect_uri' => 'https://app.example.com/api/auth/oidc/test/callback',
+                    'post_login_redirect_uri' => 'https://app.example.com/',
+                ],
+            ]),
             new OidcDiscoveryClient($httpClient, new ArrayAdapter()),
             new IdTokenVerifier($this->jwksKeyProvider()),
             $this->userResolver(),
@@ -160,15 +165,20 @@ final class OidcAuthenticatorTest extends TestCase
 
     private function idToken(): string
     {
-        return JWT::encode([
-            'iss' => self::ISSUER,
-            'aud' => self::CLIENT_ID,
-            'sub' => 'user-42',
-            'email' => 'alice@example.com',
-            'nonce' => 'nonce-456',
-            'iat' => time(),
-            'exp' => time() + 300,
-        ], self::SECRET, 'HS256', 'kid');
+        return JWT::encode(
+            [
+                'iss' => self::ISSUER,
+                'aud' => self::CLIENT_ID,
+                'sub' => 'user-42',
+                'email' => 'alice@example.com',
+                'nonce' => 'nonce-456',
+                'iat' => time(),
+                'exp' => time() + 300,
+            ],
+            self::SECRET,
+            'HS256',
+            'kid',
+        );
     }
 
     private function jwksKeyProvider(): JwksKeyProviderInterface
@@ -181,7 +191,7 @@ final class OidcAuthenticatorTest extends TestCase
 
     private function userResolver(): OidcUserResolverInterface
     {
-        return new class () implements OidcUserResolverInterface {
+        return new class() implements OidcUserResolverInterface {
             public function resolve(array $claims, OidcProviderConfig $provider): UserInterface
             {
                 if (!isset($claims['email']) || !is_string($claims['email'])) {

@@ -24,14 +24,17 @@ final readonly class ProblemDetails
      */
     public function toArray(): array
     {
-        return array_filter([
-            'type' => $this->type,
-            'title' => $this->title,
-            'status' => $this->status,
-            'detail' => $this->detail,
-            'code' => $this->code,
-            'action' => $this->action,
-            'extensions' => $this->extensions === [] ? null : $this->extensions,
-        ], static fn (mixed $value): bool => $value !== null);
+        return array_filter(
+            [
+                'type' => $this->type,
+                'title' => $this->title,
+                'status' => $this->status,
+                'detail' => $this->detail,
+                'code' => $this->code,
+                'action' => $this->action,
+                'extensions' => $this->extensions === [] ? null : $this->extensions,
+            ],
+            static fn(mixed $value): bool => $value !== null,
+        );
     }
 }

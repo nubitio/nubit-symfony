@@ -13,12 +13,7 @@ use DateTimeImmutable;
  */
 interface RefreshTokenStoreInterface
 {
-    public function save(
-        string $jti,
-        string $tokenHash,
-        string $userIdentifier,
-        DateTimeImmutable $expiresAt,
-    ): void;
+    public function save(string $jti, string $tokenHash, string $userIdentifier, DateTimeImmutable $expiresAt): void;
 
     /** Whether an unexpired, unrevoked token with this hash exists. */
     public function isActiveByHash(string $tokenHash): bool;

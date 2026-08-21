@@ -21,8 +21,7 @@ final readonly class InAppNotificationChannel implements NotificationChannelInte
 
     public function __construct(
         private EntityManagerInterface $entityManager,
-    ) {
-    }
+    ) {}
 
     public function getIdentifier(): string
     {

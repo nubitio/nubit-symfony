@@ -13,6 +13,5 @@ final readonly class TenantStamp implements StampInterface
         public ?string $tenantName,
         public ?string $tenantDomain,
         public ?string $requestId,
-    ) {
-    }
+    ) {}
 }

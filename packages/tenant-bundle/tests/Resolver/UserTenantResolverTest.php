@@ -33,9 +33,7 @@ final class UserTenantResolverTest extends TestCase
                 return [];
             }
 
-            public function eraseCredentials(): void
-            {
-            }
+            public function eraseCredentials(): void {}
 
             public function getUserIdentifier(): string
             {
@@ -51,8 +49,7 @@ final readonly class TenantAwareUserStub implements TenantAwareUserInterface, Us
         private int $tenantId,
         private string $tenantName,
         private ?string $tenantDomain,
-    ) {
-    }
+    ) {}
 
     public function getTenantId(): ?int
     {
@@ -74,9 +71,7 @@ final readonly class TenantAwareUserStub implements TenantAwareUserInterface, Us
         return ['ROLE_USER'];
     }
 
-    public function eraseCredentials(): void
-    {
-    }
+    public function eraseCredentials(): void {}
 
     public function getUserIdentifier(): string
     {

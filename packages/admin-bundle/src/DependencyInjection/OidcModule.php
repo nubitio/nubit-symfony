@@ -16,9 +16,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurat
 
 final class OidcModule
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * @param array<string, array{issuer: string, client_id: string, client_secret: string, scopes: list<string>, redirect_uri: string, post_login_redirect_uri: string}> $providers

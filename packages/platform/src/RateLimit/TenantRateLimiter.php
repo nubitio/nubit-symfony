@@ -6,9 +6,9 @@ namespace Nubit\Platform\RateLimit;
 
 use Nubit\Platform\Tenant\Scope\TenantScope;
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\NativeClock;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final readonly class TenantRateLimiter
 {
@@ -36,13 +36,15 @@ final readonly class TenantRateLimiter
         }
 
         $timestamp = $this->clock->now()->getTimestamp();
-        $cacheKey = $this->tenantScope?->rateLimitKey($tenantName, $this->policy->windowKey($timestamp))
-            ?? TenantScope::rateLimitCacheKey($tenantName, $this->policy->windowKey($timestamp));
+        $cacheKey = $this->tenantScope?->rateLimitKey(
+            $tenantName,
+            $this->policy->windowKey($timestamp),
+        ) ?? TenantScope::rateLimitCacheKey($tenantName, $this->policy->windowKey($timestamp));
 
         $item = $this->cache->getItem($cacheKey);
 
         /** @var int $current */
-        $current = $item->isHit() ? (int)$item->get() + 1 : 1;
+        $current = $item->isHit() ? (int) $item->get() + 1 : 1;
 
         $item->set($current);
         $item->expiresAfter($this->policy->windowSeconds);
@@ -59,5 +61,4 @@ final readonly class TenantRateLimiter
             retryAfter: $retryAfter,
         );
     }
-
 }

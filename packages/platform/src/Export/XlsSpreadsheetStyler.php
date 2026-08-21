@@ -28,8 +28,12 @@ final class XlsSpreadsheetStyler
      * @param list<string> $fields
      * @param array<string, XlsColumn> $columns
      */
-    public function apply(Worksheet $sheet, XlsSheetLayout $layout, array $columns, XlsSheetOptions $options = new XlsSheetOptions()): void
-    {
+    public function apply(
+        Worksheet $sheet,
+        XlsSheetLayout $layout,
+        array $columns,
+        XlsSheetOptions $options = new XlsSheetOptions(),
+    ): void {
         $this->autoSizeColumns($sheet, count($layout->fields));
 
         if ($options->freezeHeader) {
@@ -49,7 +53,9 @@ final class XlsSpreadsheetStyler
         }
 
         if ($options->showTotals) {
-            $sheet->getStyle('A' . $layout->totalsRow . ':' . $layout->lastColumn . $layout->totalsRow)->applyFromArray($this->totalsStyle());
+            $sheet
+                ->getStyle('A' . $layout->totalsRow . ':' . $layout->lastColumn . $layout->totalsRow)
+                ->applyFromArray($this->totalsStyle());
         }
 
         foreach ($layout->fields as $index => $field) {
@@ -66,7 +72,8 @@ final class XlsSpreadsheetStyler
                 continue;
             }
 
-            $sheet->getStyle($column . '2:' . $column . $layout->totalsRow)
+            $sheet
+                ->getStyle($column . '2:' . $column . $layout->totalsRow)
                 ->getNumberFormat()
                 ->setFormatCode($columnSpec->presentation->format);
 
@@ -96,14 +103,20 @@ final class XlsSpreadsheetStyler
         $sheet->getColumnDimension($column)->setWidth((float) $width);
     }
 
-    private function applyAlignment(Worksheet $sheet, string $column, XlsSheetLayout $layout, XlsColumn $columnSpec): void
-    {
-        $alignment = $columnSpec->presentation->alignment ?? ($columnSpec->isNumeric() ? Alignment::HORIZONTAL_RIGHT : null);
+    private function applyAlignment(
+        Worksheet $sheet,
+        string $column,
+        XlsSheetLayout $layout,
+        XlsColumn $columnSpec,
+    ): void {
+        $alignment =
+            $columnSpec->presentation->alignment ?? ($columnSpec->isNumeric() ? Alignment::HORIZONTAL_RIGHT : null);
         if ($alignment === null) {
             return;
         }
 
-        $sheet->getStyle($column . '2:' . $column . $layout->totalsRow)
+        $sheet
+            ->getStyle($column . '2:' . $column . $layout->totalsRow)
             ->getAlignment()
             ->setHorizontal($alignment);
     }

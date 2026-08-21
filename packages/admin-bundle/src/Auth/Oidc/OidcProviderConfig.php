@@ -17,6 +17,5 @@ final readonly class OidcProviderConfig
         public array $scopes,
         public string $redirectUri,
         public string $postLoginRedirectUri,
-    ) {
-    }
+    ) {}
 }

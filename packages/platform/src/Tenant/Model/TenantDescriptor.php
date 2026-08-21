@@ -108,6 +108,6 @@ final readonly class TenantDescriptor
     /** @param array<string, mixed> $values */
     private static function firstPresent(array $values, string $primary, string $legacy): mixed
     {
-        return array_key_exists($primary, $values) ? $values[$primary] : ($values[$legacy] ?? null);
+        return array_key_exists($primary, $values) ? $values[$primary] : $values[$legacy] ?? null;
     }
 }

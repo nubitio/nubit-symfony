@@ -21,8 +21,7 @@ final readonly class OidcFlowStateCodec
 
     public function __construct(
         private string $secret,
-    ) {
-    }
+    ) {}
 
     public function encode(OidcFlowState $state): string
     {
@@ -66,14 +65,18 @@ final readonly class OidcFlowStateCodec
             return null;
         }
 
-        if (!isset($data['provider'], $data['state'], $data['nonce'], $data['codeVerifier'], $data['issuedAt'])
-            || !is_string($data['provider']) || !is_string($data['state']) || !is_string($data['nonce'])
-            || !is_string($data['codeVerifier']) || !is_int($data['issuedAt'])
+        if (
+            !isset($data['provider'], $data['state'], $data['nonce'], $data['codeVerifier'], $data['issuedAt'])
+            || !is_string($data['provider'])
+            || !is_string($data['state'])
+            || !is_string($data['nonce'])
+            || !is_string($data['codeVerifier'])
+            || !is_int($data['issuedAt'])
         ) {
             return null;
         }
 
-        if (time() > $data['issuedAt'] + self::TTL_SECONDS) {
+        if (time() > ($data['issuedAt'] + self::TTL_SECONDS)) {
             return null;
         }
 

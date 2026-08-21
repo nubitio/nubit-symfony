@@ -22,9 +22,7 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 final class MediaModule
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * @param array{
@@ -35,30 +33,32 @@ final class MediaModule
      *     allowed_mimes: list<string>,
      * } $config
      */
-    public static function load(
-        array $config,
-        ContainerConfigurator $container,
-        DefaultsConfigurator $services,
-    ): void {
+    public static function load(array $config, ContainerConfigurator $container, DefaultsConfigurator $services): void
+    {
         $container->parameters()->set('nubit_admin.media.directory', $config['directory']);
 
         if (null !== $config['storage']['filesystem']) {
             $services->alias('nubit_admin.media.filesystem', $config['storage']['filesystem']);
         } else {
-            $services->set('nubit_admin.media.local_adapter', LocalFilesystemAdapter::class)
-                ->arg('$location', $config['storage']['local_directory']);
-            $services->set('nubit_admin.media.filesystem', Filesystem::class)
-                ->arg('$adapter', service('nubit_admin.media.local_adapter'));
+            $services->set('nubit_admin.media.local_adapter', LocalFilesystemAdapter::class)->arg(
+                '$location',
+                $config['storage']['local_directory'],
+            );
+            $services->set('nubit_admin.media.filesystem', Filesystem::class)->arg(
+                '$adapter',
+                service('nubit_admin.media.local_adapter'),
+            );
         }
 
-        $services->set('nubit_admin.media.file_manager', FileManager::class)
-            ->arg('$defaultFilesystem', service('nubit_admin.media.filesystem'));
+        $services->set('nubit_admin.media.file_manager', FileManager::class)->arg(
+            '$defaultFilesystem',
+            service('nubit_admin.media.filesystem'),
+        );
 
-        $services->set(MediaStorage::class)
-            ->arg('$fileManager', service('nubit_admin.media.file_manager'))
-            ->arg('$directory', $config['directory'])
-            ->arg('$allowedMimes', $config['allowed_mimes'])
-            ->arg('$maxSize', $config['max_size']);
+        $services->set(MediaStorage::class)->arg('$fileManager', service('nubit_admin.media.file_manager'))->arg(
+            '$directory',
+            $config['directory'],
+        )->arg('$allowedMimes', $config['allowed_mimes'])->arg('$maxSize', $config['max_size']);
 
         $services->set(RouteMediaUrlResolver::class);
         $services->alias(MediaUrlResolverInterface::class, RouteMediaUrlResolver::class);
@@ -66,7 +66,6 @@ final class MediaModule
         $services->set(MediaSoftDeleteProcessor::class);
         $services->set(MediaUploadController::class)->tag('controller.service_arguments');
         $services->set(MediaFileController::class)->tag('controller.service_arguments');
-        $services->set(PurgeMediaCommand::class)
-            ->arg('$retentionDays', $config['purge_retention_days']);
+        $services->set(PurgeMediaCommand::class)->arg('$retentionDays', $config['purge_retention_days']);
     }
 }

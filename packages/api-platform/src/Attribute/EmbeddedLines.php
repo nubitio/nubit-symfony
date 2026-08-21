@@ -32,6 +32,5 @@ final readonly class EmbeddedLines
         public ?string $route = null,
         /** @var list<string> Serializer groups used when building the plain JSON rows. */
         public array $normalizationGroups = [],
-    ) {
-    }
+    ) {}
 }

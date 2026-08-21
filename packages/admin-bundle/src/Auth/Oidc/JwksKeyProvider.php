@@ -25,8 +25,7 @@ final readonly class JwksKeyProvider implements JwksKeyProviderInterface
     public function __construct(
         private HttpClientInterface $httpClient,
         private CacheInterface $cache,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, Key>

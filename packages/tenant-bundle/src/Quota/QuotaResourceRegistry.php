@@ -18,9 +18,7 @@ final class QuotaResourceRegistry
         if (!isset($this->cache[$class])) {
             $reflection = new \ReflectionClass($class);
             $attributes = $reflection->getAttributes(QuotaResource::class);
-            $this->cache[$class] = $attributes === []
-                ? ''
-                : $attributes[0]->newInstance()->resource;
+            $this->cache[$class] = $attributes === [] ? '' : $attributes[0]->newInstance()->resource;
         }
 
         $resource = $this->cache[$class];

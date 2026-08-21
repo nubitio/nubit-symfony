@@ -15,15 +15,11 @@ final readonly class DoctrineTenantRegistry implements TenantRegistryInterface, 
     public function __construct(
         private EntityManagerInterface $entityManager,
         private string $tenantEntityClass,
-    ) {
-    }
+    ) {}
 
     public function getTenants(): array
     {
-        return array_map(
-            static fn (TenantDescriptor $tenant): array => $tenant->toArray(),
-            $this->tenants(),
-        );
+        return array_map(static fn(TenantDescriptor $tenant): array => $tenant->toArray(), $this->tenants());
     }
 
     public function getTenantByName(string $name): ?array
@@ -45,7 +41,7 @@ final readonly class DoctrineTenantRegistry implements TenantRegistryInterface, 
         $repository = $this->entityManager->getRepository($this->tenantEntityClass);
         $rows = $repository->findAll();
 
-        return array_map(fn (object $row): TenantDescriptor => $this->mapEntity($row), $rows);
+        return array_map(fn(object $row): TenantDescriptor => $this->mapEntity($row), $rows);
     }
 
     public function findByName(string $name): ?TenantDescriptor
@@ -69,9 +65,7 @@ final readonly class DoctrineTenantRegistry implements TenantRegistryInterface, 
      */
     private function nameCriteria(string $name): array
     {
-        return method_exists($this->tenantEntityClass, 'getSlug')
-            ? ['slug' => $name]
-            : ['name' => $name];
+        return method_exists($this->tenantEntityClass, 'getSlug') ? ['slug' => $name] : ['name' => $name];
     }
 
     private function mapEntity(object $entity): TenantDescriptor

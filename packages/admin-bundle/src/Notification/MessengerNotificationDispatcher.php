@@ -19,8 +19,7 @@ final readonly class MessengerNotificationDispatcher implements NotificationDisp
 {
     public function __construct(
         private MessageBusInterface $bus,
-    ) {
-    }
+    ) {}
 
     public function dispatch(NotificationMessage $message): void
     {

@@ -189,13 +189,18 @@ final class IdTokenVerifierTest extends TestCase
 
     public function testRejectsAMissingNonce(): void
     {
-        $token = JWT::encode([
-            'iss' => self::ISSUER,
-            'aud' => self::CLIENT_ID,
-            'sub' => 'user-42',
-            'iat' => time(),
-            'exp' => time() + 300,
-        ], self::SECRET, 'HS256', 'kid');
+        $token = JWT::encode(
+            [
+                'iss' => self::ISSUER,
+                'aud' => self::CLIENT_ID,
+                'sub' => 'user-42',
+                'iat' => time(),
+                'exp' => time() + 300,
+            ],
+            self::SECRET,
+            'HS256',
+            'kid',
+        );
 
         $this->expectException(OidcAuthenticationException::class);
 
@@ -216,14 +221,19 @@ final class IdTokenVerifierTest extends TestCase
 
     public function testRejectsATokenSignedWithAnUnknownKey(): void
     {
-        $forged = JWT::encode([
-            'iss' => self::ISSUER,
-            'aud' => self::CLIENT_ID,
-            'sub' => 'user-42',
-            'nonce' => 'expected-nonce',
-            'iat' => time(),
-            'exp' => time() + 300,
-        ], 'a-completely-different-secret-the-idp-never-issued', 'HS256', 'kid');
+        $forged = JWT::encode(
+            [
+                'iss' => self::ISSUER,
+                'aud' => self::CLIENT_ID,
+                'sub' => 'user-42',
+                'nonce' => 'expected-nonce',
+                'iat' => time(),
+                'exp' => time() + 300,
+            ],
+            'a-completely-different-secret-the-idp-never-issued',
+            'HS256',
+            'kid',
+        );
 
         $this->expectException(OidcAuthenticationException::class);
 

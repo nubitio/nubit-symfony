@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\ApiPlatform\Doctrine\Traits;
 
-use DateTimeInterface;
 use DateTime;
+use DateTimeInterface;
 use DateTimeZone;
 use Doctrine\ORM\Mapping as ORM;
 

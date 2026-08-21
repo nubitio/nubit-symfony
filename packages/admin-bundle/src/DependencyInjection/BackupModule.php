@@ -16,9 +16,7 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 final class BackupModule
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * @param array{
@@ -33,19 +31,25 @@ final class BackupModule
         if (null !== $config['storage']['filesystem']) {
             $services->alias('nubit_admin.backup.filesystem', $config['storage']['filesystem']);
         } else {
-            $services->set('nubit_admin.backup.local_adapter', LocalFilesystemAdapter::class)
-                ->arg('$location', $config['storage']['local_directory']);
-            $services->set('nubit_admin.backup.filesystem', Filesystem::class)
-                ->arg('$adapter', service('nubit_admin.backup.local_adapter'));
+            $services->set('nubit_admin.backup.local_adapter', LocalFilesystemAdapter::class)->arg(
+                '$location',
+                $config['storage']['local_directory'],
+            );
+            $services->set('nubit_admin.backup.filesystem', Filesystem::class)->arg(
+                '$adapter',
+                service('nubit_admin.backup.local_adapter'),
+            );
         }
 
-        $services->set('nubit_admin.backup.file_manager', FileManager::class)
-            ->arg('$defaultFilesystem', service('nubit_admin.backup.filesystem'));
+        $services->set('nubit_admin.backup.file_manager', FileManager::class)->arg(
+            '$defaultFilesystem',
+            service('nubit_admin.backup.filesystem'),
+        );
 
-        $services->set(PostgresTenantBackupRunner::class)
-            ->arg('$fileManager', service('nubit_admin.backup.file_manager'))
-            ->arg('$pgDumpBinary', $config['pg_dump_binary'])
-            ->arg('$timeoutSeconds', $config['timeout_seconds']);
+        $services->set(PostgresTenantBackupRunner::class)->arg(
+            '$fileManager',
+            service('nubit_admin.backup.file_manager'),
+        )->arg('$pgDumpBinary', $config['pg_dump_binary'])->arg('$timeoutSeconds', $config['timeout_seconds']);
         $services->alias(TenantBackupRunnerInterface::class, PostgresTenantBackupRunner::class);
 
         $services->set(TenantBackupCommand::class);

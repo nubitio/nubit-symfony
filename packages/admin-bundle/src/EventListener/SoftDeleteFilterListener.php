@@ -18,8 +18,7 @@ final readonly class SoftDeleteFilterListener
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-    ) {
-    }
+    ) {}
 
     public function __invoke(RequestEvent $event): void
     {

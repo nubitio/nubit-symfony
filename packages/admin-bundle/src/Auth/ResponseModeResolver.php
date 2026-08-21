@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\Auth;
 
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Exception\JsonException;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Decides whether auth endpoints respond with tokens in the JSON body

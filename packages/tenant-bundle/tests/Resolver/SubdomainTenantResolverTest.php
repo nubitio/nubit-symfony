@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\TenantBundle\Tests\Resolver;
 
-use Nubit\TenantBundle\Resolver\SubdomainTenantResolver;
 use Nubit\Platform\Tenant\Contract\TenantRegistryInterface;
+use Nubit\TenantBundle\Resolver\SubdomainTenantResolver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -21,9 +21,7 @@ final class SubdomainTenantResolverTest extends TestCase
 
             public function getTenantByName(string $name): ?array
             {
-                return 'acme' === $name
-                    ? ['id' => 3, 'name' => 'acme', 'primary_domain' => 'acme.example.com']
-                    : null;
+                return 'acme' === $name ? ['id' => 3, 'name' => 'acme', 'primary_domain' => 'acme.example.com'] : null;
             }
 
             public function getTenantByDomain(string $domain): ?array
@@ -46,15 +44,13 @@ final class SubdomainTenantResolverTest extends TestCase
     {
         $registry = $this->createMock(TenantRegistryInterface::class);
         $registry->expects(self::never())->method('getTenantByName');
-        $registry->expects(self::once())
+        $registry
+            ->expects(self::once())
             ->method('getTenantByDomain')
             ->with('acme.test')
             ->willReturn(['id' => '8', 'name' => 'acme']);
 
-        $tenant = (new SubdomainTenantResolver($registry))->resolve(
-            Request::create('https://acme.test/api/me'),
-            null,
-        );
+        $tenant = (new SubdomainTenantResolver($registry))->resolve(Request::create('https://acme.test/api/me'), null);
 
         self::assertNotNull($tenant);
         self::assertSame(8, $tenant->id);

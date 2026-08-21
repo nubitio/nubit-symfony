@@ -12,6 +12,5 @@ final readonly class FeatureFlagContext
         public ?int $tenantId = null,
         public ?string $tenantName = null,
         public array $attributes = [],
-    ) {
-    }
+    ) {}
 }

@@ -24,6 +24,5 @@ final readonly class TenantScoped
          * → {@code setRestaurant($em->getReference(...))}). Requires {@code tenant_entity}.
          */
         public ?string $relation = null,
-    ) {
-    }
+    ) {}
 }

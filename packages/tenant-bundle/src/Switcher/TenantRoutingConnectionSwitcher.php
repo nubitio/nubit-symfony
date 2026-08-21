@@ -15,7 +15,9 @@ use Nubit\TenantBundle\Contract\TenantSchemaConnectionSwitcherInterface;
 use Nubit\TenantBundle\Isolation\TenantIsolationTarget;
 
 /** Routes non-HTTP tenant activation to the configured data-isolation target. */
-final class TenantRoutingConnectionSwitcher implements TenantConnectionSwitcherInterface, ResettableTenantConnectionSwitcherInterface
+final class TenantRoutingConnectionSwitcher implements
+    TenantConnectionSwitcherInterface,
+    ResettableTenantConnectionSwitcherInterface
 {
     private ?string $activeTarget = null;
 
@@ -28,7 +30,10 @@ final class TenantRoutingConnectionSwitcher implements TenantConnectionSwitcherI
         private readonly ?TenantConnectionSwitcherInterface $columnSwitcher = null,
     ) {
         if (!in_array($isolation, ['schema', 'hybrid'], strict: true)) {
-            throw new \InvalidArgumentException(sprintf('Tenant routing switcher does not support "%s" isolation.', $isolation));
+            throw new \InvalidArgumentException(sprintf(
+                'Tenant routing switcher does not support "%s" isolation.',
+                $isolation,
+            ));
         }
     }
 
@@ -114,7 +119,10 @@ final class TenantRoutingConnectionSwitcher implements TenantConnectionSwitcherI
 
     private function switchToDatabase(TenantIsolationTarget $target, string $tenantName): void
     {
-        if (null === $this->databaseSwitcher || !$this->databaseSwitcher instanceof ResettableTenantConnectionSwitcherInterface) {
+        if (
+            null === $this->databaseSwitcher
+            || !$this->databaseSwitcher instanceof ResettableTenantConnectionSwitcherInterface
+        ) {
             throw new ServiceException('Hybrid database isolation requires a resettable database connection switcher.');
         }
 

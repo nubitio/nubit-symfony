@@ -33,17 +33,17 @@ use Nubit\AdminBundle\DependencyInjection\BackupModule;
 use Nubit\AdminBundle\DependencyInjection\ExportModule;
 use Nubit\AdminBundle\DependencyInjection\MediaModule;
 use Nubit\AdminBundle\DependencyInjection\NotificationModule;
-use Nubit\AdminBundle\DependencyInjection\OidcModule;
 use Nubit\AdminBundle\DependencyInjection\ObservabilityModule;
+use Nubit\AdminBundle\DependencyInjection\OidcModule;
 use Nubit\AdminBundle\DependencyInjection\RuntimeConfigModule;
 use Nubit\AdminBundle\EmbeddedLines\Controller\EmbeddedLinesController;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRegistry;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRouteLoader;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRowSerializer;
 use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
-use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use Nubit\AdminBundle\Export\XlsxEncoder;
 use Nubit\AdminBundle\Mercure\FailSafeHub;
+use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\Session\AppProfile;
 use Nubit\AdminBundle\Session\DefaultMeResponseBuilder;
@@ -177,14 +177,23 @@ final class NubitAdminBundle extends AbstractBundle
             ->isRequired()
             ->cannotBeEmpty()
             ->end()
-            ->scalarNode('client_id')->isRequired()->cannotBeEmpty()->end()
-            ->scalarNode('client_secret')->isRequired()->cannotBeEmpty()->end()
+            ->scalarNode('client_id')
+            ->isRequired()
+            ->cannotBeEmpty()
+            ->end()
+            ->scalarNode('client_secret')
+            ->isRequired()
+            ->cannotBeEmpty()
+            ->end()
             ->arrayNode('scopes')
-            ->scalarPrototype()->end()
+            ->scalarPrototype()
+            ->end()
             ->defaultValue(['openid', 'email', 'profile'])
             ->end()
             ->scalarNode('redirect_uri')
-            ->info('Must exactly match the redirect URI registered with the IdP — usually {api_base_url}/api/auth/oidc/{name}/callback.')
+            ->info(
+                'Must exactly match the redirect URI registered with the IdP — usually {api_base_url}/api/auth/oidc/{name}/callback.',
+            )
             ->isRequired()
             ->cannotBeEmpty()
             ->end()

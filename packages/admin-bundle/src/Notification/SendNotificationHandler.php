@@ -24,8 +24,7 @@ final readonly class SendNotificationHandler
     public function __construct(
         #[AutowireIterator('nubit.admin.notification_channel')]
         private iterable $channels,
-    ) {
-    }
+    ) {}
 
     public function __invoke(NotificationMessage $message): void
     {
@@ -34,7 +33,9 @@ final readonly class SendNotificationHandler
         if ($channels === []) {
             throw new \RuntimeException(sprintf(
                 'No notification channel registered matches %s.',
-                $message->channels === [] ? 'any registered channel (none are registered)' : implode(', ', $message->channels),
+                $message->channels === []
+                    ? 'any registered channel (none are registered)'
+                    : implode(', ', $message->channels),
             ));
         }
 
@@ -54,13 +55,10 @@ final readonly class SendNotificationHandler
             return $all;
         }
 
-        return array_values(array_filter(
-            $all,
-            static fn (NotificationChannelInterface $channel): bool => \in_array(
-                $channel->getIdentifier(),
-                $message->channels,
-                true,
-            ),
-        ));
+        return array_values(array_filter($all, static fn(NotificationChannelInterface $channel): bool => \in_array(
+            $channel->getIdentifier(),
+            $message->channels,
+            true,
+        )));
     }
 }

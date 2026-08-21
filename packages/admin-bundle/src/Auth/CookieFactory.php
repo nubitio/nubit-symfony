@@ -10,8 +10,7 @@ final readonly class CookieFactory
 {
     public function __construct(
         private bool $cookieSecure = true,
-    ) {
-    }
+    ) {}
 
     /** @param ''|'lax'|'none'|'strict' $sameSite */
     public function createSecureCookie(
@@ -20,7 +19,7 @@ final readonly class CookieFactory
         int $expiresAt,
         string $path = '/',
         ?string $domain = null,
-        string $sameSite = Cookie::SAMESITE_STRICT
+        string $sameSite = Cookie::SAMESITE_STRICT,
     ): Cookie {
         return Cookie::create(
             $name,
@@ -29,17 +28,14 @@ final readonly class CookieFactory
             $path,
             $domain,
             $this->cookieSecure,
-            true,  // httpOnly
+            true, // httpOnly
             false, // raw
-            $sameSite
+            $sameSite,
         );
     }
 
-    public function createExpiredCookie(
-        string $name,
-        string $path = '/',
-        ?string $domain = null
-    ): Cookie {
+    public function createExpiredCookie(string $name, string $path = '/', ?string $domain = null): Cookie
+    {
         return Cookie::create(
             $name,
             '',
@@ -47,9 +43,9 @@ final readonly class CookieFactory
             $path,
             $domain,
             $this->cookieSecure,
-            true,  // httpOnly
+            true, // httpOnly
             false, // raw
-            Cookie::SAMESITE_STRICT
+            Cookie::SAMESITE_STRICT,
         );
     }
 }

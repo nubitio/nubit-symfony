@@ -24,16 +24,17 @@ final class NubitWorkflowBundle extends AbstractBundle
 {
     public function configure(DefinitionConfigurator $definition): void
     {
-        $definition->rootNode()
+        $definition
+            ->rootNode()
             ->children()
-                ->booleanNode('enabled')
-                    ->info('Enable workflow transition routes and x-workflow OpenAPI hints.')
-                    ->defaultTrue()
-                ->end()
-                ->scalarNode('api_route_prefix')
-                    ->info('Global API route prefix prepended when inferring collection paths.')
-                    ->defaultValue('/api')
-                ->end()
+            ->booleanNode('enabled')
+            ->info('Enable workflow transition routes and x-workflow OpenAPI hints.')
+            ->defaultTrue()
+            ->end()
+            ->scalarNode('api_route_prefix')
+            ->info('Global API route prefix prepended when inferring collection paths.')
+            ->defaultValue('/api')
+            ->end()
             ->end();
     }
 
@@ -46,20 +47,19 @@ final class NubitWorkflowBundle extends AbstractBundle
         }
 
         $services = $configurator->services();
-        $services->defaults()
-            ->autowire()
-            ->autoconfigure();
+        $services->defaults()->autowire()->autoconfigure();
 
         $services->set(WorkflowMetadata::class);
-        $services->set(WorkflowRegistry::class)
-            ->arg('$apiRoutePrefix', $config['api_route_prefix']);
-        $services->set(WorkflowEngine::class)
-            ->arg('$guardLocator', tagged_locator('nubit.workflow_guard', indexAttribute: 'class'));
+        $services->set(WorkflowRegistry::class)->arg('$apiRoutePrefix', $config['api_route_prefix']);
+        $services->set(WorkflowEngine::class)->arg('$guardLocator', tagged_locator(
+            'nubit.workflow_guard',
+            indexAttribute: 'class',
+        ));
         $services->set(WorkflowTransitionController::class);
-        $services->set(WorkflowRouteLoader::class)
-            ->tag('routing.loader', ['type' => 'nubit_workflow']);
+        $services->set(WorkflowRouteLoader::class)->tag('routing.loader', ['type' => 'nubit_workflow']);
 
-        $services->set(WorkflowDocumentationNormalizer::class)
+        $services
+            ->set(WorkflowDocumentationNormalizer::class)
             ->decorate('Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer')
             ->args([
                 '$inner' => service('.inner'),

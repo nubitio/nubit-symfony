@@ -12,9 +12,7 @@ final class RecordingFilterCollection extends FilterCollection
     public bool $enabled = false;
     public TenantFilter $filter;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function isEnabled(string $name): bool
     {
@@ -33,7 +31,5 @@ final class RecordingFilterCollection extends FilterCollection
         return $this->filter;
     }
 
-    public function setFiltersStateDirty(): void
-    {
-    }
+    public function setFiltersStateDirty(): void {}
 }

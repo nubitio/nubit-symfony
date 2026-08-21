@@ -12,9 +12,7 @@ use Doctrine\ORM\QueryBuilder;
  */
 final class GridFilterHelper
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /** Maps a grid operator to its DQL operator. */
     public static function dqlOperator(string $op): string

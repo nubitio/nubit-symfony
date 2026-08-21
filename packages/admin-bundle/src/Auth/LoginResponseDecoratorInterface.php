@@ -15,10 +15,5 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 interface LoginResponseDecoratorInterface
 {
-    public function decorate(
-        JsonResponse $response,
-        UserInterface $user,
-        TokenPair $tokenPair,
-        Request $request,
-    ): void;
+    public function decorate(JsonResponse $response, UserInterface $user, TokenPair $tokenPair, Request $request): void;
 }

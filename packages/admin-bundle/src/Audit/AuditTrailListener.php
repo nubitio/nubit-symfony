@@ -9,8 +9,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Nubit\AdminBundle\Audit\Entity\AuditLog;
-use Nubit\ApiPlatform\Attribute\AuditMasked;
 use Nubit\ApiPlatform\Attribute\Auditable;
+use Nubit\ApiPlatform\Attribute\AuditMasked;
 use ReflectionClass;
 use Stringable;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -41,8 +41,7 @@ class AuditTrailListener
     public function __construct(
         private readonly TokenStorageInterface $tokenStorage,
         private readonly array $ignoredFields = ['createdAt', 'updatedAt', 'password'],
-    ) {
-    }
+    ) {}
 
     public function onFlush(OnFlushEventArgs $args): void
     {
@@ -65,7 +64,12 @@ class AuditTrailListener
                 $changes[$field] = ['before' => null, 'after' => $this->normalizeValue($change[1], $em)];
             }
 
-            $this->pending[] = ['entity' => $entity, 'resource' => $resource, 'action' => 'create', 'changes' => $changes];
+            $this->pending[] = [
+                'entity' => $entity,
+                'resource' => $resource,
+                'action' => 'create',
+                'changes' => $changes,
+            ];
         }
 
         foreach ($uow->getScheduledEntityUpdates() as $entity) {
@@ -89,7 +93,12 @@ class AuditTrailListener
                 continue;
             }
 
-            $this->pending[] = ['entity' => $entity, 'resource' => $resource, 'action' => 'update', 'changes' => $changes];
+            $this->pending[] = [
+                'entity' => $entity,
+                'resource' => $resource,
+                'action' => 'update',
+                'changes' => $changes,
+            ];
         }
 
         foreach ($uow->getScheduledEntityDeletions() as $entity) {
@@ -132,13 +141,9 @@ class AuditTrailListener
         foreach ($pending as $record) {
             $id = $record['id'] ?? $this->entityId($record['entity'], $em);
 
-            $em->persist(new AuditLog(
-                $record['resource'],
-                $id ?? '?',
-                $record['action'],
-                $record['changes'],
-                $username,
-            ));
+            $em->persist(
+                new AuditLog($record['resource'], $id ?? '?', $record['action'], $record['changes'], $username),
+            );
         }
 
         $em->flush();
@@ -198,7 +203,7 @@ class AuditTrailListener
             return null;
         }
 
-        return implode(':', array_map(fn ($id) => (string) $this->normalizeValue($id, $em), $ids));
+        return implode(':', array_map(fn($id) => (string) $this->normalizeValue($id, $em), $ids));
     }
 
     /**
@@ -216,7 +221,7 @@ class AuditTrailListener
         }
 
         if (\is_array($value)) {
-            return array_map(fn ($item) => $this->normalizeValue($item, $em), $value);
+            return array_map(fn($item) => $this->normalizeValue($item, $em), $value);
         }
 
         if (\is_object($value)) {

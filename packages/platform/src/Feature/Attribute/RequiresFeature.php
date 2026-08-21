@@ -10,6 +10,5 @@ final class RequiresFeature
     public function __construct(
         public readonly string $featureKey,
         public readonly string $message = 'This feature requires a plan upgrade.',
-    ) {
-    }
+    ) {}
 }

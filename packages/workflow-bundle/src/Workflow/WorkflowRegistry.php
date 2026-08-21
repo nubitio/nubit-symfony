@@ -22,8 +22,7 @@ final class WorkflowRegistry
         private readonly ResourceMetadataCollectionFactoryInterface $resourceMetadataFactory,
         private readonly WorkflowMetadata $metadata,
         private readonly string $apiRoutePrefix = '/api',
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, WorkflowDefinition>
@@ -114,7 +113,7 @@ final class WorkflowRegistry
 
         $short = (new \ReflectionClass($entityClass))->getShortName();
 
-        return $this->apiRoutePrefix . '/' . ((new UnicodeString($short))->snake())->toString() . 's';
+        return $this->apiRoutePrefix . '/' . (new UnicodeString($short))->snake()->toString() . 's';
     }
 
     private function routeKey(string $routePrefix): string
