@@ -43,7 +43,7 @@
         "symfony/cache": "^7.4 || ^8.0"
     },
     "suggest": {
-        "doctrine/dbal": "Required by Nubit\\Platform\\Observability\\Doctrine tracing middleware",
+        "doctrine/dbal": "Required by Nubit\\Platform\\Observability\\Doctrine tracing middleware and Nubit\\Platform\\Tenant\\Backup\\PostgresTenantBackupRunner",
         "league/flysystem": "Required by Nubit\\Platform\\Filesystem\\FileManager",
         "monolog/monolog": "Required by Nubit\\Platform\\Observability\\Logging\\TenantLogProcessor",
         "open-telemetry/api": "Trace correlation in TenantLogProcessor",

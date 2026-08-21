@@ -9,7 +9,7 @@ composer require nubitio/platform
 ## What's inside
 
 - **Exceptions** — `ServiceException`, `ValidationException`, `NotFoundException`, `DomainProblemException`, `QuotaExceededException` with `DomainErrorCode`. Throw these from services; `nubitio/api-platform` maps them to proper HTTP responses.
-- **Tenant** — `TenantContext` plus contracts (`TenantRegistryInterface`, `TenantConnectionSwitcherInterface`, `TenantDescriptorRegistryInterface`, `TenantBackupRunnerInterface`). Single-tenant apps bind noop implementations; multi-tenant apps provide real ones.
+- **Tenant** — `TenantContext` plus contracts (`TenantRegistryInterface`, `TenantConnectionSwitcherInterface`, `TenantDescriptorRegistryInterface`, `TenantBackupRunnerInterface`). Single-tenant apps bind noop implementations; multi-tenant apps provide real ones. `PostgresTenantBackupRunner` is the one shipped backup implementation (`pg_dump --format=custom`, credentials from the Doctrine connection, password via `PGPASSWORD`, dump persisted through `FileManager`); `nubitio/admin-bundle` wires it behind `nubit_admin.backup.enabled`.
 - **Feature gates** — `#[RequiresFeature]` attribute + `FeatureCheckerInterface`.
 - **Quota contracts** — `QuotaEnforcerInterface`, `QuotaResourceResolverInterface`.
 - **Messenger** — `TenantStampMiddleware` / `TenantContextMiddleware` propagate tenant + actor through async messages.
@@ -17,6 +17,7 @@ composer require nubitio/platform
 - **Feature flags** — vendor-neutral, typed evaluation through `TenantFeatureFlags`; distinct from plan entitlements exposed by `FeatureCheckerInterface`. `StaticFeatureFlagProvider` provides deterministic local defaults and the provider port can be adapted to OpenFeature.
 - **Privacy** — `#[SensitiveData]`, `DataRedactor` and sink-specific policies protect structured logs, traces, analytics and integrations.
 - **Analytics** — typed, versioned events with explicit purpose, consent checks, deduplication and provider-neutral sanitized delivery.
+- **Notifications** — `NotificationMessage` (a scalar-only, Messenger-serializable payload) plus `NotificationDispatcherInterface` and `NotificationChannelInterface`. The contracts live here so domain code can raise a notification without depending on a delivery mechanism; `nubitio/admin-bundle` supplies the Messenger dispatcher and the email/in-app channels.
 - **HTTP** — `ApiResponse` JSON envelope (`success`/`message`/`data`).
 
 Heavy integrations (Flysystem, PhpSpreadsheet, WeasyPrint, Monolog, OpenTelemetry) are `suggest`-ed — install them only if you use the corresponding helper.
