@@ -14,6 +14,41 @@ final class GridFilterHelper
 {
     private function __construct() {}
 
+    /**
+     * Every operator a grid filter leaf may carry.
+     *
+     * Kept as one list so callers can tell a leaf like `['name', 'contains', 'a']`
+     * apart from a list of leaves without guessing from the array shape.
+     */
+    public const array OPERATORS = [
+        'contains',
+        'notcontains',
+        'startswith',
+        'endswith',
+        'isnull',
+        'isnotnull',
+        'in',
+        '=',
+        '<>',
+        '!=',
+        '>',
+        '>=',
+        '<',
+        '<=',
+    ];
+
+    /** True when `$op` is a grid filter operator. */
+    public static function isOperator(mixed $op): bool
+    {
+        return is_string($op) && in_array($op, self::OPERATORS, true);
+    }
+
+    /** True when the operator carries no bound value. */
+    public static function isUnaryOperator(mixed $op): bool
+    {
+        return 'isnull' === $op || 'isnotnull' === $op;
+    }
+
     /** Maps a grid operator to its DQL operator. */
     public static function dqlOperator(string $op): string
     {

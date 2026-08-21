@@ -9,10 +9,12 @@ use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
+use Throwable;
 
 /**
  * API Platform filter implementing the Nubit grid contract: `sort`, `filter`,
@@ -81,11 +83,11 @@ class DataGridFilter extends AbstractFilter
         array $context = [],
     ): void {
         if ('sort' === $property) {
-            $this->applySort($queryBuilder, $resourceClass, $value);
+            $this->applySort($queryBuilder, $resourceClass, self::decodeGridParam($value));
         }
 
         if ('filter' === $property) {
-            $this->applyFilter($queryBuilder, $resourceClass, $value);
+            $this->applyFilter($queryBuilder, $resourceClass, self::decodeGridParam($value));
         }
 
         if ('searchValue' === $property && isset($context['filters']['searchExpr'])) {
@@ -94,19 +96,94 @@ class DataGridFilter extends AbstractFilter
             if (is_array($searchExpr)) {
                 $orX = $queryBuilder->expr()->orX();
                 foreach ($searchExpr as $field) {
-                    $dqlExpr = $this->resolveFieldExpression($queryBuilder, $resourceClass, $field);
-                    $param = GridFilterHelper::uniqueParameterName($queryBuilder, $field);
-                    $orX->add(sprintf('%s LIKE :%s', $dqlExpr, $param));
-                    $queryBuilder->setParameter($param, sprintf('%%%s%%', $value));
+                    $orX->add($this->searchComparison($queryBuilder, $resourceClass, (string) $field, $value));
                 }
 
                 $queryBuilder->andWhere($orX);
             } else {
-                $dqlExpr = $this->resolveFieldExpression($queryBuilder, $resourceClass, $searchExpr);
-                $param = GridFilterHelper::uniqueParameterName($queryBuilder, $searchExpr);
-                $queryBuilder->andWhere(sprintf('%s LIKE :%s', $dqlExpr, $param));
-                $queryBuilder->setParameter($param, sprintf('%%%s%%', $value));
+                $queryBuilder->andWhere($this->searchComparison(
+                    $queryBuilder,
+                    $resourceClass,
+                    (string) $searchExpr,
+                    $value,
+                ));
             }
+        }
+    }
+
+    /**
+     * Builds one `LIKE` comparison for the global search, and binds its value.
+     *
+     * Global search runs the same text pattern across every field the resource
+     * declares searchable, which routinely includes amounts, dates and enums.
+     * PostgreSQL has no `LIKE` for those — `numeric ~~ unknown` aborts the whole
+     * request with a 500 — so anything not known to be a string column is
+     * concatenated with an empty string first, which every supported platform
+     * renders as a text cast. Known string columns are compared directly, so
+     * the common case stays index-friendly.
+     */
+    private function searchComparison(
+        QueryBuilder $queryBuilder,
+        string $resourceClass,
+        string $field,
+        mixed $value,
+    ): string {
+        $dqlExpr = $this->textComparableExpression(
+            $this->resolveFieldExpression($queryBuilder, $resourceClass, $field),
+            $resourceClass,
+            $field,
+        );
+
+        $param = GridFilterHelper::uniqueParameterName($queryBuilder, $field);
+        $queryBuilder->setParameter($param, sprintf('%%%s%%', $value));
+
+        return sprintf('%s LIKE :%s', $dqlExpr, $param);
+    }
+
+    /**
+     * Reshapes an expression so `LIKE` can be applied to it.
+     *
+     * Two shapes break outright. Doctrine rejects `LIKE` on an association
+     * ("Invalid PathExpression. Must be a StateFieldPathExpression"), and
+     * PostgreSQL rejects it on a numeric or date column ("operator does not
+     * exist: numeric ~~ unknown"); either aborts the request with a 500. An
+     * association falls back to its identifier — the same value `=` and `in`
+     * already match on — and anything not known to be a string column is
+     * concatenated with an empty string, which every supported platform renders
+     * as a text cast. Known string columns are returned untouched so the common
+     * case stays index-friendly.
+     */
+    private function textComparableExpression(string $expression, string $resourceClass, string $field): string
+    {
+        $metadata = $this->fieldMetadata($resourceClass);
+
+        if (null !== $metadata && $metadata->hasAssociation($field)) {
+            // IDENTITY() is defined for to-one associations only; a to-many has
+            // no single value to compare and is left for Doctrine to reject.
+            return $metadata->isSingleValuedAssociation($field)
+                ? sprintf("CONCAT(IDENTITY(%s), '')", $expression)
+                : $expression;
+        }
+
+        $isString =
+            null !== $metadata
+            && null === $this->findVirtualField($resourceClass, $field)
+            && $metadata->hasField($field)
+            && in_array($metadata->getTypeOfField($field), self::STRING_FIELD_TYPES, true);
+
+        return $isString ? $expression : sprintf("CONCAT(%s, '')", $expression);
+    }
+
+    /** Doctrine field types that PostgreSQL already compares with `LIKE`. */
+    private const array STRING_FIELD_TYPES = ['string', 'text', 'ascii_string', 'guid'];
+
+    /** @return ClassMetadata<object>|null */
+    private function fieldMetadata(string $resourceClass): ?ClassMetadata
+    {
+        try {
+            return $this->getClassMetadata($resourceClass);
+        } catch (Throwable) {
+            return null;
         }
     }
 
@@ -137,13 +214,48 @@ class DataGridFilter extends AbstractFilter
     }
 
     /**
+     * Normalizes a grid query parameter into the array shape the appliers expect.
+     *
+     * The grid protocol publishes `sort` and `filter` as JSON-encoded strings
+     * (contracts/x-grid-protocol.json), while PHP's bracket syntax
+     * (`filter[0][0]=name`) arrives already decoded. Both formats reach this
+     * filter from real clients, so both are accepted. Anything else yields no
+     * criteria — a malformed parameter must not become a 500.
+     *
+     * @return array<int, mixed>
+     */
+    private static function decodeGridParam(mixed $value): array
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            return is_array($decoded) ? array_values($decoded) : [];
+        }
+
+        return is_array($value) ? array_values($value) : [];
+    }
+
+    /**
      * @param array<int, mixed> $sort
      */
     private function applySort(QueryBuilder $queryBuilder, string $resourceClass, array $sort): void
     {
         foreach ($sort as $sortParam) {
-            $field = $sortParam['selector'];
-            $isDesc = is_bool($sortParam['desc']) ? $sortParam['desc'] : 'true' === $sortParam['desc'];
+            if (is_string($sortParam)) {
+                $sortParam = json_decode($sortParam, true);
+            }
+
+            if (!is_array($sortParam)) {
+                continue;
+            }
+
+            $field = $sortParam['selector'] ?? null;
+            if (!is_string($field) || '' === $field) {
+                continue;
+            }
+
+            $desc = $sortParam['desc'] ?? false;
+            $isDesc = is_bool($desc) ? $desc : in_array($desc, ['true', '1', 1], true);
 
             $queryBuilder->addOrderBy(
                 $this->resolveFieldExpression($queryBuilder, $resourceClass, $field),
@@ -166,12 +278,50 @@ class DataGridFilter extends AbstractFilter
     }
 
     /**
+     * True when `$candidate` is a single filter leaf — `[field, operator]` for a
+     * unary operator, `[field, operator, value]` otherwise — rather than a list
+     * of leaves. The operator position is what distinguishes the two, so a list
+     * of JSON-encoded leaves is never mistaken for a leaf.
+     *
+     * @param array<int, mixed> $candidate
+     */
+    private static function isFilterLeaf(array $candidate): bool
+    {
+        if (!isset($candidate[0], $candidate[1]) || !is_string($candidate[0])) {
+            return false;
+        }
+
+        if (!GridFilterHelper::isOperator($candidate[1])) {
+            return false;
+        }
+
+        return GridFilterHelper::isUnaryOperator($candidate[1]) ? 2 === count($candidate) : 3 === count($candidate);
+    }
+
+    /**
      * @param array<int, mixed> $filter
      */
     private function applyFilter(QueryBuilder $queryBuilder, string $resourceClass, array $filter): void
     {
+        // A single leaf may arrive unwrapped (`filter[0]=name&filter[1]==&filter[2]=x`).
+        // Wrap it so the loop below always walks a list of criteria.
+        if (self::isFilterLeaf($filter)) {
+            $filter = [$filter];
+        }
+
         foreach ($filter as $filterParam) {
             if (is_string($filterParam)) {
+                // Either a JSON-encoded leaf (the published protocol form) or a
+                // boolean connector such as "and"/"or", which carries no criteria.
+                $decoded = json_decode($filterParam, true);
+                if (!is_array($decoded)) {
+                    continue;
+                }
+
+                $filterParam = array_values($decoded);
+            }
+
+            if (!is_array($filterParam) || !array_key_exists(0, $filterParam)) {
                 continue;
             }
 
@@ -184,12 +334,12 @@ class DataGridFilter extends AbstractFilter
                 continue;
             }
 
-            if (!array_key_exists(2, $filterParam) && !in_array($filterParam[1], ['isnull', 'isnotnull'], true)) {
+            if (!array_key_exists(2, $filterParam) && !GridFilterHelper::isUnaryOperator($filterParam[1])) {
                 continue;
             }
 
-            $field = $filterParam[0];
-            $op = $filterParam[1];
+            $field = (string) $filterParam[0];
+            $op = (string) $filterParam[1];
 
             $virtualField = $this->findVirtualField($resourceClass, $field);
             if (null !== $virtualField) {
@@ -215,10 +365,18 @@ class DataGridFilter extends AbstractFilter
                 $rawValue = $filterParam[2] ?? null;
                 $value = GridFilterHelper::valueForOperator($op, $this->normalizeRelationIdentifier($rawValue));
                 $uniqueParameterName = GridFilterHelper::uniqueParameterName($queryBuilder, $field);
-                $queryBuilder->andWhere(sprintf('o.%s %s :%s', $field, $operator, $uniqueParameterName))->setParameter(
+                // Only the LIKE-family needs reshaping; `=`, `<`, `>` and friends
+                // compare an association or a number perfectly well as they are.
+                $expression =
+                    'LIKE' === $operator || 'NOT LIKE' === $operator
+                        ? $this->textComparableExpression(sprintf('o.%s', $field), $resourceClass, $field)
+                        : sprintf('o.%s', $field);
+                $queryBuilder->andWhere(sprintf(
+                    '%s %s :%s',
+                    $expression,
+                    $operator,
                     $uniqueParameterName,
-                    $value,
-                );
+                ))->setParameter($uniqueParameterName, $value);
             }
         }
     }
