@@ -16,6 +16,8 @@ Registers automatically:
 - **Single-tenant defaults** for the `Nubit\Platform` contracts (registry, connection switcher, feature checker, quota enforcer) — multi-tenant apps override the aliases.
 - **Autoconfiguration** for `GridVirtualFieldInterface` and `LoginResponseDecoratorInterface` implementations.
 - **Discovery CLI**: `bin/console nubit:discover` lists API Platform resources, embedded-lines routes, and (when installed) sequence/workflow features.
+- **Security audit CLI**: `bin/console nubit:security:audit` flags write operations with no `security:` expression (`--strict` for CI).
+- **Opt-in modules**, each off by default and covered below: spreadsheet export, SSO/OpenID Connect, notifications (email + in-app), tenant backups, analytics outbox, audit trail, media library.
 - **Embedded lines in docs**: `x-embedded-lines` on parent resources lets `SchemaCrudPage` infer `formDetail` line fields automatically. Set an explicit `route` on `#[EmbeddedLines]` (omitting it is deprecated).
 
 ## Setup
@@ -183,6 +185,23 @@ nubit_admin:
             local_directory: '%kernel.project_dir%/var/uploads'
         directory: media              # sub-directory inside the storage
         purge_retention_days: 30
+    export:
+        enabled: false                # true → "xlsx" format on every ApiResource (see below)
+    oidc:
+        enabled: false                # true → /api/auth/oidc/{provider}/… (see below)
+        providers: {}                 # keyed by provider name
+    notification:
+        enabled: false                # true → NotificationDispatcherInterface (see below)
+        from_address: ''              # "From" for the built-in email channel
+        in_app:
+            enabled: false            # true → Notification entity + GET /api/notifications
+    backup:
+        enabled: false                # true → pg_dump runner + nubit:tenant:backup (see below)
+        storage:
+            filesystem: null          # FilesystemOperator service id; null → local
+            local_directory: '%kernel.project_dir%/var/backups'
+        pg_dump_binary: pg_dump
+        timeout_seconds: 300
     runtime_config: false             # true → GET /api/runtime-config
     soft_delete: true                 # nubit_soft_delete Doctrine filter
     single_tenant_defaults: true
@@ -287,6 +306,168 @@ To serve direct S3/CDN URLs instead of streaming through PHP, implement
 picks up `nubit_media` once enabled). Reference uploads from your entities as
 a plain `ManyToOne` to `Nubit\AdminBundle\Media\Entity\Media`.
 
+## Spreadsheet export (opt-in)
+
+`export.enabled: true` registers `xlsx` as an API Platform **format**, which
+turns it on for every `#[ApiResource]` at once — the same mechanism
+`json`/`jsonld` use. No per-resource wiring, no export controller:
+
+```bash
+curl -b cookies 'https://api.example.com/api/products?_format=xlsx' -o products.xlsx
+# or: -H 'Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+```
+
+The encoder serializes whatever the normal normalizer chain already produced,
+so groups, `x-crud` hints and computed properties apply unchanged: a
+collection becomes one row per item, an item becomes a one-row workbook.
+Anything else (an empty result, a scalar) encodes as an empty workbook rather
+than failing. A `Content-Disposition` filename is added automatically
+(`products-2026-08-20.xlsx`) so browsers download instead of rendering bytes.
+
+Requires **`phpoffice/phpspreadsheet` and `ext-zip`** — both are `suggest`, so
+enabling the feature without them throws at container build with a message
+naming what to install.
+
+Frontend counterpart: `permissions: { canExport: true }` on `defineResource`
+renders the grid's Export button, which exports every row matching the current
+filters and sort (pagination dropped), not the page on screen.
+
+For hand-built exports with column control, totals rows and cell validation,
+use `Nubit\Platform\Export\XlsExporter` and friends directly instead.
+
+## SSO / OpenID Connect (opt-in)
+
+`oidc.enabled: true` adds an authorization-code + PKCE login against any
+OpenID Connect-compliant IdP (Okta, Entra ID, Google Workspace, Auth0,
+Keycloak…). Integration is by **issuer discovery**, so there is no
+provider-specific SDK:
+
+```yaml
+nubit_admin:
+    oidc:
+        enabled: true
+        providers:
+            okta:
+                issuer: 'https://example.okta.com'       # {issuer}/.well-known/openid-configuration must resolve
+                client_id: '%env(OKTA_CLIENT_ID)%'
+                client_secret: '%env(OKTA_CLIENT_SECRET)%'
+                scopes: ['openid', 'email', 'profile']   # default
+                redirect_uri: 'https://api.example.com/api/auth/oidc/okta/callback'
+                post_login_redirect_uri: 'https://app.example.com/'
+```
+
+Two things the bundle deliberately does not decide for you:
+
+```yaml
+# config/packages/security.yaml — add the authenticator to the API firewall
+firewalls:
+    api:
+        custom_authenticators:
+            - Nubit\AdminBundle\Auth\Oidc\OidcAuthenticator
+
+# config/services.yaml — provisioning policy is app-owned (this bundle does
+# not know your User class, same as TokenClaimsProviderInterface)
+Nubit\AdminBundle\Auth\Oidc\OidcUserResolverInterface:
+    alias: App\Security\OidcUserResolver
+```
+
+`resolve(array $claims, OidcProviderConfig $provider): UserInterface` decides
+everything policy-shaped: look up by `sub`/`email`, JIT-provision on first
+login, reject unknown users, map IdP groups to roles. Throw
+`OidcAuthenticationException` to refuse.
+
+- Login starts at `GET /api/auth/oidc/{provider}/redirect` — a **top-level
+  browser navigation**, not an XHR. `GET /api/auth/oidc/{provider}/callback`
+  is handled by the authenticator; both routes need `PUBLIC_ACCESS`.
+- `state`/`nonce`/PKCE verifier round-trip in an HMAC-signed `OIDC_FLOW`
+  cookie (10 min TTL, `SameSite=Lax` — `Strict` would be dropped on the way
+  back from the IdP and break every login). There is no server-side session.
+- On success the callback issues the **same token pair as password login**, so
+  from `GET /api/me` onward an SSO session is indistinguishable from a normal
+  one. Failures redirect to `post_login_redirect_uri` with `?error=oidc_failed`
+  and log the real reason — the query string never carries it.
+- ID tokens are verified against the provider's JWKS by `kid` (the token
+  header's `alg` is never trusted) plus `iss`, `aud`, `nonce` and `azp`: a
+  multi-audience token with no `azp`, or one naming another client, is
+  rejected.
+- Needs `symfony/http-client` (discovery, JWKS, token exchange) and
+  `symfony/cache` (caches discovery + JWKS for an hour).
+
+## Notifications (opt-in)
+
+`notification.enabled: true` registers a channel-agnostic dispatcher. Domain
+code describes *what happened*; channels decide how it is delivered:
+
+```php
+use Nubit\Platform\Notification\Contract\NotificationDispatcherInterface;
+use Nubit\Platform\Notification\NotificationMessage;
+
+$dispatcher->dispatch(new NotificationMessage(
+    recipient: $user->getUserIdentifier(),   // a plain identifier string, not a User FK
+    subject: 'Invoice INV-0042 confirmed',
+    body: 'The invoice was confirmed and is awaiting payment.',
+    channels: ['email', 'in_app'],           // [] means every registered channel
+    context: ['html' => $renderedHtml],      // channel-specific extras
+));
+```
+
+Dispatch goes through **Messenger**, so a slow mail server never blocks the
+request. Route `NotificationMessage` to a transport in `messenger.yaml` to
+make it genuinely async — it runs synchronously otherwise.
+
+- **`email`** — needs `symfony/mailer` and `notification.from_address`. Reads
+  `context['html']` for a HTML part. The channel is skipped entirely when
+  `symfony/mailer` isn't installed, so in-app-only setups don't need one.
+- **`in_app`** (`notification.in_app.enabled: true`) — maps `nubit_notification`
+  and exposes it as an `#[ApiResource]`: `GET /api/notifications` (`mercure: true`)
+  and `PATCH /api/notifications/{id}` with `{ "read": true }`. Run
+  `doctrine:migrations:diff` after enabling. Visibility is enforced by a
+  Doctrine filter (`nubit_notification_recipient`) whose parameter comes from
+  the authenticated token, not the request — there is no `recipient` filter to
+  bypass.
+- **Custom channels** — implement `NotificationChannelInterface`
+  (`getIdentifier()` + `send()`); it is autoconfigured onto
+  `nubit.admin.notification_channel`. Slack, SMS and push belong here.
+
+Frontend counterpart: `useNotifications()` and `<NotificationPanel>` in
+`@nubitio/admin`.
+
+## Tenant backups (opt-in)
+
+`backup.enabled: true` registers a PostgreSQL `TenantBackupRunnerInterface`
+plus `bin/console nubit:tenant:backup <tenant> [--type=full] [--dry-run]`:
+
+```yaml
+nubit_admin:
+    backup:
+        enabled: true
+        storage:
+            filesystem: null          # FilesystemOperator service id; overrides local_directory
+            local_directory: '%kernel.project_dir%/var/backups'
+        pg_dump_binary: pg_dump       # must be on PATH
+        timeout_seconds: 300
+```
+
+`pg_dump --format=custom`, with credentials read from the Doctrine connection
+rather than re-parsed from `DATABASE_URL`, invoked through `Process` with an
+argument array (never a shell string) and the password passed via `PGPASSWORD`
+so it never appears in `ps aux`. Dumps are written through Flysystem, so
+"local disk vs S3" is only which filesystem you point it at.
+
+Scope is deliberately narrow: PostgreSQL only (it throws on any other driver
+instead of writing a partial dump), and there is no backup-history table — the
+returned `id` is a timestamp. Implement `TenantBackupRunnerInterface` yourself
+for other engines or for a queryable history.
+
+## Security audit
+
+`bin/console nubit:security:audit` lists every POST/PUT/PATCH/DELETE operation
+with no `security:` expression. Routes under `/api` already require `ROLE_USER`
+via `access_control`, so an unguarded operation is not world-open — it is
+reachable by *any authenticated user*, whatever their role. That is the right
+default for most reads and a common accident on writes. `--strict` exits
+non-zero, which makes it usable as a CI gate. Always registered; no config.
+
 ## Clients
 
 **Web (`@nubitio/core`)** — works out of the box: login stores HttpOnly cookies; `CoreProvider` auto-refreshes via `auth/refresh`.
@@ -310,6 +491,9 @@ Refresh with `{ "refreshToken": "..." }` in the body; send `Authorization: Beare
 | `TokenClaimsProviderInterface` | Add claims (user id, role, branch, tenant) to JWTs and shape the login response `user` payload — alias your implementation over the default |
 | `LoginResponseDecoratorInterface` | Attach extra cookies to the web login/refresh response (e.g. a Mercure subscriber JWT) — autoconfigured by interface |
 | `RefreshTokenStoreInterface` | Swap the Doctrine store for Redis/other |
+| `OidcUserResolverInterface` | Map verified ID token claims to an app user (lookup, JIT provisioning, role mapping) — **required** when `oidc.enabled` |
+| `NotificationChannelInterface` | Extra delivery channels (Slack, SMS, push) — autoconfigured by interface |
+| `TenantBackupRunnerInterface` | Replace the PostgreSQL/`pg_dump` runner for other engines or a queryable history |
 | `MediaUrlResolverInterface` | Emit direct S3/CDN URLs for media instead of the streaming route |
 | `GridVirtualFieldInterface` | Grid fields without ORM mapping — autoconfigured by interface |
 | `Nubit\Platform` tenant/feature/quota aliases | Override for multi-tenant SaaS |
