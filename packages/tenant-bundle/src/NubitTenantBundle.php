@@ -132,16 +132,38 @@ final class NubitTenantBundle extends AbstractBundle
             return;
         }
 
-        $container->prependExtensionConfig('doctrine', [
-            'orm' => [
-                'filters' => [
-                    TenantFilter::NAME => [
-                        'class' => TenantFilter::class,
-                        'enabled' => false,
-                    ],
+        $orm = [
+            'filters' => [
+                TenantFilter::NAME => [
+                    'class' => TenantFilter::class,
+                    'enabled' => false,
                 ],
             ],
-        ]);
+        ];
+
+        // An application that names its own tenant root — an Organization, a
+        // Workspace — never touches the Tenant entity shipped here, but
+        // Doctrine's auto_mapping maps every registered bundle and would create
+        // the nubit_tenant table anyway. Disabling the mapping keeps that table
+        // out of the schema instead of leaving a permanently empty one behind.
+        if (Tenant::class !== $this->configuredTenantEntity($container)) {
+            $orm['mappings'] = ['NubitTenantBundle' => false];
+        }
+
+        $container->prependExtensionConfig('doctrine', ['orm' => $orm]);
+    }
+
+    private function configuredTenantEntity(ContainerBuilder $builder): string
+    {
+        foreach (array_reverse($builder->getExtensionConfig('nubit_tenant')) as $config) {
+            if (isset($config['tenant_entity']) && is_string($config['tenant_entity'])) {
+                $resolved = $builder->resolveEnvPlaceholders($config['tenant_entity'], true);
+
+                return is_string($resolved) ? $resolved : $config['tenant_entity'];
+            }
+        }
+
+        return Tenant::class;
     }
 
     private function isEnabled(ContainerBuilder $builder): bool

@@ -21,7 +21,10 @@ final class NubitSequenceBundle extends AbstractBundle
 {
     public function prependExtension(ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        if (!$container->hasExtension('doctrine')) {
+        // Turning the bundle off has to take its table with it: mapping the
+        // entity unconditionally left every application carrying an empty
+        // nubit_sequence_counter it never allocates from.
+        if (!$this->isEnabled($container) || !$container->hasExtension('doctrine')) {
             return;
         }
 
@@ -38,6 +41,18 @@ final class NubitSequenceBundle extends AbstractBundle
                 ],
             ],
         ]);
+    }
+
+    /** Mirrors the `enabled` node's default, read before the config is processed. */
+    private function isEnabled(ContainerBuilder $builder): bool
+    {
+        foreach (array_reverse($builder->getExtensionConfig('nubit_sequence')) as $config) {
+            if (isset($config['enabled'])) {
+                return (bool) $config['enabled'];
+            }
+        }
+
+        return true;
     }
 
     public function configure(DefinitionConfigurator $definition): void
