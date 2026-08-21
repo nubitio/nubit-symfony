@@ -388,7 +388,7 @@ final class NubitAdminBundle extends AbstractBundle
             ->children()
             ->booleanNode('enabled')
             ->info(
-                'Register the "xlsx" format on every ApiResource: GET ?_format=xlsx (or Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) streams the same collection/item data as a spreadsheet. Pairs with the frontend toolbar export button gated by permissions.canExport.',
+                'Enable the "xlsx" export format. Resources opt in individually with #[Exportable]: their GET endpoints then answer /resource.xlsx or Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet with a spreadsheet of every row matching the query, pagination removed. Resources without the attribute answer 406 and do not advertise the format. Requires phpoffice/phpspreadsheet with ext-zip and ext-gd. Pairs with the frontend toolbar button, gated separately by permissions.canExport.',
             )
             ->defaultFalse()
             ->end()
@@ -605,27 +605,29 @@ final class NubitAdminBundle extends AbstractBundle
         // request bodies. Prepend the formats so consumers get JSON support
         // out of the box — application-level api_platform.yaml still wins.
         if ($container->hasExtension('api_platform')) {
+            $formats = [
+                'json' => ['application/json'],
+                'jsonld' => ['application/ld+json'],
+            ];
+
+            // Export (opt-in), registered in the same call and deliberately
+            // last: API Platform answers a request carrying no Accept header
+            // with the *first* configured format. A separate prependExtensionConfig
+            // would land ahead of these — prepending reverses the order — and a
+            // grid asking for rows would be handed a spreadsheet it cannot parse.
+            if ($this->isFeatureEnabled($container, 'export')) {
+                $formats[XlsxEncoder::FORMAT] = [
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ];
+            }
+
             $container->prependExtensionConfig('api_platform', [
-                'formats' => [
-                    'json' => ['application/json'],
-                    'jsonld' => ['application/ld+json'],
-                ],
+                'formats' => $formats,
                 'docs_formats' => [
                     'jsonld' => ['application/ld+json'],
                     'jsonopenapi' => ['application/vnd.openapi+json'],
                     'json' => ['application/json'],
                     'html' => ['text/html'],
-                ],
-            ]);
-        }
-
-        // Export (opt-in): registering "xlsx" as an api_platform format turns
-        // it on for every ApiResource automatically — no per-resource config,
-        // same mechanism the "json"/"jsonld" formats above use.
-        if ($this->isFeatureEnabled($container, 'export') && $container->hasExtension('api_platform')) {
-            $container->prependExtensionConfig('api_platform', [
-                'formats' => [
-                    XlsxEncoder::FORMAT => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
                 ],
             ]);
         }

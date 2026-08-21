@@ -32,8 +32,14 @@ final class ExportContentDispositionListener implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
-        $format = $request->attributes->getString('_format');
-        $extension = self::FORMAT_EXTENSIONS[$format] ?? null;
+
+        // `_format` is read with get(), not getString(): API Platform routes
+        // declare an optional `{._format}` suffix, so a request that omits it
+        // leaves the attribute present but null. getString() only falls back to
+        // its default for a *missing* key and throws on a null one, which turned
+        // every plain collection request into a 500 once this listener existed.
+        $format = $request->attributes->get('_format');
+        $extension = is_string($format) ? self::FORMAT_EXTENSIONS[$format] ?? null : null;
         if ($extension === null) {
             return;
         }
@@ -43,8 +49,8 @@ final class ExportContentDispositionListener implements EventSubscriberInterface
             return;
         }
 
-        $resourceClass = $request->attributes->getString('_api_resource_class');
-        $shortName = $resourceClass === '' ? 'export' : $this->shortName($resourceClass);
+        $resourceClass = $request->attributes->get('_api_resource_class');
+        $shortName = is_string($resourceClass) && $resourceClass !== '' ? $this->shortName($resourceClass) : 'export';
         $filename = sprintf('%s-%s.%s', $this->slug($shortName), date('Y-m-d'), $extension);
 
         $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));

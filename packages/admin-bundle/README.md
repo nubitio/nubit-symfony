@@ -186,7 +186,7 @@ nubit_admin:
         directory: media              # sub-directory inside the storage
         purge_retention_days: 30
     export:
-        enabled: false                # true → "xlsx" format on every ApiResource (see below)
+        enabled: false                # true → "xlsx" format, per resource via #[Exportable] (see below)
     oidc:
         enabled: false                # true → /api/auth/oidc/{provider}/… (see below)
         providers: {}                 # keyed by provider name
@@ -308,14 +308,40 @@ a plain `ManyToOne` to `Nubit\AdminBundle\Media\Entity\Media`.
 
 ## Spreadsheet export (opt-in)
 
-`export.enabled: true` registers `xlsx` as an API Platform **format**, which
-turns it on for every `#[ApiResource]` at once — the same mechanism
-`json`/`jsonld` use. No per-resource wiring, no export controller:
+`export.enabled: true` registers `xlsx` as an API Platform **format** and
+installs the machinery. Resources then opt in one at a time:
+
+```php
+use Nubit\ApiPlatform\Attribute\Exportable;
+
+#[ApiResource]
+#[ApiFilter(DataGridFilter::class)]
+#[Exportable]
+class Product { /* … */ }
+```
 
 ```bash
-curl -b cookies 'https://api.example.com/api/products?_format=xlsx' -o products.xlsx
+curl -b cookies 'https://api.example.com/api/products.xlsx' -o products.xlsx
 # or: -H 'Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ```
+
+An export streams **every row matching the query, with pagination removed** —
+a far wider read than the paginated grid the same user sees. That is why the
+attribute is required rather than assumed: a resource holding payment
+schedules or personal data should not gain a whole-table dump because a
+sibling resource needed a spreadsheet. Without `#[Exportable]` the format is
+removed from the resource's operations, so API Platform answers **406 Not
+Acceptable** and the OpenAPI document does not advertise it.
+
+Unlisted, the attribute covers the resource's `GET` operations only. Pass
+`operations:` to narrow it further:
+
+```php
+#[Exportable(operations: ['_api_/products{._format}_get_collection'])]  // collection only
+```
+
+Operation `security:` expressions still apply — the export is the same
+operation, answered in another format.
 
 The encoder serializes whatever the normal normalizer chain already produced,
 so groups, `x-crud` hints and computed properties apply unchanged: a
@@ -324,13 +350,16 @@ Anything else (an empty result, a scalar) encodes as an empty workbook rather
 than failing. A `Content-Disposition` filename is added automatically
 (`products-2026-08-20.xlsx`) so browsers download instead of rendering bytes.
 
-Requires **`phpoffice/phpspreadsheet` and `ext-zip`** — both are `suggest`, so
-enabling the feature without them throws at container build with a message
-naming what to install.
+Requires **`phpoffice/phpspreadsheet` with `ext-zip` and `ext-gd`** — the
+package is a `suggest`, so enabling the feature without it throws at container
+build with a message naming what to install.
 
 Frontend counterpart: `permissions: { canExport: true }` on `defineResource`
 renders the grid's Export button, which exports every row matching the current
-filters and sort (pagination dropped), not the page on screen.
+filters and sort (pagination dropped), not the page on screen. The two gates
+are independent and both default to off — the button hides an endpoint the
+user could still call, so `#[Exportable]` is the one that actually restricts
+access.
 
 For hand-built exports with column control, totals rows and cell validation,
 use `Nubit\Platform\Export\XlsExporter` and friends directly instead.
