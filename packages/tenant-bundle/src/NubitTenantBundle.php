@@ -128,29 +128,41 @@ final class NubitTenantBundle extends AbstractBundle
 
     public function prependExtension(ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        if (!$this->isEnabled($container) || !$container->hasExtension('doctrine')) {
+        if (!$container->hasExtension('doctrine')) {
             return;
         }
 
-        $orm = [
-            'filters' => [
-                TenantFilter::NAME => [
-                    'class' => TenantFilter::class,
-                    'enabled' => false,
-                ],
-            ],
-        ];
+        $enabled = $this->isEnabled($container);
 
-        // An application that names its own tenant root — an Organization, a
-        // Workspace — never touches the Tenant entity shipped here, but
-        // Doctrine's auto_mapping maps every registered bundle and would create
-        // the nubit_tenant table anyway. Disabling the mapping keeps that table
-        // out of the schema instead of leaving a permanently empty one behind.
-        if (Tenant::class !== $this->configuredTenantEntity($container)) {
-            $orm['mappings'] = ['NubitTenantBundle' => false];
+        // The Tenant entity shipped here is the default tenant root. It is dead
+        // weight both when the bundle is off and when the application named its
+        // own root — an Organization, a Workspace — yet Doctrine's auto_mapping
+        // maps every registered bundle regardless, putting an empty nubit_tenant
+        // table in the schema. Disabling the mapping keeps it out.
+        //
+        // The bundle stays installed either way: admin-bundle depends on it for
+        // the tenant contracts, so "not used" has to be expressed here rather
+        // than by removing the package.
+        if (!$enabled || Tenant::class !== $this->configuredTenantEntity($container)) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => ['mappings' => ['NubitTenantBundle' => false]],
+            ]);
         }
 
-        $container->prependExtensionConfig('doctrine', ['orm' => $orm]);
+        if (!$enabled) {
+            return;
+        }
+
+        $container->prependExtensionConfig('doctrine', [
+            'orm' => [
+                'filters' => [
+                    TenantFilter::NAME => [
+                        'class' => TenantFilter::class,
+                        'enabled' => false,
+                    ],
+                ],
+            ],
+        ]);
     }
 
     private function configuredTenantEntity(ContainerBuilder $builder): string

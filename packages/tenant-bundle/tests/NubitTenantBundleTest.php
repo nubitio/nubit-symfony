@@ -54,14 +54,30 @@ final class NubitTenantBundleTest extends TestCase
         );
     }
 
-    public function testADisabledBundlePrependsNothing(): void
+    /**
+     * A disabled bundle still has to unmap its entity: it stays installed
+     * because admin-bundle depends on it, and auto_mapping does not care
+     * whether it is switched on.
+     */
+    public function testADisabledBundleUnmapsItsEntityAndRegistersNoFilter(): void
     {
-        $container = self::containerWith(['enabled' => false]);
+        $orm = self::prependedOrmConfig(['enabled' => false]);
+
+        self::assertSame(['NubitTenantBundle' => false], $orm['mappings'] ?? null);
+        self::assertArrayNotHasKey('filters', $orm);
+    }
+
+    public function testADisabledBundleUnmapsItsEntityEvenWithNoConfigurationAtAll(): void
+    {
+        $container = new ContainerBuilder();
+        $container->registerExtension(self::extension('nubit_tenant'));
+        $container->registerExtension(self::extension('doctrine'));
 
         (new NubitTenantBundle())->prependExtension(self::configurator(), $container);
 
-        self::assertSame([['enabled' => false]], $container->getExtensionConfig('nubit_tenant'));
-        self::assertSame([], $container->getExtensionConfig('doctrine'));
+        $prepended = $container->getExtensionConfig('doctrine');
+        self::assertCount(1, $prepended);
+        self::assertSame(['NubitTenantBundle' => false], $prepended[0]['orm']['mappings'] ?? null);
     }
 
     // ── harness ───────────────────────────────────────────────────────────
@@ -76,11 +92,15 @@ final class NubitTenantBundleTest extends TestCase
         $container = self::containerWith($config);
         (new NubitTenantBundle())->prependExtension(self::configurator(), $container);
 
-        $prepended = $container->getExtensionConfig('doctrine');
-        self::assertCount(1, $prepended);
-        self::assertIsArray($prepended[0]['orm'] ?? null);
+        // The bundle may prepend more than once; the container merges them, so
+        // the assertions read the combined `orm` section.
+        $orm = [];
+        foreach ($container->getExtensionConfig('doctrine') as $config) {
+            self::assertIsArray($config['orm'] ?? null);
+            $orm = array_merge($orm, $config['orm']);
+        }
 
-        return $prepended[0]['orm'];
+        return $orm;
     }
 
     /** @param array<string, mixed> $config */
