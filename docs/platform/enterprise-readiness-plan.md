@@ -492,6 +492,59 @@ de operación. Y el export XLSX corre síncrono con PhpSpreadsheet en proceso �
 **Criterio de aceptación.** Benchmark reproducible: grid sobre 2M filas paginando
 sin degradación al avanzar, y export de 500k filas en memoria acotada.
 
+### Estado
+
+**Entregado**, con una desviación deliberada y un criterio a medias — ambos
+explicados abajo. 21 tests de integración y 14 en el frontend.
+
+Paginación: API Platform **ya trae** `paginationViaCursor` y `paginationPartial`.
+Reimplementarlas habría sido construir un segundo mecanismo para discrepar del
+primero, así que el trabajo fue usarlas, publicarlas y protegerlas:
+
+- `#[GridScale]` declara cómo espera leerse un recurso, y se publica como
+  `x-grid-scale` leyendo **lo que está en vigor**, no solo el atributo: si el
+  atributo dice una cosa y la operación otra, el cliente no debe ser quien lo
+  descubra.
+- `DataGridFilter` **rechaza** ordenar por un campo distinto del cursor. Un
+  cursor camina un único campo ordenado; con otro orden la comparación deja de
+  describir la secuencia y las páginas repiten y saltan filas en silencio.
+  Ignorar el orden muestra al usuario algo que no pidió; obedecerlo le muestra
+  una página incorrecta.
+- `GridScaleRegistry` **se niega a arrancar** si un recurso declara cursor sin
+  el `RangeFilter`, el `OrderFilter` y el `order:` que lo hacen funcionar. Los
+  tres fueron descubiertos exactamente así: el enlace `next` lleva `?id[lt]=…`,
+  que sin esos filtros se ignora, y **cada página devuelve las mismas filas**
+  sin error ni aviso.
+- Conteo: `paginationPartial` elimina el `COUNT(*)` —que es lo que deja de
+  escalar primero— y `ApproximateCounter` devuelve la cuenta al pie como
+  `X-Estimated-Count` desde las estadísticas del planificador, con un único
+  lookup indexado. Solo sin filtros: una cuenta filtrada no se puede estimar, y
+  un número que ignorara el filtro sería peor que ninguno.
+- Frontend: `nextPageUrl` y `totalIsEstimate` en `GridData`, y
+  `useCursorPagination`, que camina siguiendo **los enlaces del servidor**. Sin
+  total exacto, `member.length` afirmaba que la página era la tabla entera — un
+  grid informando «10 filas» sobre tres años de movimientos.
+
+Export encolado: job Messenger, escritura fila a fila con `toIterable()` y
+`detach` periódico, descarga en streaming, y notificación al terminar cuando el
+módulo de notificaciones está activo. El ámbito por fila se **reaplica en el
+worker**: un worker no tiene sesión, y un export que lo perdiera entregaría la
+empresa entera a un usuario acotado, de forma asíncrona y sin nadie mirando. Si
+la cuenta solicitante desapareció, el job **falla** en vez de ensancharse.
+
+**Desviación deliberada: el export encolado produce CSV, no XLSX.**
+PhpSpreadsheet construye el libro entero en memoria antes de escribir un byte,
+así que un XLSX de medio millón de filas es exactamente el fallo que encolar
+pretende evitar. XLSX se mantiene en la ruta inline, donde el número de filas
+está acotado. Fingir que PhpSpreadsheet hace streaming habría sido la opción
+cómoda y falsa.
+
+**Criterio de aceptación cumplido a medias.** La corrección está verificada
+—paginación sin repetir ni saltar filas, memoria plana por diseño— pero **no hay
+benchmark reproducible sobre 2M filas ni export de 500k**. Sembrar y medir ese
+volumen no cabe en la suite de integración, que corre en cada push. Es trabajo
+pendiente de verdad, no un detalle.
+
 ---
 
 ## Pendiente fuera de este plan
@@ -514,4 +567,4 @@ Del hallazgo original queda diferido, sin generador de código:
 | 3. Documentos e importación | entregado; relaciones en la importación quedan fuera |
 | 4. Permisos granulares | entregado; pantalla de usuarios queda en la aplicación |
 | 5. Ciclo de vida de identidad | entregado; WebAuthn y SCIM siguen fuera |
-| 6. Escala de lectura y exportación | pendiente |
+| 6. Escala de lectura y exportación | entregado; falta el benchmark de volumen |

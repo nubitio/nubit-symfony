@@ -11,7 +11,6 @@ use Nubit\AdminBundle\Authorization\PermissionResolver;
 use Nubit\AdminBundle\Authorization\PermissionSecurityMetadataFactory;
 use Nubit\AdminBundle\Authorization\PermissionVoter;
 use Nubit\AdminBundle\Authorization\RowScopeExtension;
-use Nubit\AdminBundle\Authorization\RowScopeRegistry;
 use Nubit\AdminBundle\Command\PermissionListCommand;
 use Nubit\AdminBundle\Security\UnguardedOperationScanner;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
@@ -34,7 +33,6 @@ final class AuthorizationModule
     public static function load(array $config, DefaultsConfigurator $services): void
     {
         $services->set(PermissionCatalog::class);
-        $services->set(RowScopeRegistry::class);
 
         $services->set(PermissionResolver::class)->arg('$superRoles', $config['super_roles'])->arg(
             '$catalog',

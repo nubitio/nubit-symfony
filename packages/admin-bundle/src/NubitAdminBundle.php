@@ -19,6 +19,8 @@ use Nubit\AdminBundle\Auth\RefreshTokenStoreInterface;
 use Nubit\AdminBundle\Auth\ResponseModeResolver;
 use Nubit\AdminBundle\Auth\TokenClaimsProviderInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
+use Nubit\AdminBundle\Authorization\RowScopeApplier;
+use Nubit\AdminBundle\Authorization\RowScopeRegistry;
 use Nubit\AdminBundle\Command\DiscoverCommand;
 use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
@@ -50,6 +52,8 @@ use Nubit\AdminBundle\Export\XlsxEncoder;
 use Nubit\AdminBundle\Mercure\FailSafeHub;
 use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
+use Nubit\AdminBundle\OpenApi\GridScaleDocumentationNormalizer;
+use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
 use Nubit\AdminBundle\Session\AppProfile;
 use Nubit\AdminBundle\Session\DefaultMeResponseBuilder;
 use Nubit\AdminBundle\Session\MeResponseBuilderInterface;
@@ -57,9 +61,11 @@ use Nubit\AdminBundle\Tenant\AllowAllFeatureChecker;
 use Nubit\AdminBundle\Tenant\SingleTenantConnectionSwitcher;
 use Nubit\AdminBundle\Tenant\SingleTenantRegistry;
 use Nubit\AdminBundle\Tenant\UnlimitedQuotaEnforcer;
+use Nubit\ApiPlatform\Doctrine\ApproximateCounter;
 use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
 use Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface;
 use Nubit\ApiPlatform\Doctrine\Filter\SoftDeleteFilter;
+use Nubit\ApiPlatform\Doctrine\GridScaleRegistry;
 use Nubit\ApiPlatform\Doctrine\Money\MoneyColumns;
 use Nubit\ApiPlatform\Doctrine\Type\UtcDateTimeImmutableType;
 use Nubit\ApiPlatform\Http\ApiResponseListener;
@@ -561,6 +567,22 @@ final class NubitAdminBundle extends AbstractBundle
             ->end()
             ->end()
             ->end()
+            ->arrayNode('grid')
+            ->addDefaultsIfNotSet()
+            ->info('How large grids are read. See #[GridScale] for the per-resource decision.')
+            ->children()
+            ->booleanNode('approximate_count')
+            ->info(
+                'Answer an unfiltered total from the PostgreSQL planner statistics instead of COUNT(*). Wrong by a few percent between vacuums, which matters far less than the full scan it replaces.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->integerNode('approximate_count_threshold')
+            ->info('Only estimate above this many rows; below it an exact count is cheap.')
+            ->defaultValue(100000)
+            ->end()
+            ->end()
+            ->end()
             ->arrayNode('export')
             ->addDefaultsIfNotSet()
             ->children()
@@ -569,6 +591,20 @@ final class NubitAdminBundle extends AbstractBundle
                 'Enable the "xlsx" export format. Resources opt in individually with #[Exportable]: their GET endpoints then answer /resource.xlsx or Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet with a spreadsheet of every row matching the query, pagination removed. Resources without the attribute answer 406 and do not advertise the format. Requires phpoffice/phpspreadsheet with ext-zip and ext-gd. Pairs with the frontend toolbar button, gated separately by permissions.canExport.',
             )
             ->defaultFalse()
+            ->end()
+            ->booleanNode('queued')
+            ->info(
+                'Queue exports above the inline limit instead of streaming them in the request. Adds the nubit_export_job table and CSV output — PhpSpreadsheet builds a workbook in memory, so a very large XLSX is the failure queueing exists to avoid. Route RunExport to a transport.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->scalarNode('directory')
+            ->info('Where queued export files are written.')
+            ->defaultValue('%kernel.project_dir%/var/exports')
+            ->end()
+            ->integerNode('inline_limit')
+            ->info('Rows above which an export is queued. Overridden per resource by #[GridScale].')
+            ->defaultValue(5000)
             ->end()
             ->end()
             ->end()
@@ -607,9 +643,28 @@ final class NubitAdminBundle extends AbstractBundle
             ->registerForAutoconfiguration(NotificationChannelInterface::class)
             ->addTag('nubit.admin.notification_channel');
         // ── nubitio/api-platform bridge ──────────────────────────────────────
-        $services->set(DataGridFilter::class);
+        // Row scoping is registered outside the authorization module because
+        // the queued export needs it whether or not permissions are on: a
+        // worker has no session, and that is exactly where scope gets dropped.
+        $services->set(ResourceSegmentIndex::class);
+        $services->set(RowScopeRegistry::class);
+        $services->set(RowScopeApplier::class);
+
+        $services->set(GridScaleRegistry::class);
+        $services->set(ApproximateCounter::class)->arg('$connection', service('doctrine.dbal.default_connection'));
+        $services->set(DataGridFilter::class)->arg('$gridScales', service(GridScaleRegistry::class));
+
+        // Publishing how a resource expects to be read is what lets the grid
+        // paginate the way the backend intends rather than the way it always has.
+        $services->set(GridScaleDocumentationNormalizer::class)->decorate(
+            'api_platform.hydra.normalizer.documentation',
+            priority: -40,
+        )->arg('$inner', service('.inner'));
         $services->set(GridSummaryCalculator::class);
-        $services->set(ApiResponseListener::class);
+        $services->set(ApiResponseListener::class)->arg('$gridScales', service(GridScaleRegistry::class))->arg(
+            '$approximateCounter',
+            service(ApproximateCounter::class),
+        );
         $services->set(ExceptionListener::class);
 
         /** @var array{default_timezone: string, enforce_utc: bool} $timeConfig */
@@ -730,10 +785,10 @@ final class NubitAdminBundle extends AbstractBundle
             ImportModule::load($importConfig, $services, $container);
         }
 
-        /** @var array{enabled: bool} $exportConfig */
+        /** @var array{enabled: bool, queued: bool, directory: string, inline_limit: int} $exportConfig */
         $exportConfig = $config['export'];
         if ($exportConfig['enabled']) {
-            ExportModule::load($services);
+            ExportModule::load($exportConfig, $services);
         }
 
         /** @var array{enabled: bool, providers: array<string, array{issuer: string, client_id: string, client_secret: string, scopes: list<string>, redirect_uri: string, post_login_redirect_uri: string}>} $oidcConfig */
@@ -919,6 +974,25 @@ final class NubitAdminBundle extends AbstractBundle
             ]);
 
             $this->prependApiPlatformMappingPath($container, __DIR__ . '/Authorization/Entity');
+        }
+
+        // Queued exports (opt-in): mapping only.
+        if (
+            $this->readBoolean($container, ['export', 'queued'], default: false) && $container->hasExtension('doctrine')
+        ) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminExport' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Export/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Export\\Entity',
+                            'alias' => 'NubitAdminExport',
+                        ],
+                    ],
+                ],
+            ]);
         }
 
         // Import sessions (opt-in): mapping only, same reasoning as documents.

@@ -17,7 +17,7 @@ Registers automatically:
 - **Autoconfiguration** for `GridVirtualFieldInterface` and `LoginResponseDecoratorInterface` implementations.
 - **Discovery CLI**: `bin/console nubit:discover` lists API Platform resources, embedded-lines routes, and (when installed) sequence/workflow features.
 - **Security audit CLI**: `bin/console nubit:security:audit` flags write operations with no `security:` expression (`--strict` for CI).
-- **Opt-in modules**, each off by default and covered below: identity lifecycle (2FA, invitations, API keys), granular permissions, issued documents (PDF), spreadsheet import, spreadsheet export, SSO/OpenID Connect, notifications (email + in-app), tenant backups, analytics outbox, audit trail, media library.
+- **Opt-in modules**, each off by default and covered below: queued exports, identity lifecycle (2FA, invitations, API keys), granular permissions, issued documents (PDF), spreadsheet import, spreadsheet export, SSO/OpenID Connect, notifications (email + in-app), tenant backups, analytics outbox, audit trail, media library.
 - **Embedded lines in docs**: `x-embedded-lines` on parent resources lets `SchemaCrudPage` infer `formDetail` line fields automatically. Set an explicit `route` on `#[EmbeddedLines]` (omitting it is deprecated).
 
 ## Setup
@@ -167,6 +167,80 @@ For a per-user or per-tenant zone, implement
 `Nubit\Platform\Time\TimeZoneAwareInterface` on the entity that decides. The
 resolution order is user → tenant → `default_timezone` → UTC, and the resolved
 identifier is reported by `GET /api/me`.
+
+## Reading grids that grew
+
+Every grid is small on the day it ships. The ones that stop working are the ones
+nobody decided anything about: page 4,000 of an offset-paginated table asks the
+database to fetch and discard 80,000 rows, and the footer's `COUNT(*)` walks the
+relation on top of that.
+
+`#[GridScale]` is where a resource states which of those costs it will pay. API
+Platform provides the mechanisms; this declares the intent and publishes it as
+`x-grid-scale`, so the frontend paginates the way the backend expects.
+
+```php
+#[ApiResource(
+    order: ['id' => 'DESC'],
+    paginationPartial: true,
+    paginationViaCursor: [['field' => 'id', 'direction' => 'DESC']],
+)]
+#[ApiFilter(RangeFilter::class, properties: ['id'])]
+#[ApiFilter(OrderFilter::class, properties: ['id' => 'DESC'])]
+#[GridScale(cursorField: 'id', exactCount: false, inlineExportLimit: 5000)]
+class StockMovement { … }
+```
+
+All five lines are load-bearing. API Platform builds the next-page link as
+`?id[lt]=…`, which is **ignored** without the RangeFilter — and without a
+declared `order`, the cursor walks rows in whatever sequence the database felt
+like. Either omission makes every page return the same rows, silently. The
+bundle refuses to boot rather than let that ship.
+
+Sorting by any other column is refused with a 400: a cursor walks one ordered
+field, so another order makes pages repeat and skip rows. Ignoring the sort would
+show the user an order they did not ask for; obeying it would show them a wrong
+page.
+
+`exactCount: false` (or `paginationPartial`) drops the `COUNT(*)`. The footer
+still gets a number — `X-Estimated-Count`, read from PostgreSQL's planner
+statistics in one indexed lookup — for unfiltered collections only. A filtered
+count cannot be estimated, and a number that ignored the filter would be worse
+than none.
+
+## Queued exports (opt-in)
+
+```yaml
+nubit_admin:
+    export:
+        enabled: true
+        queued: true
+        directory: '%kernel.project_dir%/var/exports'
+        inline_limit: 5000
+```
+
+Above the limit — per resource via `#[GridScale]` — an export becomes a job:
+
+| Route | Purpose |
+| --- | --- |
+| `POST /api/exports/{resource}` | Queue one, carrying the grid's own query |
+| `GET /api/exports` | What you have asked for |
+| `GET /api/exports/{id}` | Status |
+| `GET /api/exports/{id}/file` | The bytes, streamed. `202` while it runs |
+
+Route `Nubit\AdminBundle\Export\Message\RunExport` to a transport. With the
+notification module on, the requester is told when it finishes.
+
+**Queued exports are CSV, not XLSX.** PhpSpreadsheet builds the whole workbook in
+memory before writing a byte, so a half-million-row XLSX is exactly the failure
+queueing exists to avoid. XLSX stays on the inline path, where the row count is
+bounded. Rows are streamed with `toIterable()` and the unit of work is cleared
+periodically, so memory stays flat regardless of size.
+
+The requester's **row scope is reapplied in the worker**. A worker has no
+session, and an export that dropped scope would hand a warehouse supervisor the
+whole company in a spreadsheet — asynchronously, with nobody watching. If the
+account no longer exists, the job fails rather than widening.
 
 ## Identity lifecycle (opt-in)
 
@@ -507,6 +581,9 @@ nubit_admin:
     time:
         default_timezone: 'UTC'       # reported by GET /api/me
         enforce_utc: true             # write *and read* datetime_immutable in UTC
+    grid:
+        approximate_count: false      # estimate the total instead of COUNT(*)
+        approximate_count_threshold: 100000
     identity:
         enabled: false                # TOTP, password reset, invitations, API keys, sessions
         issuer: 'Nubit'

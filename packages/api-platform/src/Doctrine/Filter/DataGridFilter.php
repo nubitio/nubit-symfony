@@ -10,6 +10,8 @@ use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\Mapping\ClassMetadata;
+use Nubit\ApiPlatform\Doctrine\GridScaleRegistry;
+use Nubit\ApiPlatform\Exception\SortNotSupportedException;
 use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
@@ -37,6 +39,7 @@ class DataGridFilter extends AbstractFilter
         ?NameConverterInterface $nameConverter = null,
         #[AutowireIterator('nubit.api_platform.grid_virtual_field')]
         private readonly iterable $virtualFields = [],
+        private readonly ?GridScaleRegistry $gridScales = null,
     ) {
         parent::__construct($managerRegistry, $logger, $properties, $nameConverter);
     }
@@ -191,6 +194,33 @@ class DataGridFilter extends AbstractFilter
     }
 
     /**
+     * Refuses a sort that a cursor cannot honour.
+     *
+     * Cursor pagination walks one ordered field: each page asks for rows beyond
+     * the last cursor value. Order by anything else and that comparison no
+     * longer describes the sequence, so pages silently repeat rows and skip
+     * others — the failure nobody notices until a reconciliation comes up short.
+     *
+     * Refusing is the only honest option. Ignoring the sort shows the user an
+     * order they did not ask for; obeying it shows them a page that is wrong.
+     */
+    private function assertSortableUnderCursor(string $resourceClass, string $field): void
+    {
+        $scale = $this->gridScales?->find($resourceClass);
+
+        if (null === $scale || !$scale->usesCursor() || $field === $scale->cursorField) {
+            return;
+        }
+
+        throw new SortNotSupportedException(sprintf(
+            'This resource is paginated by cursor on "%s", so it can only be sorted by that field. '
+            . 'Sorting by "%s" would return pages that repeat and skip rows.',
+            (string) $scale->cursorField,
+            $field,
+        ));
+    }
+
+    /**
      * True when the resource can actually be queried on this field.
      *
      * Field names arrive from the query string, so they are attacker-controlled.
@@ -293,6 +323,8 @@ class DataGridFilter extends AbstractFilter
 
                 continue;
             }
+
+            $this->assertSortableUnderCursor($resourceClass, $field);
 
             $desc = $sortParam['desc'] ?? false;
             $isDesc = is_bool($desc) ? $desc : in_array($desc, ['true', '1', 1], true);

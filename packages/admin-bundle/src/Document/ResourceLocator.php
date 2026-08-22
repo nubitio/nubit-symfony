@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\Document;
 
-use ApiPlatform\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
 use Nubit\Platform\Exception\NotFoundException;
 
 /**
@@ -17,15 +17,12 @@ use Nubit\Platform\Exception\NotFoundException;
  * resources API Platform already publishes, and the mapping is built once from
  * that list rather than parsed out of the request.
  */
-final class ResourceLocator
+final readonly class ResourceLocator
 {
-    /** @var array<string, class-string>|null */
-    private ?array $index = null;
-
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly ResourceNameCollectionFactoryInterface $resourceNames,
-        private readonly PrintableRegistry $printables,
+        private EntityManagerInterface $entityManager,
+        private ResourceSegmentIndex $segments,
+        private PrintableRegistry $printables,
     ) {}
 
     public function locate(string $resource, string $id): object
@@ -43,42 +40,14 @@ final class ResourceLocator
     /** @return class-string */
     public function resolveClass(string $resource): string
     {
-        $index = $this->index ??= $this->buildIndex();
-        $key = strtolower($resource);
+        $class = $this->segments->resolve($resource);
 
-        if (!isset($index[$key])) {
+        // Published is not enough: a document route must only reach resources
+        // that declare themselves printable.
+        if (!$this->printables->isPrintable($class)) {
             throw new NotFoundException(sprintf('No printable resource is published as "%s".', $resource));
         }
 
-        return $index[$key];
-    }
-
-    /** @return array<string, class-string> */
-    private function buildIndex(): array
-    {
-        $index = [];
-
-        /** @var class-string $class */
-        foreach ($this->resourceNames->create() as $class) {
-            if (!$this->printables->isPrintable($class)) {
-                continue;
-            }
-
-            $short = (new \ReflectionClass($class))->getShortName();
-
-            // Both the plural URL segment API Platform generates and the bare
-            // short name resolve, so a caller can use whichever it knows.
-            $index[strtolower($short)] = $class;
-            $index[strtolower($short) . 's'] = $class;
-            $index[self::dasherize($short)] = $class;
-            $index[self::dasherize($short) . 's'] = $class;
-        }
-
-        return $index;
-    }
-
-    private static function dasherize(string $name): string
-    {
-        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $name));
+        return $class;
     }
 }

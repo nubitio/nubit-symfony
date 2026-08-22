@@ -9,6 +9,7 @@ use Nubit\AdminBundle\Controller\ChangePasswordController;
 use Nubit\AdminBundle\Document\Controller\DocumentHistoryController;
 use Nubit\AdminBundle\Document\Controller\DownloadDocumentController;
 use Nubit\AdminBundle\Document\Controller\IssueDocumentController;
+use Nubit\AdminBundle\Export\Controller\ExportJobController;
 use Nubit\AdminBundle\Identity\Controller\IdentityController;
 use Nubit\AdminBundle\Import\Controller\ImportController;
 use Nubit\AdminBundle\Controller\LoginController;
@@ -129,6 +130,23 @@ return static function (RoutingConfigurator $routes): void {
     $routes->add('nubit_admin_api_key_revoke', '/api/api-keys/{id}')
         ->controller([IdentityController::class, 'revokeApiKey'])
         ->methods(['DELETE']);
+
+    // Queued exports (only functional with nubit_admin.export.queued).
+    $routes->add('nubit_admin_exports', '/api/exports')
+        ->controller([ExportJobController::class, 'list'])
+        ->methods(['GET']);
+
+    $routes->add('nubit_admin_export_download', '/api/exports/{id}/file')
+        ->controller([ExportJobController::class, 'download'])
+        ->methods(['GET']);
+
+    $routes->add('nubit_admin_export_request', '/api/exports/{resource}')
+        ->controller([ExportJobController::class, 'request'])
+        ->methods(['POST']);
+
+    $routes->add('nubit_admin_export_show', '/api/exports/{id}')
+        ->controller([ExportJobController::class, 'show'])
+        ->methods(['GET']);
 
     // Spreadsheet import (only functional with nubit_admin.imports.enabled).
     $routes->add('nubit_admin_import_start', '/api/imports/{resource}')
