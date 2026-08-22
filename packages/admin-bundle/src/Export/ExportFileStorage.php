@@ -12,10 +12,10 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Where queued exports are written.
  *
- * Local paths and a file handle, not the Flysystem abstraction the rest of the
- * bundle uses. The whole point of the queued path is that rows go to disk as
- * they are read; buffering a file in memory to hand it to a filesystem
- * interface would reintroduce the limit this exists to remove.
+ * Local paths, not the Flysystem abstraction the rest of the bundle uses. The
+ * whole point of the queued path is that rows go to disk as they are read;
+ * buffering a file in memory to hand it to a filesystem interface would
+ * reintroduce the limit this exists to remove.
  */
 final readonly class ExportFileStorage
 {
@@ -24,23 +24,11 @@ final readonly class ExportFileStorage
         private Filesystem $filesystem = new Filesystem(),
     ) {}
 
-    public function pathFor(ExportJob $job): string
+    public function pathFor(ExportJob $job, string $extension = 'csv'): string
     {
         $this->ensureDirectory();
 
-        return sprintf('%s/%s.csv', rtrim($this->directory, '/'), (string) $job->getId());
-    }
-
-    /** @return resource */
-    public function open(string $path)
-    {
-        $handle = fopen($path, 'w');
-
-        if (false === $handle) {
-            throw new ServiceException(sprintf('Could not open "%s" for writing.', $path));
-        }
-
-        return $handle;
+        return sprintf('%s/%s.%s', rtrim($this->directory, '/'), (string) $job->getId(), $extension);
     }
 
     public function size(string $path): int

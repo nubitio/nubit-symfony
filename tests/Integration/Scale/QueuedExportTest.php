@@ -50,6 +50,9 @@ final class QueuedExportTest extends IntegrationTestCase
                         'queued' => true,
                         'directory' => $this->workspace,
                         'inline_limit' => 3,
+                        // CSV here so the assertions can read the file as text.
+                        // The XLSX writer has its own suite.
+                        'queued_format' => 'csv',
                     ],
                 ],
             ],

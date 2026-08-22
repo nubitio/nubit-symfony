@@ -606,6 +606,13 @@ final class NubitAdminBundle extends AbstractBundle
             ->info('Rows above which an export is queued. Overridden per resource by #[GridScale].')
             ->defaultValue(5000)
             ->end()
+            ->enumNode('queued_format')
+            ->info(
+                'Format for queued exports. "xlsx" streams through openspout/openspout — PhpSpreadsheet cannot, it builds the whole workbook in memory first. "csv" needs no dependency.',
+            )
+            ->values(['xlsx', 'csv'])
+            ->defaultValue('xlsx')
+            ->end()
             ->end()
             ->end()
             ->booleanNode('runtime_config')
@@ -785,7 +792,7 @@ final class NubitAdminBundle extends AbstractBundle
             ImportModule::load($importConfig, $services, $container);
         }
 
-        /** @var array{enabled: bool, queued: bool, directory: string, inline_limit: int} $exportConfig */
+        /** @var array{enabled: bool, queued: bool, directory: string, inline_limit: int, queued_format: string} $exportConfig */
         $exportConfig = $config['export'];
         if ($exportConfig['enabled']) {
             ExportModule::load($exportConfig, $services);

@@ -13,7 +13,11 @@ use Nubit\AdminBundle\Export\ExportRequestService;
 use Nubit\AdminBundle\Export\ExportRowMapper;
 use Nubit\AdminBundle\Export\Message\RunExportHandler;
 use Nubit\AdminBundle\Export\QueuedExportRunner;
+use Nubit\AdminBundle\Export\Writer\CsvExportWriter;
+use Nubit\AdminBundle\Export\Writer\QueuedExportWriterInterface;
+use Nubit\AdminBundle\Export\Writer\XlsxExportWriter;
 use Nubit\AdminBundle\Export\XlsxEncoder;
+use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 
@@ -24,7 +28,13 @@ final class ExportModule
     private function __construct() {}
 
     /**
-     * @param array{enabled: bool, queued: bool, directory: string, inline_limit: int} $config
+     * @param array{
+     *     enabled: bool,
+     *     queued: bool,
+     *     directory: string,
+     *     inline_limit: int,
+     *     queued_format: string,
+     * } $config
      */
     public static function load(array $config, DefaultsConfigurator $services): void
     {
@@ -52,9 +62,27 @@ final class ExportModule
             return;
         }
 
-        // The queued path writes CSV rather than XLSX, and says so. PhpSpreadsheet
-        // builds a workbook in memory before writing a byte, so a half-million-row
-        // XLSX is the same out-of-memory failure the queue exists to avoid.
+        // XLSX by default, streamed. PhpSpreadsheet — which the inline export
+        // uses for its styling, totals and validation — builds the entire
+        // workbook in memory first, so it cannot be the queued writer: a
+        // half-million-row sheet is the out-of-memory failure queueing exists to
+        // avoid. OpenSpout appends each row to the sheet as it arrives.
+        if ('xlsx' === $config['queued_format']) {
+            if (!class_exists(XlsxWriter::class)) {
+                throw new LogicException(
+                    'nubit_admin.export.queued_format: xlsx needs openspout/openspout, the only PHP writer that '
+                    . 'streams XLSX. Run: composer require openspout/openspout — or set queued_format: csv, '
+                    . 'which needs nothing.',
+                );
+            }
+
+            $services->set(XlsxExportWriter::class);
+            $services->alias(QueuedExportWriterInterface::class, XlsxExportWriter::class);
+        } else {
+            $services->set(CsvExportWriter::class);
+            $services->alias(QueuedExportWriterInterface::class, CsvExportWriter::class);
+        }
+
         $services->set(ExportFileStorage::class)->arg('$directory', $config['directory']);
         $services->set(ExportRowMapper::class);
         $services->set(QueuedExportRunner::class);

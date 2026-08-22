@@ -217,6 +217,7 @@ nubit_admin:
         queued: true
         directory: '%kernel.project_dir%/var/exports'
         inline_limit: 5000
+        queued_format: xlsx           # or csv, which needs no dependency
 ```
 
 Above the limit — per resource via `#[GridScale]` — an export becomes a job:
@@ -231,11 +232,25 @@ Above the limit — per resource via `#[GridScale]` — an export becomes a job:
 Route `Nubit\AdminBundle\Export\Message\RunExport` to a transport. With the
 notification module on, the requester is told when it finishes.
 
-**Queued exports are CSV, not XLSX.** PhpSpreadsheet builds the whole workbook in
-memory before writing a byte, so a half-million-row XLSX is exactly the failure
-queueing exists to avoid. XLSX stays on the inline path, where the row count is
-bounded. Rows are streamed with `toIterable()` and the unit of work is cleared
-periodically, so memory stays flat regardless of size.
+**Queued exports are XLSX, streamed.** They go through
+[openspout/openspout](https://github.com/openspout/openspout), which appends each
+row to the sheet as it arrives — measured at 4 MB of peak growth for 50,000 rows.
+PhpSpreadsheet, which the inline export uses for its styling, totals and
+validation, builds the entire workbook in memory before writing a byte, so it
+cannot be the queued writer at any size that matters.
+
+```bash
+composer require openspout/openspout
+```
+
+The trade is features: no formulas, no data validation, no totals row. Those stay
+on the inline export, which is a presentation artifact with a bounded row count;
+this one is a data dump, and one that opens is worth more than a beautiful one
+that never finishes. Set `queued_format: csv` for a writer that needs no
+dependency at all.
+
+Rows are streamed with `toIterable()` and detached as they go, so memory stays
+flat regardless of size.
 
 The requester's **row scope is reapplied in the worker**. A worker has no
 session, and an export that dropped scope would hand a warehouse supervisor the

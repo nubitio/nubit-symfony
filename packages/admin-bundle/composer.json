@@ -77,6 +77,7 @@
         "phpoffice/phpspreadsheet": "Required by the \"xlsx\" export format when nubit_admin.export.enabled is true (also needs ext-zip)",
         "open-telemetry/api": "Tenant-aware tracing when nubit_admin.observability.enabled is true",
         "symfony/mercure-bundle": "Live grid updates; the bundle adds a fail-safe hub decorator and the subscriber cookie",
+        "openspout/openspout": "Required when nubit_admin.export.queued_format is xlsx — the only PHP writer that streams XLSX rather than building the workbook in memory",
         "symfony/expression-language": "Required when nubit_admin.authorization.enforce_by_default is true (derived security: expressions)",
         "symfony/mailer": "Email notification channel when nubit_admin.notification.enabled is true",
         "symfony/http-client": "OIDC discovery/JWKS fetching and token exchange when nubit_admin.oidc.enabled is true",

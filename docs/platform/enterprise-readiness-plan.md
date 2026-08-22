@@ -532,18 +532,25 @@ worker**: un worker no tiene sesión, y un export que lo perdiera entregaría la
 empresa entera a un usuario acotado, de forma asíncrona y sin nadie mirando. Si
 la cuenta solicitante desapareció, el job **falla** en vez de ensancharse.
 
-**Desviación deliberada: el export encolado produce CSV, no XLSX.**
-PhpSpreadsheet construye el libro entero en memoria antes de escribir un byte,
-así que un XLSX de medio millón de filas es exactamente el fallo que encolar
-pretende evitar. XLSX se mantiene en la ruta inline, donde el número de filas
-está acotado. Fingir que PhpSpreadsheet hace streaming habría sido la opción
-cómoda y falsa.
+**El export encolado produce XLSX en streaming**, vía `openspout/openspout`, que
+añade cada fila a la hoja según llega. PhpSpreadsheet —que la ruta inline usa por
+su estilado, totales y validación— construye el libro entero en memoria antes de
+escribir un byte, así que no puede ser el escritor encolado a ningún tamaño que
+importe. El precio son funcionalidades: sin fórmulas, sin validación, sin fila de
+totales. Eso se queda en la ruta inline, que es un artefacto de presentación con
+un número de filas acotado; la encolada es un volcado de datos, y uno que abre
+vale más que uno bonito que nunca termina. `queued_format: csv` sigue disponible
+para quien no quiera la dependencia.
 
-**Criterio de aceptación cumplido a medias.** La corrección está verificada
-—paginación sin repetir ni saltar filas, memoria plana por diseño— pero **no hay
-benchmark reproducible sobre 2M filas ni export de 500k**. Sembrar y medir ese
-volumen no cabe en la suite de integración, que corre en cada push. Es trabajo
-pendiente de verdad, no un detalle.
+**Memoria verificada, no afirmada.** `XlsxExportTest` exporta 50.000 filas y
+comprueba el crecimiento del pico: **4 MB medidos**. El umbral del test se deja
+muy por encima a propósito —comprueba un orden de magnitud, no mide un
+asignador—, pero las mismas filas por PhpSpreadsheet serían cientos de megas y
+fallarían por mucho.
+
+**Lo que sigue faltando del criterio:** el benchmark de lectura sobre 2M filas.
+La corrección de la paginación está verificada, pero no su comportamiento a ese
+volumen, y sembrarlo no cabe en una suite que corre en cada push.
 
 ---
 
@@ -567,4 +574,4 @@ Del hallazgo original queda diferido, sin generador de código:
 | 3. Documentos e importación | entregado; relaciones en la importación quedan fuera |
 | 4. Permisos granulares | entregado; pantalla de usuarios queda en la aplicación |
 | 5. Ciclo de vida de identidad | entregado; WebAuthn y SCIM siguen fuera |
-| 6. Escala de lectura y exportación | entregado; falta el benchmark de volumen |
+| 6. Escala de lectura y exportación | entregado; falta el benchmark de lectura sobre 2M filas |

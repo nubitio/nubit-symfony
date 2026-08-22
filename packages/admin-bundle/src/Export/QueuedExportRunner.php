@@ -8,6 +8,7 @@ use ApiPlatform\Doctrine\Orm\Util\QueryNameGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Authorization\RowScopeApplier;
 use Nubit\AdminBundle\Export\Entity\ExportJob;
+use Nubit\AdminBundle\Export\Writer\QueuedExportWriterInterface;
 use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -23,9 +24,9 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
  *    arrive, and the unit of work is cleared periodically — without that, the
  *    identity map holds every row and a large export is an out-of-memory error
  *    at the ninety percent mark;
- *  - the output is CSV. PhpSpreadsheet builds an XLSX in memory before writing
- *    a byte, so an XLSX of half a million rows is the same failure by another
- *    route. XLSX stays for the inline path, where the row count is bounded.
+ *  - the file is written through a streaming writer. PhpSpreadsheet builds the
+ *    whole workbook in memory before emitting a byte, which is the same failure
+ *    by another route; OpenSpout appends each row to the sheet as it arrives.
  *
  * The user who asked is resolved and their row scope re-applied. A worker has
  * no session, and an export that quietly dropped scope would hand a warehouse
@@ -33,9 +34,6 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
  */
 final readonly class QueuedExportRunner
 {
-    /** Cleared this often, so memory stays flat regardless of the row count. */
-    private const int CLEAR_EVERY = 500;
-
     /** @param UserProviderInterface<\Symfony\Component\Security\Core\User\UserInterface> $userProvider */
     public function __construct(
         private EntityManagerInterface $entityManager,
@@ -43,6 +41,7 @@ final readonly class QueuedExportRunner
         private DataGridFilter $gridFilter,
         private RowScopeApplier $rowScope,
         private ExportRowMapper $rowMapper,
+        private QueuedExportWriterInterface $writer,
         private ?UserProviderInterface $userProvider = null,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
@@ -87,30 +86,24 @@ final readonly class QueuedExportRunner
         $this->rowScope->apply($queryBuilder, $resourceClass, $this->requestingUser($job));
 
         $columns = $this->rowMapper->columnsFor($resourceClass);
-        $path = $this->storage->pathFor($job);
+        $path = $this->storage->pathFor($job, $this->writer->extension());
+        $properties = array_keys($columns);
 
-        $handle = $this->storage->open($path);
+        $this->writer->open($path, $columns);
         $rows = 0;
 
         try {
-            // Excel refuses to read UTF-8 without this, and an export nobody can
-            // open is not an export.
-            fwrite($handle, "\xEF\xBB\xBF");
-            fputcsv($handle, array_values($columns), escape: '');
-
             /** @var object $entity */
             foreach ($queryBuilder->getQuery()->toIterable() as $entity) {
-                fputcsv($handle, $this->rowMapper->row($entity, array_keys($columns)), escape: '');
+                $this->writer->writeRow($this->rowMapper->row($entity, $properties));
                 ++$rows;
 
-                if (0 === ($rows % self::CLEAR_EVERY)) {
-                    // The job itself must survive the clear: it is flushed after
-                    // this method returns.
-                    $this->entityManager->detach($entity);
-                }
+                // Detached as it goes: otherwise the identity map holds every
+                // row and a large export dies at the ninety percent mark.
+                $this->entityManager->detach($entity);
             }
         } finally {
-            fclose($handle);
+            $this->writer->close();
         }
 
         unset($metadata);

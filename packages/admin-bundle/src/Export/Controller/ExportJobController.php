@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Export\Entity\ExportJob;
 use Nubit\AdminBundle\Export\ExportFileStorage;
 use Nubit\AdminBundle\Export\ExportRequestService;
+use Nubit\AdminBundle\Export\Writer\QueuedExportWriterInterface;
 use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,6 +37,7 @@ final readonly class ExportJobController
         private ExportRequestService $exports,
         private ExportFileStorage $storage,
         private ResourceSegmentIndex $segments,
+        private QueuedExportWriterInterface $writer,
         private Security $security,
     ) {}
 
