@@ -29,8 +29,13 @@ use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\MeController;
 use Nubit\AdminBundle\Controller\RefreshController;
 use Nubit\AdminBundle\DependencyInjection\AnalyticsModule;
+use Nubit\AdminBundle\DependencyInjection\AuthorizationModule;
 use Nubit\AdminBundle\DependencyInjection\BackupModule;
+use Nubit\AdminBundle\DependencyInjection\Compiler\RemoveEmailChannelWithoutMailerPass;
+use Nubit\AdminBundle\DependencyInjection\DocumentModule;
 use Nubit\AdminBundle\DependencyInjection\ExportModule;
+use Nubit\AdminBundle\DependencyInjection\IdentityModule;
+use Nubit\AdminBundle\DependencyInjection\ImportModule;
 use Nubit\AdminBundle\DependencyInjection\MediaModule;
 use Nubit\AdminBundle\DependencyInjection\NotificationModule;
 use Nubit\AdminBundle\DependencyInjection\ObservabilityModule;
@@ -55,16 +60,21 @@ use Nubit\AdminBundle\Tenant\UnlimitedQuotaEnforcer;
 use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
 use Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface;
 use Nubit\ApiPlatform\Doctrine\Filter\SoftDeleteFilter;
+use Nubit\ApiPlatform\Doctrine\Money\MoneyColumns;
+use Nubit\ApiPlatform\Doctrine\Type\UtcDateTimeImmutableType;
 use Nubit\ApiPlatform\Http\ApiResponseListener;
 use Nubit\ApiPlatform\Http\ExceptionListener;
 use Nubit\ApiPlatform\Http\GridSummaryCalculator;
+use Nubit\ApiPlatform\Metadata\MoneyPropertyMetadataFactory;
 use Nubit\ApiPlatform\OpenApi\TranslatedDocumentationNormalizer;
+use Nubit\ApiPlatform\Serializer\MoneyNormalizer;
 use Nubit\Platform\Feature\Contract\FeatureCheckerInterface;
 use Nubit\Platform\Notification\Contract\NotificationChannelInterface;
 use Nubit\Platform\Quota\Contract\QuotaEnforcerInterface;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Nubit\Platform\Tenant\Contract\TenantConnectionSwitcherInterface;
 use Nubit\Platform\Tenant\Contract\TenantRegistryInterface;
+use Nubit\Platform\Time\TimeZoneResolver;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -114,6 +124,24 @@ final class NubitAdminBundle extends AbstractBundle
             ->defaultValue(1209600)
             ->end()
             ->booleanNode('cookie_secure')
+            ->defaultTrue()
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('time')
+            ->addDefaultsIfNotSet()
+            ->info('Storage is UTC; this configures how instants are presented.')
+            ->children()
+            ->scalarNode('default_timezone')
+            ->info(
+                'IANA identifier used when neither the user nor the tenant states one. Reported by GET /api/me so the frontend formats the same way.',
+            )
+            ->defaultValue('UTC')
+            ->end()
+            ->booleanNode('enforce_utc')
+            ->info(
+                'Override Doctrine datetime_immutable so timestamps are written and read as UTC regardless of the server locale. Turn off only if the application already handles this itself.',
+            )
             ->defaultTrue()
             ->end()
             ->end()
@@ -328,6 +356,156 @@ final class NubitAdminBundle extends AbstractBundle
             ->end()
             ->end()
             ->end()
+            ->arrayNode('identity')
+            ->addDefaultsIfNotSet()
+            ->info('Second factor, password recovery, invitations, API keys and active sessions.')
+            ->children()
+            ->booleanNode('enabled')
+            ->defaultFalse()
+            ->end()
+            ->scalarNode('issuer')
+            ->info('Name shown in the authenticator app.')
+            ->defaultValue('Nubit')
+            ->end()
+            ->scalarNode('user_class')
+            ->info(
+                'FQCN of the application User entity. Required for password reset and invitations, which have to write to it. Alias IdentityUserGatewayInterface instead for anything the default gateway cannot express.',
+            )
+            ->defaultNull()
+            ->end()
+            ->scalarNode('user_identifier_property')
+            ->defaultValue('email')
+            ->end()
+            ->arrayNode('totp')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('required_for_all')
+            ->defaultFalse()
+            ->end()
+            ->arrayNode('required_for_roles')
+            ->info('Roles that must enrol a second factor, e.g. ROLE_ADMIN.')
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue([])
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('password_reset')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->integerNode('lifetime_minutes')
+            ->defaultValue(30)
+            ->end()
+            ->integerNode('max_attempts')
+            ->info('Requests per window, counted per identity and per IP. 0 disables the limit.')
+            ->defaultValue(5)
+            ->end()
+            ->integerNode('window_seconds')
+            ->defaultValue(900)
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('invitations')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->integerNode('lifetime_days')
+            ->defaultValue(7)
+            ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('authorization')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Granular resource.action permissions: the Role entity, a voter, row scoping and permissions in GET /api/me.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->booleanNode('enforce_by_default')
+            ->info(
+                'Give every operation without an explicit security: expression the permission it implies. Turning this off leaves the catalogue advisory — the operations stay reachable by any authenticated user.',
+            )
+            ->defaultTrue()
+            ->end()
+            ->arrayNode('super_roles')
+            ->info(
+                'Roles holding every permission without listing them, so nobody can lock themselves out of the authorization screen.',
+            )
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue(['ROLE_SUPER_ADMIN'])
+            ->end()
+            ->arrayNode('exempt_resources')
+            ->info('Resource FQCNs that stay reachable without a derived permission.')
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue([])
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('documents')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Issue PDF documents for #[Printable] resources: POST /api/documents/{resource}/{id}, the nubit_issued_document table and a download route. Needs WeasyPrint on PATH.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->booleanNode('async')
+            ->info(
+                'Render through Messenger instead of inline. The issue call returns a pending document and the download route answers 202 until the worker finishes. Route RenderDocument to a transport.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->scalarNode('directory')
+            ->info('Sub-directory inside the storage where issued documents land.')
+            ->defaultValue('documents')
+            ->end()
+            ->scalarNode('weasyprint_binary')
+            ->info('Path to the WeasyPrint executable.')
+            ->defaultValue('weasyprint')
+            ->end()
+            ->arrayNode('storage')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->scalarNode('filesystem')
+            ->info(
+                'Service id of a League\\Flysystem FilesystemOperator. Overrides local_directory. Issued documents are records — point this at storage with a retention policy.',
+            )
+            ->defaultNull()
+            ->end()
+            ->scalarNode('local_directory')
+            ->defaultValue('%kernel.project_dir%/var/documents')
+            ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('imports')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')
+            ->info(
+                'Expose spreadsheet import for #[Importable] resources: POST /api/imports/{resource} (upload + dry run), PATCH to correct the mapping, POST /confirm to apply. Adds the nubit_import_session table.',
+            )
+            ->defaultFalse()
+            ->end()
+            ->scalarNode('directory')
+            ->info(
+                'Where uploaded files are kept while a session is open. They are the evidence of what was imported — set a retention policy.',
+            )
+            ->defaultValue('%kernel.project_dir%/var/imports')
+            ->end()
+            ->scalarNode('default_currency')
+            ->info('Currency assumed for money columns whose cells carry no currency code.')
+            ->defaultValue('EUR')
+            ->end()
+            ->end()
+            ->end()
             ->arrayNode('notification')
             ->addDefaultsIfNotSet()
             ->children()
@@ -434,6 +612,19 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(ApiResponseListener::class);
         $services->set(ExceptionListener::class);
 
+        /** @var array{default_timezone: string, enforce_utc: bool} $timeConfig */
+        $timeConfig = $config['time'];
+        $services->set(TimeZoneResolver::class)->arg('$defaultTimeZone', $timeConfig['default_timezone']);
+
+        // Money: exact amounts on the wire, and a documented format so the
+        // frontend renders one currency field instead of three raw columns.
+        $services->set(MoneyNormalizer::class)->tag('serializer.normalizer', ['priority' => 100]);
+        $services->set(MoneyPropertyMetadataFactory::class)->decorate(
+            'api_platform.metadata.property.metadata_factory',
+            null,
+            30,
+        )->arg('$decorated', service('.inner'));
+
         if ($config['api']['translated_docs']) {
             $services->set(TranslatedDocumentationNormalizer::class)->decorate(
                 'api_platform.hydra.normalizer.documentation',
@@ -469,11 +660,15 @@ final class NubitAdminBundle extends AbstractBundle
             $authConfig['refresh_token_ttl'],
         );
 
-        $services->set(JWTAuthenticator::class);
+        // The TOTP badge is only attached when the identity module is on:
+        // a badge nothing resolves fails the whole passport.
+        /** @var array{enabled: bool} $identityEnabled Read here because the authenticator is registered above the module. */
+        $identityEnabled = $config['identity'];
+        $services->set(JWTAuthenticator::class)->arg('$secondFactorEnabled', $identityEnabled['enabled']);
 
         $services->set(PurgeRefreshTokensCommand::class);
         $services->set(DiscoverCommand::class);
-        $services->set(SecurityAuditCommand::class);
+        $services->set(SecurityAuditCommand::class)->tag('console.command');
 
         if ($config['soft_delete']) {
             $services->set(SoftDeleteFilterListener::class);
@@ -509,6 +704,30 @@ final class NubitAdminBundle extends AbstractBundle
 
         if ($config['media']['enabled']) {
             MediaModule::load($config['media'], $configurator, $services);
+        }
+
+        /** @var array{enabled: bool, issuer: string, totp: array{required_for_all: bool, required_for_roles: list<string>}, password_reset: array{lifetime_minutes: int, max_attempts: int, window_seconds: int}, invitations: array{lifetime_days: int}, user_class: ?string, user_identifier_property: string} $identityConfig */
+        $identityConfig = $config['identity'];
+        if ($identityConfig['enabled']) {
+            IdentityModule::load($identityConfig, $services);
+        }
+
+        /** @var array{enabled: bool, enforce_by_default: bool, super_roles: list<string>, exempt_resources: list<string>} $authorizationConfig */
+        $authorizationConfig = $config['authorization'];
+        if ($authorizationConfig['enabled']) {
+            AuthorizationModule::load($authorizationConfig, $services);
+        }
+
+        /** @var array{enabled: bool, async: bool, directory: string, weasyprint_binary: string, storage: array{filesystem: ?string, local_directory: string}} $documentConfig */
+        $documentConfig = $config['documents'];
+        if ($documentConfig['enabled']) {
+            DocumentModule::load($documentConfig, $configurator, $services, $container);
+        }
+
+        /** @var array{enabled: bool, directory: string, default_currency: string} $importConfig */
+        $importConfig = $config['imports'];
+        if ($importConfig['enabled']) {
+            ImportModule::load($importConfig, $services, $container);
         }
 
         /** @var array{enabled: bool} $exportConfig */
@@ -599,6 +818,13 @@ final class NubitAdminBundle extends AbstractBundle
         }
     }
 
+    public function build(ContainerBuilder $container): void
+    {
+        parent::build($container);
+
+        $container->addCompilerPass(new RemoveEmailChannelWithoutMailerPass());
+    }
+
     public function prependExtension(ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
         // The Nubit HTTP client (@nubitio/core) sends plain application/json
@@ -636,6 +862,82 @@ final class NubitAdminBundle extends AbstractBundle
         // ApiResource. Conditional on the raw config because an unconditional
         // mapping would surface the nubit_media table and /api/media routes
         // in apps that never enabled the feature.
+        // Issued documents (opt-in): only the Doctrine mapping. The entity is
+        // deliberately not an ApiResource — an archive of issued records has no
+        // business exposing create/update/delete operations.
+        if ($this->isFeatureEnabled($container, 'documents') && $container->hasExtension('doctrine')) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminDocument' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Document/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Document\\Entity',
+                            'alias' => 'NubitAdminDocument',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+
+        // Identity lifecycle (opt-in): TOTP credentials, single-use tokens and
+        // API keys. Mapping only — none of these is an ApiResource, because a
+        // credential store has no business being CRUD-able.
+        if ($this->isFeatureEnabled($container, 'identity') && $container->hasExtension('doctrine')) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminIdentity' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Identity/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Identity\\Entity',
+                            'alias' => 'NubitAdminIdentity',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+
+        // Roles (opt-in). Mapped *and* exposed as an ApiResource: the role
+        // administration screen is the CRUD engine reading the same contract as
+        // every other resource, rather than a bespoke page.
+        if ($this->isFeatureEnabled($container, 'authorization') && $container->hasExtension('doctrine')) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminAuthorization' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Authorization/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Authorization\\Entity',
+                            'alias' => 'NubitAdminAuthorization',
+                        ],
+                    ],
+                ],
+            ]);
+
+            $this->prependApiPlatformMappingPath($container, __DIR__ . '/Authorization/Entity');
+        }
+
+        // Import sessions (opt-in): mapping only, same reasoning as documents.
+        if ($this->isFeatureEnabled($container, 'imports') && $container->hasExtension('doctrine')) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'NubitAdminImport' => [
+                            'is_bundle' => false,
+                            'type' => 'attribute',
+                            'dir' => __DIR__ . '/Import/Entity',
+                            'prefix' => 'Nubit\\AdminBundle\\Import\\Entity',
+                            'alias' => 'NubitAdminImport',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+
         if ($this->isFeatureEnabled($container, 'media')) {
             $this->prependMediaMappings($container);
         }
@@ -713,6 +1015,33 @@ final class NubitAdminBundle extends AbstractBundle
             ],
         ]);
 
+        // One meaning per timestamp column. Doctrine's stock type both writes
+        // and reads in the server's local zone, so two deployments of the same
+        // application disagree about what a stored instant was.
+        if ($this->readBoolean($container, ['time', 'enforce_utc'], default: true)) {
+            $container->prependExtensionConfig('doctrine', [
+                'dbal' => ['types' => ['datetime_immutable' => UtcDateTimeImmutableType::class]],
+            ]);
+        }
+
+        // Map the money embeddable. It adds no table of its own — an embeddable
+        // is only columns on the entity that uses it — but Doctrine still has to
+        // know the class, and an application should not have to discover that by
+        // hitting a mapping exception the first time it stores an amount.
+        $container->prependExtensionConfig('doctrine', [
+            'orm' => [
+                'mappings' => [
+                    'NubitMoney' => [
+                        'is_bundle' => false,
+                        'type' => 'attribute',
+                        'dir' => dirname((string) (new \ReflectionClass(MoneyColumns::class))->getFileName()),
+                        'prefix' => 'Nubit\\ApiPlatform\\Doctrine\\Money',
+                        'alias' => 'NubitMoney',
+                    ],
+                ],
+            ],
+        ]);
+
         // Map the bundle's RefreshToken entity.
         $container->prependExtensionConfig('doctrine', [
             'orm' => [
@@ -736,6 +1065,36 @@ final class NubitAdminBundle extends AbstractBundle
      * same way as top-level ones (`export.enabled`); the last config fragment
      * that mentions the toggle wins, matching Symfony's own merge order.
      */
+    /**
+     * Reads a plain boolean leaf out of the raw (pre-processing) bundle config.
+     *
+     * {@see isFeatureEnabled} answers a different question — whether a module's
+     * `enabled` sub-key is on — and cannot express a leaf that defaults to true.
+     *
+     * @param list<string> $path
+     */
+    private function readBoolean(ContainerBuilder $builder, array $path, bool $default): bool
+    {
+        $value = $default;
+
+        foreach ($builder->getExtensionConfig('nubit_admin') as $config) {
+            $node = $config;
+            foreach ($path as $segment) {
+                if (!is_array($node) || !array_key_exists($segment, $node)) {
+                    continue 2;
+                }
+                /** @var array<string, mixed>|bool $node */
+                $node = $node[$segment];
+            }
+
+            if (is_bool($node)) {
+                $value = $node;
+            }
+        }
+
+        return $value;
+    }
+
     private function isFeatureEnabled(ContainerBuilder $builder, string ...$path): bool
     {
         $enabled = false;

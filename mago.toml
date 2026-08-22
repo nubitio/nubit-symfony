@@ -16,6 +16,7 @@ paths = [
     "packages/workflow-bundle/tests",
     "packages/sequence-bundle/src",
     "packages/sequence-bundle/tests",
+    "tests",
 ]
 includes = ["vendor"]
 excludes = ["var/**"]

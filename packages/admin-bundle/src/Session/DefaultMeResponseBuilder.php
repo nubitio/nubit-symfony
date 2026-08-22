@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\Session;
 
+use Nubit\AdminBundle\Authorization\PermissionResolver;
 use Nubit\Platform\Feature\Contract\FeatureCheckerInterface;
 use Nubit\Platform\Tenant\Context\TenantContext;
+use Nubit\Platform\Time\TimeZoneResolver;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -19,6 +21,8 @@ final readonly class DefaultMeResponseBuilder implements MeResponseBuilderInterf
         private AppProfile $appProfile,
         private ?TenantContext $tenantContext = null,
         private ?FeatureCheckerInterface $featureChecker = null,
+        private ?TimeZoneResolver $timeZoneResolver = null,
+        private ?PermissionResolver $permissionResolver = null,
     ) {}
 
     public function build(UserInterface $user): array
@@ -28,6 +32,21 @@ final readonly class DefaultMeResponseBuilder implements MeResponseBuilderInterf
             'roles' => $user->getRoles(),
             'appProfile' => $this->appProfile->value,
         ];
+
+        // Storage is UTC, so the frontend cannot format a timestamp until it
+        // knows which zone to render it in. Sending it with the session is what
+        // keeps a date shown in the grid, in an export and on a printed
+        // document from disagreeing.
+        if ($this->timeZoneResolver !== null) {
+            $response['timeZone'] = $this->timeZoneResolver->resolveIdentifier($user);
+        }
+
+        // The frontend renders actions from this. It is a convenience, never
+        // the gate: the same permissions are enforced in the voter, so a client
+        // that ignores the list gets a 403 rather than a result.
+        if ($this->permissionResolver !== null) {
+            $response = [...$response, ...$this->permissionResolver->sessionBlock($user)];
+        }
 
         if ($this->appProfile === AppProfile::Internal) {
             return $response;

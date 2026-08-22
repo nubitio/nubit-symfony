@@ -93,21 +93,24 @@ class DataGridFilter extends AbstractFilter
         if ('searchValue' === $property && isset($context['filters']['searchExpr'])) {
             $searchExpr = $context['filters']['searchExpr'];
 
-            if (is_array($searchExpr)) {
-                $orX = $queryBuilder->expr()->orX();
-                foreach ($searchExpr as $field) {
-                    $orX->add($this->searchComparison($queryBuilder, $resourceClass, (string) $field, $value));
-                }
+            // searchExpr names the columns to scan and arrives from the client
+            // like every other grid parameter, so unknown entries are dropped
+            // rather than handed to DQL.
+            $fields = array_values(array_filter(
+                array_map(strval(...), is_array($searchExpr) ? $searchExpr : [$searchExpr]),
+                fn(string $field): bool => $this->isQueryableField($resourceClass, $field),
+            ));
 
-                $queryBuilder->andWhere($orX);
-            } else {
-                $queryBuilder->andWhere($this->searchComparison(
-                    $queryBuilder,
-                    $resourceClass,
-                    (string) $searchExpr,
-                    $value,
-                ));
+            if ([] === $fields) {
+                return;
             }
+
+            $orX = $queryBuilder->expr()->orX();
+            foreach ($fields as $field) {
+                $orX->add($this->searchComparison($queryBuilder, $resourceClass, $field, $value));
+            }
+
+            $queryBuilder->andWhere($orX);
         }
     }
 
@@ -187,6 +190,34 @@ class DataGridFilter extends AbstractFilter
         }
     }
 
+    /**
+     * True when the resource can actually be queried on this field.
+     *
+     * Field names arrive from the query string, so they are attacker-controlled.
+     * Passing an unknown one through to DQL raises a Doctrine semantical error
+     * and the request ends as a 500 — the same outcome the malformed-parameter
+     * handling above already refuses to produce. Unknown fields are dropped
+     * instead, consistent with how API Platform's own filters treat properties
+     * a resource does not expose.
+     *
+     * When metadata cannot be read at all (a resource that is not an ORM
+     * entity), the field is allowed through so non-Doctrine resources keep
+     * working as before.
+     */
+    private function isQueryableField(string $resourceClass, string $field): bool
+    {
+        if (null !== $this->findVirtualField($resourceClass, $field)) {
+            return true;
+        }
+
+        $metadata = $this->fieldMetadata($resourceClass);
+        if (null === $metadata) {
+            return true;
+        }
+
+        return $metadata->hasField($field) || $metadata->hasAssociation($field);
+    }
+
     private function findVirtualField(string $resourceClass, string $field): ?GridVirtualFieldInterface
     {
         foreach ($this->virtualFields as $virtualField) {
@@ -251,6 +282,15 @@ class DataGridFilter extends AbstractFilter
 
             $field = $sortParam['selector'] ?? null;
             if (!is_string($field) || '' === $field) {
+                continue;
+            }
+
+            if (!$this->isQueryableField($resourceClass, $field)) {
+                $this->getLogger()->notice('Ignoring grid sort on an unknown field.', [
+                    'resource' => $resourceClass,
+                    'field' => $field,
+                ]);
+
                 continue;
             }
 
@@ -344,6 +384,15 @@ class DataGridFilter extends AbstractFilter
             $virtualField = $this->findVirtualField($resourceClass, $field);
             if (null !== $virtualField) {
                 $virtualField->applyFilter($queryBuilder, $resourceClass, $field, $op, $filterParam[2] ?? null);
+                continue;
+            }
+
+            if (!$this->isQueryableField($resourceClass, $field)) {
+                $this->getLogger()->notice('Ignoring grid filter on an unknown field.', [
+                    'resource' => $resourceClass,
+                    'field' => $field,
+                ]);
+
                 continue;
             }
 

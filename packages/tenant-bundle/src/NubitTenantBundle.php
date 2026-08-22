@@ -316,18 +316,26 @@ final class NubitTenantBundle extends AbstractBundle
             $services->alias(TenantDatabaseUrlProviderInterface::class, RegistryTenantDatabaseUrlProvider::class);
             $services->alias(TenantIsolationTargetProviderInterface::class, RegistryTenantDatabaseUrlProvider::class);
 
+            // DoctrineBundle registers `doctrine` and aliases ManagerRegistry,
+            // but never ConnectionRegistry, so this argument has to be bound by
+            // hand or the container fails to compile.
             $services->set(DatabaseTenantConnectionSwitcher::class)->arg(
-                '$tenantConnectionName',
-                $config['tenant_connection'],
-            );
+                '$connectionRegistry',
+                service('doctrine'),
+            )->arg('$tenantConnectionName', $config['tenant_connection']);
             $services->alias(TenantDatabaseConnectionSwitcherInterface::class, DatabaseTenantConnectionSwitcher::class);
         }
 
         if (in_array($config['isolation'], ['schema', 'hybrid'], strict: true)) {
+            // See the note on DatabaseTenantConnectionSwitcher: ConnectionRegistry
+            // is not an autowirable service.
             $services->set(PostgresSchemaTenantConnectionSwitcher::class)->arg(
-                '$tenantConnectionName',
-                $config['tenant_connection'],
-            )->arg('$schemaPrefix', $config['schema_prefix'])->arg('$baseSchemas', $config['base_schemas']);
+                '$connectionRegistry',
+                service('doctrine'),
+            )->arg('$tenantConnectionName', $config['tenant_connection'])->arg(
+                '$schemaPrefix',
+                $config['schema_prefix'],
+            )->arg('$baseSchemas', $config['base_schemas']);
             $services->alias(
                 TenantSchemaConnectionSwitcherInterface::class,
                 PostgresSchemaTenantConnectionSwitcher::class,
@@ -341,13 +349,18 @@ final class NubitTenantBundle extends AbstractBundle
             )->arg('$tenantRegistry', service(TenantDescriptorRegistryInterface::class))->arg(
                 '$schemaSwitcher',
                 service(TenantSchemaConnectionSwitcherInterface::class),
-            );
+                // $columnSwitcher is typed against TenantConnectionSwitcherInterface,
+                // which is aliased to this very service below. Leaving it to
+                // autowiring makes the router depend on itself and the container
+                // refuses to compile, so it is always bound explicitly. Schema
+                // isolation never routes to the column switcher; hybrid does.
+            )->arg('$columnSwitcher', service(ColumnTenantConnectionSwitcher::class));
 
             if ('hybrid' === $config['isolation']) {
                 $tenantRouter->arg('$targetProvider', service(TenantIsolationTargetProviderInterface::class))->arg(
                     '$databaseSwitcher',
                     service(TenantDatabaseConnectionSwitcherInterface::class),
-                )->arg('$columnSwitcher', service(ColumnTenantConnectionSwitcher::class));
+                );
             }
 
             $services->alias(TenantConnectionSwitcherInterface::class, TenantRoutingConnectionSwitcher::class);

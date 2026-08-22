@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\AdminBundle\Auth;
 
 use Firebase\JWT\ExpiredException;
+use Nubit\AdminBundle\Identity\Badge\TotpBadge;
 use Nubit\Platform\Tenant\Context\TenantContext;
 use Override;
 use Psr\Log\LoggerInterface;
@@ -62,6 +63,15 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
         #[AutowireIterator('nubit.admin.login_response_decorator')]
         private readonly iterable $responseDecorators = [],
         private readonly ?TenantContext $tenantContext = null,
+        /**
+         * Whether a second factor may be presented at all.
+         *
+         * The badge is only attached when the identity module is on. Attaching
+         * one nothing resolves would fail authentication outright, so an
+         * application without the module keeps working even if a client sends
+         * the field.
+         */
+        private readonly bool $secondFactorEnabled = false,
     ) {}
 
     #[Override]
@@ -152,11 +162,13 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
     {
         $username = '';
         $password = '';
+        $totpCode = '';
 
         try {
             $data = $request->toArray();
             $username = self::stringClaim($data, 'username') ?? '';
             $password = self::stringClaim($data, 'password') ?? '';
+            $totpCode = self::stringClaim($data, 'totpCode') ?? '';
         } catch (JsonException) {
             $username = '';
             $password = '';
@@ -172,6 +184,13 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
 
         if ($this->userProvider instanceof PasswordUpgraderInterface) {
             $passport->addBadge(new PasswordUpgradeBadge($password, $this->userProvider));
+        }
+
+        if ($this->secondFactorEnabled) {
+            // Always attached, even empty: TotpListener needs to distinguish
+            // "no code was sent" from "the module is off", and it is the
+            // listener — not this class — that knows whether one was required.
+            $passport->addBadge(new TotpBadge($totpCode));
         }
 
         $passport->setAttribute('is_login', true);

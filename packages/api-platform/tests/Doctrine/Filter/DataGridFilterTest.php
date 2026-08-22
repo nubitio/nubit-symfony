@@ -248,7 +248,16 @@ final class DataGridFilterTest extends TestCase
         self::assertStringContainsString("CONCAT(o.createdAt, '') LIKE :createdAt", $queryBuilder->getDQL());
     }
 
-    public function testAnUnmappedSearchFieldTakesTheSafePath(): void
+    /**
+     * A field the resource does not have is dropped, not cast.
+     *
+     * The earlier behaviour wrapped it in `CONCAT` and passed it through, which
+     * reads as defensive but is not: `o.whatever` is a Doctrine semantical error
+     * with or without the cast, so against a real database the request ended as
+     * a 500. Field names come from the query string, so that was a 500 any
+     * client could trigger at will.
+     */
+    public function testAnUnmappedSearchFieldIsDropped(): void
     {
         $queryBuilder = self::queryBuilder();
 
@@ -256,7 +265,51 @@ final class DataGridFilterTest extends TestCase
             'filters' => ['searchExpr' => ['whatever']],
         ]);
 
-        self::assertStringContainsString("CONCAT(o.whatever, '')", $queryBuilder->getDQL());
+        self::assertNull($queryBuilder->getDQLPart('where'));
+    }
+
+    /** Known fields still apply when an unknown one is listed alongside them. */
+    public function testUnknownSearchFieldsDoNotDiscardTheKnownOnes(): void
+    {
+        $queryBuilder = self::queryBuilder();
+
+        self::filter(['name' => 'string'])->applyGridParam($queryBuilder, 'searchValue', 'acme', [
+            'filters' => ['searchExpr' => ['name', 'whatever']],
+        ]);
+
+        $dql = $queryBuilder->getDQL();
+        self::assertStringContainsString('o.name LIKE :name', $dql);
+        self::assertStringNotContainsString('whatever', $dql);
+    }
+
+    public function testAnUnknownFilterFieldIsDropped(): void
+    {
+        $queryBuilder = self::queryBuilder();
+
+        self::filter()->applyGridParam($queryBuilder, 'filter', '["whatever","=","x"]');
+
+        self::assertNull($queryBuilder->getDQLPart('where'));
+    }
+
+    public function testAnUnknownSortFieldIsDropped(): void
+    {
+        $queryBuilder = self::queryBuilder();
+
+        self::filter()->applyGridParam($queryBuilder, 'sort', '[{"selector":"whatever","desc":true}]');
+
+        self::assertEmpty($queryBuilder->getDQLPart('orderBy'));
+    }
+
+    /** Booleans survive the round trip: a checkbox column filters on `true`, not `"1"`. */
+    public function testBooleanFilterValueIsBoundAsABoolean(): void
+    {
+        $queryBuilder = self::queryBuilder();
+
+        self::filter(['paid' => 'boolean'])->applyGridParam($queryBuilder, 'filter', '["paid","=",true]');
+
+        $parameter = $queryBuilder->getParameter('paid');
+        self::assertNotNull($parameter);
+        self::assertTrue($parameter->getValue());
     }
 
     public function testSearchWithoutASearchExprIsIgnored(): void

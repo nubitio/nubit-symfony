@@ -61,8 +61,15 @@ final class GridFilterHelper
         };
     }
 
-    /** Prepares the bound value for the given grid operator (LIKE wildcards, …). */
-    public static function valueForOperator(string $op, mixed $value): string|int|float|null
+    /**
+     * Prepares the bound value for the given grid operator (LIKE wildcards, …).
+     *
+     * Booleans are part of the contract: a grid filtering a checkbox column
+     * sends `["paid", "=", true]`, and JSON preserves the type all the way here.
+     * Excluding bool from the return type turned that ordinary payload into a
+     * TypeError and a 500.
+     */
+    public static function valueForOperator(string $op, mixed $value): string|int|float|bool|null
     {
         return match ($op) {
             'contains', 'notcontains' => sprintf('%%%s%%', $value),

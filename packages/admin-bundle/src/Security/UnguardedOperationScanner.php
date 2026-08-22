@@ -22,6 +22,19 @@ final class UnguardedOperationScanner
     private const array MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
     /**
+     * @param bool $requirePermissionOnReads Extends the scan to GET when the
+     *                                       authorization module is on. With
+     *                                       permissions in play, a read nobody
+     *                                       guarded is a real finding rather
+     *                                       than a sensible default — every
+     *                                       operation has a permission it could
+     *                                       have declared.
+     */
+    public function __construct(
+        private readonly bool $requirePermissionOnReads = false,
+    ) {}
+
+    /**
      * @param iterable<array{resourceClass: string, operation: HttpOperation}> $operations
      *
      * @return list<UnguardedOperation>
@@ -34,7 +47,7 @@ final class UnguardedOperationScanner
             $operation = $entry['operation'];
             $method = strtoupper($operation->getMethod());
 
-            if (!\in_array($method, self::MUTATING_METHODS, true)) {
+            if (!$this->isInScope($method)) {
                 continue;
             }
 
@@ -51,6 +64,11 @@ final class UnguardedOperationScanner
         }
 
         return $findings;
+    }
+
+    private function isInScope(string $method): bool
+    {
+        return $this->requirePermissionOnReads || \in_array($method, self::MUTATING_METHODS, true);
     }
 
     private function isGuarded(HttpOperation $operation): bool

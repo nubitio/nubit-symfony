@@ -42,6 +42,23 @@ class RefreshToken
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
+    /**
+     * What the session was opened from.
+     *
+     * Nullable and purely descriptive: it exists so the person reviewing their
+     * own active sessions can tell "my laptop" from "something in another
+     * country", which is the only way a session list is actionable at all.
+     */
+    #[ORM\Column(name: 'user_agent', length: 255, nullable: true)]
+    private ?string $userAgent = null;
+
+    #[ORM\Column(name: 'ip_address', length: 45, nullable: true)]
+    private ?string $ipAddress = null;
+
+    /** Updated on rotation, which is the only moment the session proves it is still alive. */
+    #[ORM\Column(name: 'last_used_at', type: 'datetime_immutable', nullable: true)]
+    private ?DateTimeImmutable $lastUsedAt = null;
+
     public function __construct(string $jti, string $tokenHash, string $userIdentifier, DateTimeImmutable $expiresAt)
     {
         $this->jti = $jti;
@@ -94,5 +111,38 @@ class RefreshToken
     public function isActive(DateTimeImmutable $now): bool
     {
         return null === $this->revokedAt && $this->expiresAt > $now;
+    }
+
+    public function getUserAgent(): ?string
+    {
+        return $this->userAgent;
+    }
+
+    public function getIpAddress(): ?string
+    {
+        return $this->ipAddress;
+    }
+
+    public function getLastUsedAt(): ?DateTimeImmutable
+    {
+        return $this->lastUsedAt;
+    }
+
+    public function describeClient(?string $userAgent, ?string $ipAddress): static
+    {
+        // Truncated to the column width rather than rejected: a user agent is
+        // client-supplied and arbitrarily long, and losing a session record
+        // because a browser sent a novel is not a trade worth making.
+        $this->userAgent = null === $userAgent ? null : mb_substr($userAgent, 0, 255);
+        $this->ipAddress = null === $ipAddress ? null : mb_substr($ipAddress, 0, 45);
+
+        return $this;
+    }
+
+    public function touch(DateTimeImmutable $when): static
+    {
+        $this->lastUsedAt = $when;
+
+        return $this;
     }
 }

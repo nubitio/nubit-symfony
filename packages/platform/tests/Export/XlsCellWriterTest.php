@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\Platform\Tests\Export;
 
 use Nubit\Platform\Export\XlsExporter;
+use Nubit\Platform\Money\Money;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -104,6 +105,63 @@ final class XlsCellWriterTest extends TestCase
             ->getActiveSheet();
 
         self::assertSame('Cuota 1', $sheet->getCell('A2')->getValue());
+    }
+
+    /**
+     * An exported amount has to be a number in the spreadsheet. Flattened to
+     * JSON it is technically all the data and useless: the reader's first act
+     * on an amount column is to select it and read the sum.
+     */
+    public function testMoneyIsWrittenAsASummableNumber(): void
+    {
+        $sheet = (new XlsExporter())
+            ->makeSpreadsheet([['total' => [
+                'amount' => '1234.50',
+                'currency' => 'EUR',
+                'scale' => 2,
+                'minorAmount' => 123450,
+            ]]], ['total' => 'Total'])
+            ->getActiveSheet();
+
+        // PhpSpreadsheet stores the cell in the spreadsheet's own numeric model
+        // once it is typed numeric; the format code is what renders the two
+        // decimals back to the reader.
+        self::assertSame(1234.5, $sheet->getCell('A2')->getValue());
+        self::assertSame(DataType::TYPE_NUMERIC, $sheet->getCell('A2')->getDataType());
+        self::assertSame('#,##0.00', $sheet->getStyle('A2')->getNumberFormat()->getFormatCode());
+    }
+
+    public function testAMoneyObjectIsWrittenTheSameWay(): void
+    {
+        $sheet = (new XlsExporter())
+            ->makeSpreadsheet([['total' => Money::of('1234.50', 'EUR')]], ['total' => 'Total'])
+            ->getActiveSheet();
+
+        self::assertSame(1234.5, $sheet->getCell('A2')->getValue());
+        self::assertSame(DataType::TYPE_NUMERIC, $sheet->getCell('A2')->getDataType());
+    }
+
+    /** A currency with no minor unit must not gain two decimals in the export. */
+    public function testAZeroDecimalCurrencyKeepsItsFormat(): void
+    {
+        $sheet = (new XlsExporter())
+            ->makeSpreadsheet([['total' => ['amount' => '1999', 'currency' => 'JPY', 'scale' => 0]]], [
+                'total' => 'Total',
+            ])
+            ->getActiveSheet();
+
+        self::assertSame(1999, $sheet->getCell('A2')->getValue());
+        self::assertSame('#,##0', $sheet->getStyle('A2')->getNumberFormat()->getFormatCode());
+    }
+
+    /** Something that merely has an "amount" key is not money and must not be numeric. */
+    public function testANonMoneyArrayIsStillFlattened(): void
+    {
+        $sheet = (new XlsExporter())
+            ->makeSpreadsheet([['total' => ['amount' => 'quite a lot', 'currency' => 'EUR']]], ['total' => 'Total'])
+            ->getActiveSheet();
+
+        self::assertSame(DataType::TYPE_STRING, $sheet->getCell('A2')->getDataType());
     }
 
     public function testScalarValuesAreUnaffected(): void

@@ -65,9 +65,20 @@ Fields without ORM mapping (computed columns, joins) plug in via `GridVirtualFie
 
 ```bash
 composer install
-vendor/bin/phpunit
+composer test              # unit suites, no database needed
+composer test-integration  # boots real kernels against a throwaway PostgreSQL
 vendor/bin/mago analyze
 ```
+
+`composer test-integration` provisions PostgreSQL and a PHP runtime through
+Docker. Point `NUBIT_TEST_DATABASE_URL` at a server of your own to skip the
+provisioning and run `vendor/bin/phpunit --testsuite integration` directly.
+
+The integration suite compiles containers and issues real HTTP requests, so it
+covers what unit tests structurally cannot: tenant isolation in every mode,
+bundle wiring with each optional module on and off, and the SQL the Doctrine
+filters actually emit. See
+[`docs/platform/enterprise-readiness-plan.md`](docs/platform/enterprise-readiness-plan.md).
 
 Monorepo: packages are mirrored to read-only repos ([nubitio/platform](https://github.com/nubitio/platform), [nubitio/api-platform](https://github.com/nubitio/api-platform)) by the split workflow on every push/tag. Release = tag `vX.Y.Z` (lockstep; release notes in GitHub Releases, no changelog files).
 

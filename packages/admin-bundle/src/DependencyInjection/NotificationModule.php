@@ -25,6 +25,11 @@ final class NotificationModule
         // symfony/mailer is a `suggest`, not a hard requirement: an app that
         // turns notifications on for in-app delivery only must not be forced
         // to install a mailer just to boot the container.
+        //
+        // Installed is not the same as configured, and this early in
+        // compilation only the former is knowable. RemoveEmailChannelWithoutMailerPass
+        // drops the channel again once it can see whether a mailer service
+        // actually exists.
         if (interface_exists(MailerInterface::class)) {
             $services->set(EmailNotificationChannel::class)->arg('$fromAddress', $config['from_address']);
         }

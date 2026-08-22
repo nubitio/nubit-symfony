@@ -50,8 +50,53 @@ jobs:
       - name: Static analysis (no new issues)
         run: composer stan
 
-      - name: PHPUnit
-        run: vendor/bin/phpunit
+      - name: PHPUnit (unit)
+        run: vendor/bin/phpunit --exclude-testsuite integration
+
+  integration:
+    name: Integration (PHP ${{ matrix.php-version }}, PostgreSQL)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.3', '8.5']
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: integration
+          POSTGRES_PASSWORD: integration
+          POSTGRES_DB: integration
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U integration -d integration"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # IntegrationTestCase fails rather than skips when this is missing in CI:
+      # a silently skipped isolation suite looks identical to a passing one.
+      NUBIT_TEST_DATABASE_URL: 'postgresql://integration:integration@127.0.0.1:5432/integration?serverVersion=16&charset=utf8'
+      NUBIT_TEST_DATABASE_HOST: 127.0.0.1
+      NUBIT_TEST_DATABASE_USER: integration
+      NUBIT_TEST_DATABASE_PASSWORD: integration
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: gd, zip, intl, pdo_pgsql
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: PHPUnit (integration)
+        # Each test compiles its own container, and PHP cannot unload one once
+        # loaded. The ceiling is the suite's shape, not a leak.
+        run: php -d memory_limit=512M vendor/bin/phpunit --testsuite integration
 
   package-isolation:
     name: Package isolation (${{ matrix.package }})

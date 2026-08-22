@@ -1,16 +1,16 @@
 {
     "name": "nubitio/nubit-symfony",
-    "description": "Monorepo for the Nubit Symfony backend packages (nubitio/platform, nubitio/api-platform). Not installable — require the individual packages.",
+    "description": "Monorepo for the Nubit Symfony backend packages (nubitio/platform, nubitio/api-platform). Not installable \u2014 require the individual packages.",
     "type": "project",
     "license": "MIT",
     "require": {
-        "php": ">=8.3",
         "api-platform/core": "^4.3.12",
         "doctrine/doctrine-bundle": "^2.13 || ^3.0",
         "doctrine/orm": "^3.0",
         "doctrine/persistence": "^4.0",
         "firebase/php-jwt": "^7.0",
         "league/flysystem": "^3.0",
+        "php": ">=8.3",
         "psr/cache": "^3.0",
         "psr/log": "^3.0",
         "symfony/config": "^7.4 || ^8.0",
@@ -18,6 +18,7 @@
         "symfony/dependency-injection": "^7.4 || ^8.0",
         "symfony/doctrine-bridge": "^7.4 || ^8.0",
         "symfony/event-dispatcher": "^7.4 || ^8.0",
+        "symfony/expression-language": "^7.4 || ^8.0",
         "symfony/framework-bundle": "^7.4 || ^8.0",
         "symfony/http-foundation": "^7.4 || ^8.0",
         "symfony/http-kernel": "^7.4 || ^8.0",
@@ -49,7 +50,8 @@
         "symfony/cache": "^7.4 || ^8.0",
         "symfony/http-client": "^7.4 || ^8.0",
         "symfony/mailer": "^7.4 || ^8.0",
-        "symfony/mercure": "^0.6"
+        "symfony/mercure": "^0.6",
+        "symfony/yaml": "^7.4"
     },
     "autoload": {
         "psr-4": {
@@ -68,11 +70,13 @@
             "Nubit\\AdminBundle\\Tests\\": "packages/admin-bundle/tests/",
             "Nubit\\TenantBundle\\Tests\\": "packages/tenant-bundle/tests/",
             "Nubit\\WorkflowBundle\\Tests\\": "packages/workflow-bundle/tests/",
-            "Nubit\\SequenceBundle\\Tests\\": "packages/sequence-bundle/tests/"
+            "Nubit\\SequenceBundle\\Tests\\": "packages/sequence-bundle/tests/",
+            "Nubit\\Tests\\": "tests/"
         }
     },
     "scripts": {
-        "test": "phpunit",
+        "test": "phpunit --exclude-testsuite integration",
+        "test-integration": "scripts/integration-tests.sh",
         "check": [
             "@test",
             "@stan",
