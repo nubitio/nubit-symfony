@@ -9,6 +9,7 @@ use Nubit\Platform\Money\Money;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -37,14 +38,29 @@ final class PermissionVoter extends Voter
         return Permission::isPermissionName($attribute);
     }
 
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
-    {
+    /**
+     * The `$vote` argument is optional in Symfony 7.4 and declared on the parent
+     * in 8.0, so it is accepted here rather than omitted: a three-parameter
+     * override stops being a valid signature the moment the newer major is
+     * installed. It carries the reason a refusal happened, which is the
+     * difference between "access denied" and a log line somebody can act on.
+     */
+    protected function voteOnAttribute(
+        string $attribute,
+        mixed $subject,
+        TokenInterface $token,
+        ?Vote $vote = null,
+    ): bool {
         $user = $token->getUser();
         if (!$user instanceof UserInterface) {
+            $vote?->addReason('The token carries no authenticated user.');
+
             return false;
         }
 
         if (!$this->resolver->hasPermission($user, $attribute)) {
+            $vote?->addReason(\sprintf('No role of this user grants "%s".', $attribute));
+
             return false;
         }
 
@@ -67,11 +83,22 @@ final class PermissionVoter extends Voter
                 'amount' => (string) $amount,
                 'limit' => (string) $limit,
             ]);
+            $vote?->addReason(\sprintf(
+                'The amount is in %s and the limit in %s.',
+                $amount->currency->code,
+                $limit->currency->code,
+            ));
 
             return false;
         }
 
-        return $amount->absolute()->isLessThanOrEqualTo($limit);
+        if (!$amount->absolute()->isLessThanOrEqualTo($limit)) {
+            $vote?->addReason(\sprintf('%s exceeds the limit of %s on "%s".', $amount, $limit, $attribute));
+
+            return false;
+        }
+
+        return true;
     }
 
     /** The amount a limited permission is measured against, per `#[Authorized(limited: …)]`. */

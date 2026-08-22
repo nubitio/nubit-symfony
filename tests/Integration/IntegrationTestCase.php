@@ -123,6 +123,24 @@ abstract class IntegrationTestCase extends TestCase
         return $entityManager;
     }
 
+    /**
+     * Whether Doctrine was configured to map this class.
+     *
+     * Asked of the mapping driver, not of `hasMetadataFor()`: that one reports
+     * whether metadata happens to be *loaded*, which under DoctrineBundle 2 was
+     * true for everything only because the proxy cache warmer had walked every
+     * class on boot. DoctrineBundle 3 generates no proxies and runs no warmer,
+     * so the same call answers false for classes that are mapped perfectly well.
+     * The question these suites mean to ask is about configuration.
+     */
+    protected function isMapped(string $entityClass): bool
+    {
+        $driver = $this->entityManager()->getConfiguration()->getMetadataDriverImpl();
+        self::assertNotNull($driver, 'Doctrine has no metadata driver.');
+
+        return in_array($entityClass, $driver->getAllClassNames(), true);
+    }
+
     protected function container(): ContainerInterface
     {
         if (null === $this->kernel) {

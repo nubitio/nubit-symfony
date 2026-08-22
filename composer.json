@@ -41,6 +41,7 @@
     },
     "require-dev": {
         "carthage-software/mago": "^1.40",
+        "composer/semver": "^3.4",
         "league/flysystem-memory": "^3.0",
         "monolog/monolog": "^3.0",
         "open-telemetry/api": "^1.0",

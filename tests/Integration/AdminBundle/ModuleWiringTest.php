@@ -175,9 +175,4 @@ final class ModuleWiringTest extends IntegrationTestCase
 
         return $config;
     }
-
-    private function isMapped(string $entityClass): bool
-    {
-        return $this->entityManager()->getMetadataFactory()->hasMetadataFor($entityClass);
-    }
 }

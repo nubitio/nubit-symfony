@@ -173,7 +173,7 @@ final class ColumnIsolationTest extends IntegrationTestCase
 
     private function markTestSkippedUnlessTenantTableMapped(): void
     {
-        if (!$this->entityManager()->getMetadataFactory()->hasMetadataFor(Tenant::class)) {
+        if (!$this->isMapped(Tenant::class)) {
             self::markTestSkipped('The bundle unmapped its Tenant entity for this configuration.');
         }
     }

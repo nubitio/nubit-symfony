@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Nubit\Tests\Integration;
 
 use ApiPlatform\Symfony\Bundle\ApiPlatformBundle;
+use Composer\InstalledVersions;
+use Composer\Semver\VersionParser;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Nubit\AdminBundle\NubitAdminBundle;
 use Nubit\ApiPlatform\Document\DocumentRendererInterface;
@@ -122,16 +124,29 @@ final class TestKernel extends Kernel
         $configurator->extension('doctrine', [
             'dbal' => [
                 'url' => $this->databaseUrl,
-                'use_savepoints' => true,
+                // No `use_savepoints`: DBAL 4 always nests transactions with
+                // savepoints, the option is deprecated there and DoctrineBundle
+                // 3 rejects it outright.
                 'profiling' => false,
             ],
             'orm' => [
-                'auto_generate_proxy_classes' => true,
-                // Native lazy objects from PHP 8.4 on; the CI matrix still
-                // includes 8.3, where Doctrine falls back to lazy ghosts.
-                'enable_native_lazy_objects' => \PHP_VERSION_ID >= 80400,
-                'enable_lazy_ghost_objects' => true,
-                'report_fields_where_declared' => true,
+                // DoctrineBundle 3 removed the proxy and ghost-object options:
+                // there is nothing left to configure once native lazy objects
+                // are the only mechanism. The CI matrix resolves 2.x on PHP 8.3
+                // and 3.x on 8.5, so the config has to suit both.
+                ...(
+                    self::doctrineBundleIsV3()
+                        ? []
+                        : [
+                            'auto_generate_proxy_classes' => true,
+                            // Native lazy objects from PHP 8.4 on; the CI matrix
+                            // still includes 8.3, where Doctrine falls back to
+                            // lazy ghosts.
+                            'enable_native_lazy_objects' => \PHP_VERSION_ID >= 80400,
+                            'enable_lazy_ghost_objects' => true,
+                            'report_fields_where_declared' => true,
+                        ]
+                ),
                 'validate_xml_mapping' => true,
                 'naming_strategy' => 'doctrine.orm.naming_strategy.underscore_number_aware',
                 // Applications run with auto_mapping on, and the bundles rely on
@@ -189,6 +204,16 @@ final class TestKernel extends Kernel
         $routes->add('nubit_test_find', '/_test/find')->controller([TestQueryController::class, 'find']);
         $routes->add('nubit_test_join', '/_test/join')->controller([TestQueryController::class, 'join']);
         $routes->add('nubit_test_dql', '/_test/dql')->controller([TestQueryController::class, 'dql']);
+    }
+
+    /**
+     * Asked of Composer rather than sniffed from a class, because what changed
+     * between the majors is which configuration keys exist — and a missing key
+     * is not something any class name reports.
+     */
+    private static function doctrineBundleIsV3(): bool
+    {
+        return InstalledVersions::satisfies(new VersionParser(), 'doctrine/doctrine-bundle', '>=3');
     }
 
     /** @return array<string, array<string, mixed>> */

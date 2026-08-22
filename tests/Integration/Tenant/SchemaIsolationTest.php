@@ -206,6 +206,6 @@ final class SchemaIsolationTest extends IntegrationTestCase
     /** Keeps the fixture entity referenced so a rename cannot silently orphan this suite. */
     public function testFixtureEntityIsMapped(): void
     {
-        self::assertTrue($this->entityManager()->getMetadataFactory()->hasMetadataFor(Widget::class));
+        self::assertTrue($this->isMapped(Widget::class));
     }
 }
