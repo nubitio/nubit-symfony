@@ -87,6 +87,13 @@ release updates every internal constraint and tag together; the
 `nubit-skeleton` compatibility declaration records the supported frontend and
 backend line pair.
 
+## Security
+
+Report vulnerabilities privately through the repository's **Security** tab; see
+[`SECURITY.md`](SECURITY.md) for scope, supported versions, and what to expect.
+Cross-tenant data access and authorization bypass are the highest-severity
+classes here.
+
 ## License
 
 MIT
