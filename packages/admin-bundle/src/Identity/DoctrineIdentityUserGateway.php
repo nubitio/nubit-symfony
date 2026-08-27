@@ -44,12 +44,15 @@ final readonly class DoctrineIdentityUserGateway implements IdentityUserGatewayI
             throw new IdentityException('This user cannot hold a password.');
         }
 
+        PasswordPolicy::assertAcceptable($plainPassword);
         $this->write($user, 'password', $this->passwordHasher->hashPassword($user, $plainPassword));
         $this->entityManager->flush();
     }
 
     public function createUser(string $identifier, string $plainPassword, array $roles): UserInterface
     {
+        PasswordPolicy::assertAcceptable($plainPassword);
+
         $user = new $this->userClass();
 
         $this->write($user, $this->identifierProperty, $identifier);

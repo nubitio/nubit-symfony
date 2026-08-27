@@ -38,11 +38,11 @@ final class MediaFileController
             throw new NotFoundHttpException('Media file missing from storage.');
         }
 
-        $fileName = $media->getOriginalName() ?? $media->getPath();
+        $fileName = preg_replace('/[\r\n"\\\\]/', '', $media->getOriginalName() ?? $media->getPath()) ?: 'file';
 
         return new Response($contents, Response::HTTP_OK, [
             'Content-Type' => $media->getMimeType() ?? 'application/octet-stream',
-            'Content-Disposition' => sprintf('inline; filename="%s"', addslashes($fileName)),
+            'Content-Disposition' => sprintf('inline; filename="%s"', $fileName),
             // Upload filenames are unique (slug + uniqid), so the bytes behind
             // a given media id never change — let browsers cache aggressively.
             'Cache-Control' => 'private, max-age=31536000, immutable',

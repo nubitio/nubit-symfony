@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Import\Entity\ImportSession;
 use Nubit\AdminBundle\Import\Exception\ImportException;
 use Nubit\AdminBundle\Import\ImportService;
+use Nubit\AdminBundle\Security\PrivilegedAccess;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,6 +32,7 @@ final readonly class ImportController
         private EntityManagerInterface $entityManager,
         private ImportService $imports,
         private Security $security,
+        private PrivilegedAccess $access,
     ) {}
 
     public function start(Request $request, string $resource): JsonResponse
@@ -85,6 +87,11 @@ final readonly class ImportController
         $session = $this->entityManager->find(ImportSession::class, $id);
 
         if (!$session instanceof ImportSession) {
+            throw new NotFoundHttpException('Import session not found.');
+        }
+
+        $owner = $session->getCreatedBy();
+        if (null !== $owner && !$this->access->ownsOrAdmin($owner)) {
             throw new NotFoundHttpException('Import session not found.');
         }
 

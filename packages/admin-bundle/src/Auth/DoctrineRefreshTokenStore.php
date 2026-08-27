@@ -25,6 +25,24 @@ final readonly class DoctrineRefreshTokenStore implements RefreshTokenStoreInter
         return null !== $this->findActiveByHash($tokenHash);
     }
 
+    public function consumeByHash(string $tokenHash): bool
+    {
+        $affected = (int) $this->entityManager
+            ->createQueryBuilder()
+            ->update(RefreshToken::class, 'rt')
+            ->set('rt.revokedAt', ':revokedAt')
+            ->where('rt.tokenHash = :hash')
+            ->andWhere('rt.revokedAt IS NULL')
+            ->andWhere('rt.expiresAt > :now')
+            ->setParameter('revokedAt', new DateTimeImmutable())
+            ->setParameter('hash', $tokenHash)
+            ->setParameter('now', new DateTimeImmutable())
+            ->getQuery()
+            ->execute();
+
+        return $affected > 0;
+    }
+
     public function revokeByHash(string $tokenHash): void
     {
         $token = $this->findActiveByHash($tokenHash);

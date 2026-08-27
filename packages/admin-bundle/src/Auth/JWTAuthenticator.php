@@ -140,7 +140,11 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
         }
         $tokenTenantName = is_string($rawTenantName) ? $rawTenantName : null;
         $currentTenantName = $this->tenantContext?->getTenantName();
-        if (null !== $tokenTenantName && null !== $currentTenantName && $tokenTenantName !== $currentTenantName) {
+        // A token bound to a tenant is refused unless that tenant is the one
+        // resolved for this request. Treating a missing current tenant as
+        // "no check" would let a stolen tenant token work on a host that
+        // failed to resolve tenancy.
+        if (null !== $tokenTenantName && $tokenTenantName !== $currentTenantName) {
             $this->logger->warning('JWT tenant mismatch: token belongs to a different tenant', [
                 'token_tenant' => $tokenTenantName,
                 'current_tenant' => $currentTenantName,

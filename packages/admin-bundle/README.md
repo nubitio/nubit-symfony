@@ -291,7 +291,9 @@ prompt.
 
 A code is single-use: a TOTP code stays valid for its whole window, so an
 observed one would otherwise be replayable for a minute and a half. Recovery
-codes are stored hashed and consumed when used.
+codes are stored hashed and consumed when used. `DELETE /api/auth/totp` and
+regenerating recovery codes require `{ "code": "..." }` — a stolen access
+cookie is not enough to turn the second factor off.
 
 **Password recovery.** `POST /api/auth/password/forgot` always answers 204,
 whether or not the address exists — anything else turns the endpoint into a way
@@ -303,14 +305,18 @@ Delivery is an event, not a mailer call: listen for
 `Nubit\AdminBundle\Identity\Event\PasswordResetRequested` and send it however
 the product sends things.
 
-**Invitations.** `POST /api/invitations` with an email and roles. The roles ride
-on the token, so the account exists with the right authority from its first
-second. `UserInvited` carries the plaintext token for delivery.
+**Invitations.** `POST /api/invitations` with an email and roles requires
+`ROLE_ADMIN`. The roles ride on the token, so the account exists with the right
+authority from its first second. `UserInvited` carries the plaintext token for
+delivery. Reset and invitation passwords must be at least 8 characters, same as
+change-password.
 
 **API keys.** `POST /api/api-keys` returns the key once; afterwards only the
-prefix is visible. A key authenticates **as a principal**, so permissions, row
-scope and the audit trail keep working with no special case — an integration is
-a user that never types a password. Present it as `X-Api-Key`, and register
+prefix is visible. A caller lists, rotates and revokes **their own** keys;
+administrators see every key. Creating a key for another username is an admin
+action. A key authenticates **as a principal**, so permissions, row scope and
+the audit trail keep working with no special case — an integration is a user
+that never types a password. Present it as `X-Api-Key`, and register
 `ApiKeyAuthenticator` alongside `JWTAuthenticator` in the firewall:
 
 ```yaml

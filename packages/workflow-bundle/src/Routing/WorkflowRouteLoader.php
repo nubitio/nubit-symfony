@@ -37,7 +37,7 @@ final class WorkflowRouteLoader extends Loader
                         '_workflow_route_prefix' => $definition->routePrefix,
                     ],
                     [
-                        'id' => '\d+',
+                        'id' => '[^/]+',
                         'transition' => '[a-z][a-z0-9_]*',
                     ],
                     methods: ['POST'],
