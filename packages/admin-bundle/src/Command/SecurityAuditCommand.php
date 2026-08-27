@@ -7,6 +7,7 @@ namespace Nubit\AdminBundle\Command;
 use ApiPlatform\Metadata\HttpOperation;
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
 use ApiPlatform\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
+use Nubit\AdminBundle\Security\BundleRouteCatalog;
 use Nubit\AdminBundle\Security\UnguardedOperationScanner;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -54,26 +55,37 @@ final class SecurityAuditCommand extends Command
         $io->title('Nubit security audit');
 
         $findings = $this->scanner->scan($this->collectOperations());
+        $bundleRoutes = BundleRouteCatalog::mutatingRoutes();
 
         if ($findings === []) {
-            $io->success('Every POST/PUT/PATCH/DELETE operation declares a security: expression.');
+            $io->success('Every POST/PUT/PATCH/DELETE ApiResource operation declares a security: expression.');
+        } else {
+            $io->table(['Resource', 'Method', 'URI template'], array_map(static fn($finding) => [
+                $finding->resourceShortName,
+                $finding->method,
+                $finding->uriTemplate ?? '—',
+            ], $findings));
 
-            return Command::SUCCESS;
+            $io->note(sprintf(
+                '%d write operation(s) rely on the default firewall access_control (ROLE_USER) with no per-operation '
+                . 'role check. Add security: "is_granted(\'ROLE_...\')" if that\'s not intentional.',
+                \count($findings),
+            ));
         }
 
-        $io->table(['Resource', 'Method', 'URI template'], array_map(static fn($finding) => [
-            $finding->resourceShortName,
-            $finding->method,
-            $finding->uriTemplate ?? '—',
-        ], $findings));
+        $io->section('Bundle routes (not ApiResource operations)');
+        $io->table(['Module', 'Method', 'Path', 'Gate'], array_map(static fn(array $route): array => [
+            $route['module'],
+            $route['method'],
+            $route['path'],
+            $route['gate'],
+        ], $bundleRoutes));
+        $io->note(
+            'These routes sit outside API Platform. The gate is what the controller enforces on top of ROLE_USER. '
+            . 'A module that is off answers 404 rather than 500.',
+        );
 
-        $io->note(sprintf(
-            '%d write operation(s) rely on the default firewall access_control (ROLE_USER) with no per-operation '
-            . 'role check. Add security: "is_granted(\'ROLE_...\')" if that\'s not intentional.',
-            \count($findings),
-        ));
-
-        if ($input->getOption('strict')) {
+        if ($findings !== [] && $input->getOption('strict')) {
             $io->error('Failing: --strict was set and unguarded write operations were found.');
 
             return Command::FAILURE;

@@ -26,6 +26,7 @@ use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
 use Nubit\AdminBundle\Command\SecurityAuditCommand;
 use Nubit\AdminBundle\Controller\ChangePasswordController;
+use Nubit\AdminBundle\Controller\DisabledModuleController;
 use Nubit\AdminBundle\Controller\LoginController;
 use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\MeController;
@@ -54,6 +55,7 @@ use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\OpenApi\GridScaleDocumentationNormalizer;
 use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
+use Nubit\AdminBundle\Security\BundleRouteCatalog;
 use Nubit\AdminBundle\Security\PrivilegedAccess;
 use Nubit\AdminBundle\Session\AppProfile;
 use Nubit\AdminBundle\Session\DefaultMeResponseBuilder;
@@ -859,6 +861,8 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(MeController::class)->tag('controller.service_arguments');
         $services->set(PrivilegedAccess::class);
 
+        self::stubDisabledModuleControllers($services, $config);
+
         $services->set(EmbeddedLinesRegistry::class);
         $services->set(EmbeddedLinesRowSerializer::class);
         $services->set(EmbeddedLinesController::class)->tag('controller.service_arguments');
@@ -1142,12 +1146,37 @@ final class NubitAdminBundle extends AbstractBundle
     }
 
     /**
-     * Reads the raw (pre-processing) bundle config: prependExtension runs
-     * before configuration is processed, so this is the only signal available.
-     * Takes a path so nested toggles (`notification.in_app.enabled`) read the
-     * same way as top-level ones (`export.enabled`); the last config fragment
-     * that mentions the toggle wins, matching Symfony's own merge order.
+     * Routes for optional modules live in one file so applications do not
+     * import them per feature. When the module is off the real controller is
+     * not a service, which used to 500. These stubs answer 404 instead.
+     *
+     * @param array<string, mixed> $config
      */
+    private static function stubDisabledModuleControllers(DefaultsConfigurator $services, array $config): void
+    {
+        /** @var array<string, bool> $enabled */
+        $enabled = [
+            'identity' => (bool) ($config['identity']['enabled'] ?? false),
+            'documents' => (bool) ($config['documents']['enabled'] ?? false),
+            'imports' => (bool) ($config['imports']['enabled'] ?? false),
+            'media' => (bool) ($config['media']['enabled'] ?? false),
+            'oidc' => (bool) ($config['oidc']['enabled'] ?? false),
+            'audit' => (bool) ($config['audit']['enabled'] ?? false),
+            'export_queued' =>
+                (bool) ($config['export']['enabled'] ?? false) && (bool) ($config['export']['queued'] ?? false),
+        ];
+
+        foreach (BundleRouteCatalog::controllersByModule() as $module => $classes) {
+            if ($enabled[$module] ?? false) {
+                continue;
+            }
+
+            foreach ($classes as $class) {
+                $services->set($class)->class(DisabledModuleController::class)->tag('controller.service_arguments');
+            }
+        }
+    }
+
     /**
      * Reads a plain boolean leaf out of the raw (pre-processing) bundle config.
      *
