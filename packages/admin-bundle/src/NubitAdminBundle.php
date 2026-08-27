@@ -1150,7 +1150,7 @@ final class NubitAdminBundle extends AbstractBundle
      * import them per feature. When the module is off the real controller is
      * not a service, which used to 500. These stubs answer 404 instead.
      *
-     * @param array<string, mixed> $config
+     * @param array<array-key, mixed> $config
      */
     private static function stubDisabledModuleControllers(DefaultsConfigurator $services, array $config): void
     {
