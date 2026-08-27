@@ -105,11 +105,7 @@ final readonly class ExportJobController
         $basename = (string) preg_replace('/\.[^.]+$/', '', $basename);
 
         $response->headers->set('Content-Type', $this->writer->mediaType());
-        $response->headers->set('Content-Disposition', sprintf(
-            'attachment; filename="%s.%s"',
-            $basename,
-            $extension,
-        ));
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s.%s"', $basename, $extension));
 
         return $response;
     }

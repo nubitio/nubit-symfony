@@ -126,10 +126,9 @@ final readonly class ApiKeyManager
     public function forUser(string $userIdentifier): array
     {
         /** @var list<ApiKey> $keys */
-        $keys = $this->entityManager->getRepository(ApiKey::class)->findBy(
-            ['userIdentifier' => $userIdentifier],
-            ['createdAt' => 'DESC'],
-        );
+        $keys = $this->entityManager->getRepository(ApiKey::class)->findBy(['userIdentifier' => $userIdentifier], [
+            'createdAt' => 'DESC',
+        ]);
 
         return $keys;
     }
