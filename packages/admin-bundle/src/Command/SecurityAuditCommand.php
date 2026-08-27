@@ -85,7 +85,7 @@ final class SecurityAuditCommand extends Command
             . 'A module that is off answers 404 rather than 500.',
         );
 
-        if ($findings !== [] && $input->getOption('strict')) {
+        if ($findings !== [] && true === $input->getOption('strict')) {
             $io->error('Failing: --strict was set and unguarded write operations were found.');
 
             return Command::FAILURE;
