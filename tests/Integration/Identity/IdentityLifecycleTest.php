@@ -166,6 +166,23 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         self::assertSame(Response::HTTP_OK, $this->login()->getStatusCode());
     }
 
+    public function testDisablingOverHttpRequiresTheSecondFactor(): void
+    {
+        $enrolment = $this->totp()->beginEnrolment(self::EMAIL);
+        $this->totp()->confirmEnrolment(self::EMAIL, Totp::codeAt($enrolment['secret'], intdiv(time(), Totp::PERIOD)));
+        $token = $this->accessToken(totpCode: $this->codeFor($enrolment['secret']));
+
+        $withoutCode = $this->send('DELETE', '/api/auth/totp', token: $token, body: []);
+        self::assertSame(Response::HTTP_BAD_REQUEST, $withoutCode->getStatusCode());
+        self::assertTrue($this->totp()->isEnrolled(self::EMAIL));
+
+        $withCode = $this->send('DELETE', '/api/auth/totp', token: $token, body: [
+            'code' => $enrolment['recoveryCodes'][0],
+        ]);
+        self::assertSame(Response::HTTP_NO_CONTENT, $withCode->getStatusCode(), (string) $withCode->getContent());
+        self::assertFalse($this->totp()->isEnrolled(self::EMAIL));
+    }
+
     // ── Password recovery ─────────────────────────────────────────────────
 
     /**
@@ -180,6 +197,19 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         self::assertSame(Response::HTTP_NO_CONTENT, $known->getStatusCode());
         self::assertSame($known->getStatusCode(), $unknown->getStatusCode());
         self::assertSame((string) $known->getContent(), (string) $unknown->getContent());
+    }
+
+    public function testAShortResetPasswordIsRefused(): void
+    {
+        $token = $this->requestReset();
+
+        $response = $this->send('POST', '/api/auth/password/reset', body: [
+            'token' => $token,
+            'password' => 'short',
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+        self::assertSame(Response::HTTP_OK, $this->login()->getStatusCode());
     }
 
     public function testAResetTokenChangesThePassword(): void
@@ -360,6 +390,18 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         self::assertSame(Response::HTTP_CONFLICT, $response->getStatusCode());
     }
 
+    public function testAClerkCannotInvite(): void
+    {
+        $this->seedUser('clerk@example.com', ['ROLE_USER']);
+
+        $response = $this->send('POST', '/api/invitations', token: $this->accessToken('clerk@example.com'), body: [
+            'email' => 'newcomer@example.com',
+            'roles' => ['ROLE_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
     /** The preview must not reveal anything for a token that is not valid. */
     public function testPreviewingAnUnknownInvitationIsNotFound(): void
     {
@@ -428,6 +470,16 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         );
         self::assertSame(Response::HTTP_OK, $this->send('GET', '/api/me', apiKey: $rotated['key'])->getStatusCode());
         self::assertSame($original['record']->getName(), $rotated['record']->getName());
+    }
+
+    public function testAClerkCannotListSomebodyElsesApiKeys(): void
+    {
+        $this->apiKeys()->create('Warehouse scanner', self::EMAIL);
+        $this->seedUser('clerk@example.com', ['ROLE_USER']);
+
+        $payload = $this->json($this->send('GET', '/api/api-keys', token: $this->accessToken('clerk@example.com')));
+
+        self::assertSame([], $payload['keys']);
     }
 
     public function testAnUnknownKeyIsRefused(): void
@@ -605,9 +657,9 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         );
     }
 
-    private function accessToken(): string
+    private function accessToken(string $username = self::EMAIL, ?string $totpCode = null): string
     {
-        foreach ($this->login()->headers->getCookies() as $cookie) {
+        foreach ($this->login($totpCode, $username)->headers->getCookies() as $cookie) {
             if (JWTAuthenticator::AUTH_COOKIE === $cookie->getName()) {
                 return (string) $cookie->getValue();
             }
@@ -629,13 +681,14 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         return $this->send('POST', '/api/auth/login', body: $body);
     }
 
-    private function seedUser(string $email): TestUser
+    /** @param list<string> $roles */
+    private function seedUser(string $email, array $roles = ['ROLE_ADMIN']): TestUser
     {
         $hasher = $this->container()->get(UserPasswordHasherInterface::class);
         self::assertInstanceOf(UserPasswordHasherInterface::class, $hasher);
 
         $user = new TestUser();
-        $user->setEmail($email)->setRoles(['ROLE_ADMIN']);
+        $user->setEmail($email)->setRoles($roles);
         $user->setPassword($hasher->hashPassword($user, self::PASSWORD));
 
         $entityManager = $this->entityManager();

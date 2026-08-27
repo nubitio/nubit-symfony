@@ -29,6 +29,17 @@ final class InMemoryRefreshTokenStore implements RefreshTokenStoreInterface
         return null !== $token && !$token['revoked'] && $token['expiresAt'] > new DateTimeImmutable();
     }
 
+    public function consumeByHash(string $tokenHash): bool
+    {
+        if (!$this->isActiveByHash($tokenHash)) {
+            return false;
+        }
+
+        $this->tokens[$tokenHash]['revoked'] = true;
+
+        return true;
+    }
+
     public function revokeByHash(string $tokenHash): void
     {
         if (isset($this->tokens[$tokenHash])) {

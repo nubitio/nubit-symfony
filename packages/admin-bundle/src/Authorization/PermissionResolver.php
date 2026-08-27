@@ -7,6 +7,7 @@ namespace Nubit\AdminBundle\Authorization;
 use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Authorization\Entity\Role;
 use Nubit\Platform\Money\Money;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -46,6 +47,7 @@ final class PermissionResolver
          */
         private readonly array $superRoles = ['ROLE_SUPER_ADMIN'],
         private readonly ?PermissionCatalog $catalog = null,
+        private readonly ?RoleHierarchyInterface $roleHierarchy = null,
     ) {}
 
     /** @return list<string> */
@@ -98,7 +100,7 @@ final class PermissionResolver
     /** @return list<string> */
     private function resolvePermissions(UserInterface $user): array
     {
-        $roleNames = array_values(array_map(strtoupper(...), $user->getRoles()));
+        $roleNames = $this->reachableRoleNames($user);
 
         if ([] !== array_intersect($roleNames, $this->superRoles)) {
             return $this->catalog?->names() ?? [];
@@ -119,7 +121,7 @@ final class PermissionResolver
     /** @return array<string, Money> */
     private function resolveLimits(UserInterface $user): array
     {
-        $roleNames = array_values(array_map(strtoupper(...), $user->getRoles()));
+        $roleNames = $this->reachableRoleNames($user);
 
         if ([] !== array_intersect($roleNames, $this->superRoles)) {
             return [];
@@ -185,6 +187,21 @@ final class PermissionResolver
 
     private function cacheKey(UserInterface $user): string
     {
-        return $user->getUserIdentifier() . '|' . implode(',', $user->getRoles());
+        return $user->getUserIdentifier() . '|' . implode(',', $this->reachableRoleNames($user));
+    }
+
+    /** @return list<string> */
+    private function reachableRoleNames(UserInterface $user): array
+    {
+        $roles = array_values(array_map(strtoupper(...), $user->getRoles()));
+
+        if (null === $this->roleHierarchy) {
+            return $roles;
+        }
+
+        return array_values(array_unique(array_map(
+            strtoupper(...),
+            $this->roleHierarchy->getReachableRoleNames($roles),
+        )));
     }
 }

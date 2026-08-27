@@ -54,6 +54,7 @@ use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\OpenApi\GridScaleDocumentationNormalizer;
 use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
+use Nubit\AdminBundle\Security\PrivilegedAccess;
 use Nubit\AdminBundle\Session\AppProfile;
 use Nubit\AdminBundle\Session\DefaultMeResponseBuilder;
 use Nubit\AdminBundle\Session\MeResponseBuilderInterface;
@@ -856,6 +857,7 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(RefreshController::class)->tag('controller.service_arguments');
         $services->set(LogoutController::class)->tag('controller.service_arguments');
         $services->set(MeController::class)->tag('controller.service_arguments');
+        $services->set(PrivilegedAccess::class);
 
         $services->set(EmbeddedLinesRegistry::class);
         $services->set(EmbeddedLinesRowSerializer::class);

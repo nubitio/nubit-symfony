@@ -6,8 +6,11 @@ namespace Nubit\AdminBundle\Audit\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Audit\Entity\AuditLog;
+use Nubit\AdminBundle\Authorization\PermissionResolver;
+use Nubit\AdminBundle\Security\PrivilegedAccess;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * GET /api/audit-trail/{resource}/{id} — newest-first entries in the exact
@@ -25,10 +28,14 @@ final class AuditTrailController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly PrivilegedAccess $access,
+        private readonly ?PermissionResolver $permissions = null,
     ) {}
 
     public function __invoke(string $resource, string $id, Request $request): JsonResponse
     {
+        $this->assertCanRead($resource);
+
         /** @var list<AuditLog> $rows */
         $rows = $this->entityManager
             ->createQueryBuilder()
@@ -51,5 +58,25 @@ final class AuditTrailController
             'action' => $log->getAction(),
             'changes' => $log->getChanges() === [] ? new \stdClass() : $log->getChanges(),
         ], $rows));
+    }
+
+    /**
+     * When the authorization module is on, the trail of a resource is a read
+     * of that resource. Without it the firewall's ROLE_USER remains the gate.
+     */
+    private function assertCanRead(string $resource): void
+    {
+        if (null === $this->permissions) {
+            return;
+        }
+
+        if ($this->access->isAdmin()) {
+            return;
+        }
+
+        $permission = strtolower($resource) . '.read';
+        if (!$this->permissions->hasPermission($this->access->user(), $permission)) {
+            throw new AccessDeniedHttpException();
+        }
     }
 }

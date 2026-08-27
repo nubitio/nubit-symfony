@@ -73,16 +73,13 @@ final readonly class RefreshController
         }
 
         $tokenHash = hash('sha256', (string) $refreshToken);
-        if (!$this->refreshTokenStore->isActiveByHash($tokenHash)) {
+        if (!$this->refreshTokenStore->consumeByHash($tokenHash)) {
             $this->logger->warning('Refresh token not active in store', [
                 'username' => $user->getUserIdentifier(),
             ]);
 
             return new JsonResponse(['message' => 'Invalid refresh token'], Response::HTTP_UNAUTHORIZED);
         }
-
-        // Rotation: the presented token is single-use.
-        $this->refreshTokenStore->revokeByHash($tokenHash);
 
         try {
             $tokenPair = $this->tokenGenerator->generateTokenPair($user, $payload);

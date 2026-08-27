@@ -18,6 +18,14 @@ interface RefreshTokenStoreInterface
     /** Whether an unexpired, unrevoked token with this hash exists. */
     public function isActiveByHash(string $tokenHash): bool;
 
+    /**
+     * Atomically revokes the token if it is still active.
+     *
+     * Returns false when the hash is unknown, already revoked or expired, so
+     * two parallel refreshes cannot both mint a new session.
+     */
+    public function consumeByHash(string $tokenHash): bool;
+
     /** Revokes the token with this hash (used on rotation and logout). */
     public function revokeByHash(string $tokenHash): void;
 

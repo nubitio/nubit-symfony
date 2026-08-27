@@ -36,7 +36,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'nubit_role')]
-#[ORM\UniqueConstraint(name: 'UNIQ_NUBIT_ROLE_NAME', columns: ['name'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_NUBIT_ROLE_TENANT_NAME', columns: ['tenant_id', 'name'])]
 #[ApiResource(
     operations: [new GetCollection(), new Get(), new Post(), new Patch(), new Delete()],
     // Administering roles is administering authorization itself; nothing below

@@ -82,8 +82,8 @@ filters actually emit. See
 
 Monorepo: packages are mirrored to read-only repos ([nubitio/platform](https://github.com/nubitio/platform), [nubitio/api-platform](https://github.com/nubitio/api-platform)) by the split workflow on every push/tag. Release = tag `vX.Y.Z` (lockstep; release notes in GitHub Releases, no changelog files).
 
-All internal packages depend on the same `0.x` minor release line. A minor
-release updates every internal constraint and tag together; the
+All internal packages depend on the same `1.0` release line. A release
+updates every internal constraint and tag together; the
 `nubit-skeleton` compatibility declaration records the supported frontend and
 backend line pair.
 

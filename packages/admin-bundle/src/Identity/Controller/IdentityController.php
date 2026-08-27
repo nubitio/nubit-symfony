@@ -13,6 +13,7 @@ use Nubit\AdminBundle\Identity\InvitationService;
 use Nubit\AdminBundle\Identity\PasswordResetService;
 use Nubit\AdminBundle\Identity\SessionRegistry;
 use Nubit\AdminBundle\Identity\TotpManager;
+use Nubit\AdminBundle\Security\PrivilegedAccess;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -38,6 +39,7 @@ final readonly class IdentityController
         private InvitationService $invitations,
         private ApiKeyManager $apiKeys,
         private SessionRegistry $sessions,
+        private PrivilegedAccess $access,
     ) {}
 
     // ── Second factor ─────────────────────────────────────────────────────
@@ -76,18 +78,35 @@ final readonly class IdentityController
         ]);
     }
 
-    public function totpDisable(): JsonResponse
+    public function totpDisable(Request $request): JsonResponse
     {
-        $this->totp->disable($this->currentUserIdentifier());
+        $identifier = $this->currentUserIdentifier();
+
+        // A stolen access cookie must not be enough to turn the second factor
+        // off. The code (or a recovery code) is the proof the person holding
+        // the session can still produce the factor they are about to remove.
+        if ($this->totp->isEnrolled($identifier)) {
+            try {
+                $this->totp->verify($identifier, self::field($request, 'code'));
+            } catch (TotpException $exception) {
+                return new JsonResponse(['message' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
+            }
+        }
+
+        $this->totp->disable($identifier);
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function totpRecoveryCodes(): JsonResponse
+    public function totpRecoveryCodes(Request $request): JsonResponse
     {
+        $identifier = $this->currentUserIdentifier();
+
         try {
+            $this->totp->verify($identifier, self::field($request, 'code'));
+
             return new JsonResponse([
-                'recoveryCodes' => $this->totp->regenerateRecoveryCodes($this->currentUserIdentifier()),
+                'recoveryCodes' => $this->totp->regenerateRecoveryCodes($identifier),
             ]);
         } catch (TotpException $exception) {
             return new JsonResponse(['message' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
@@ -125,6 +144,10 @@ final readonly class IdentityController
 
     public function invite(Request $request): JsonResponse
     {
+        // Inviting is creating an account with chosen roles. Any authenticated
+        // caller doing that is a privilege escalation, not a convenience.
+        $this->access->requireAdmin();
+
         /** @var list<string> $roles */
         $roles = self::arrayField($request, 'roles');
 
@@ -181,6 +204,11 @@ final readonly class IdentityController
 
     public function createApiKey(Request $request): JsonResponse
     {
+        $username = self::field($request, 'username') ?: $this->currentUserIdentifier();
+        if (!$this->access->ownsOrAdmin($username)) {
+            throw new AccessDeniedHttpException();
+        }
+
         /** @var list<string> $roles */
         $roles = self::arrayField($request, 'roles');
         $expires = self::field($request, 'expiresAt');
@@ -188,7 +216,7 @@ final readonly class IdentityController
         try {
             $issued = $this->apiKeys->create(
                 self::field($request, 'name'),
-                self::field($request, 'username') ?: $this->currentUserIdentifier(),
+                $username,
                 $roles,
                 '' === $expires ? null : new \DateTimeImmutable($expires, new \DateTimeZone('UTC')),
                 $this->security->getUser()?->getUserIdentifier(),
@@ -209,19 +237,24 @@ final readonly class IdentityController
 
     public function listApiKeys(): JsonResponse
     {
-        return new JsonResponse(['keys' => array_map(self::describeKey(...), $this->apiKeys->all())]);
+        $keys = $this->access->isAdmin()
+            ? $this->apiKeys->all()
+            : $this->apiKeys->forUser($this->currentUserIdentifier());
+
+        return new JsonResponse(['keys' => array_map(self::describeKey(...), $keys)]);
     }
 
     public function rotateApiKey(int $id): JsonResponse
     {
-        $issued = $this->apiKeys->rotate($this->apiKey($id), $this->security->getUser()?->getUserIdentifier());
+        $key = $this->ownedApiKey($id);
+        $issued = $this->apiKeys->rotate($key, $this->security->getUser()?->getUserIdentifier());
 
         return new JsonResponse([...self::describeKey($issued['record']), 'key' => $issued['key']]);
     }
 
     public function revokeApiKey(int $id): JsonResponse
     {
-        $this->apiKeys->revoke($this->apiKey($id));
+        $this->apiKeys->revoke($this->ownedApiKey($id));
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
@@ -273,6 +306,17 @@ final readonly class IdentityController
         $key = $this->entityManager->find(ApiKey::class, $id);
 
         return $key instanceof ApiKey ? $key : throw new NotFoundHttpException('API key not found.');
+    }
+
+    private function ownedApiKey(int $id): ApiKey
+    {
+        $key = $this->apiKey($id);
+
+        if (!$this->access->ownsOrAdmin($key->getUserIdentifier())) {
+            throw new NotFoundHttpException('API key not found.');
+        }
+
+        return $key;
     }
 
     private function currentUserIdentifier(): string

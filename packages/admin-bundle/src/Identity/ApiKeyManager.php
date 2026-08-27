@@ -122,6 +122,18 @@ final readonly class ApiKeyManager
         return $keys;
     }
 
+    /** @return list<ApiKey> */
+    public function forUser(string $userIdentifier): array
+    {
+        /** @var list<ApiKey> $keys */
+        $keys = $this->entityManager->getRepository(ApiKey::class)->findBy(
+            ['userIdentifier' => $userIdentifier],
+            ['createdAt' => 'DESC'],
+        );
+
+        return $keys;
+    }
+
     public static function hash(string $plain): string
     {
         return hash('sha256', $plain);

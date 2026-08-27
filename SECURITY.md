@@ -36,13 +36,11 @@ Only the current minor line receives security fixes.
 
 | Line | Status |
 | --- | --- |
-| 0.15.x | Supported |
-| < 0.15 | Not supported — upgrade to 0.15.x |
+| 1.0.x | Supported |
+| < 1.0 | Not supported — upgrade to 1.0.x |
 
-These packages are pre-1.0. A minor bump may contain breaking changes, and
-older lines do not receive backports. If you need a fix, the upgrade path is
-forward. A longer support window will be declared with 1.0, not before —
-promising one now would be a commitment without a maintenance team behind it.
+The 1.0 line receives security fixes. Older 0.x lines do not receive backports.
+If you need a fix, the upgrade path is forward.
 
 The frontend counterpart, [`nubit-react`](https://github.com/nubitio/nubit-react),
 versions independently; `nubit-compatibility.json` in

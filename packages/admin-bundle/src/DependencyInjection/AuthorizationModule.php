@@ -37,7 +37,7 @@ final class AuthorizationModule
         $services->set(PermissionResolver::class)->arg('$superRoles', $config['super_roles'])->arg(
             '$catalog',
             service(PermissionCatalog::class),
-        );
+        )->arg('$roleHierarchy', service('security.role_hierarchy')->nullOnInvalid());
 
         $services->set(PermissionVoter::class)->tag('security.voter');
 

@@ -23,7 +23,10 @@ final class CurrentRecipientFilter extends SQLFilter
         }
 
         if (!$this->hasParameter('recipient')) {
-            return '';
+            // Fail closed: a worker or console query that forgot to set the
+            // recipient must not see everybody's inbox. HTTP requests get the
+            // parameter from CurrentRecipientFilterListener.
+            return '1=0';
         }
 
         return sprintf('%s.recipient = %s', $targetTableAlias, $this->getParameter('recipient'));

@@ -21,12 +21,12 @@ final class CurrentRecipientFilterTest extends TestCase
         static::assertSame('', $filter->addFilterConstraint($metadata, 't0'));
     }
 
-    public function testAddsNoConstraintWhenTheRecipientParameterIsNotSet(): void
+    public function testFailsClosedWhenTheRecipientParameterIsNotSet(): void
     {
         $filter = $this->makeFilter();
         $metadata = $this->makeMetadata(Notification::class);
 
-        static::assertSame('', $filter->addFilterConstraint($metadata, 't0'));
+        static::assertSame('1=0', $filter->addFilterConstraint($metadata, 't0'));
     }
 
     public function testConstrainsToTheRecipientParameterWhenSet(): void

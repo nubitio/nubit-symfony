@@ -100,10 +100,15 @@ final readonly class ExportJobController
             fclose($handle);
         });
 
-        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $extension = $this->writer->extension();
+        $basename = preg_replace('/[\r\n"\\\\]/', '', $job->getFilename()) ?: 'export';
+        $basename = (string) preg_replace('/\.[^.]+$/', '', $basename);
+
+        $response->headers->set('Content-Type', $this->writer->mediaType());
         $response->headers->set('Content-Disposition', sprintf(
-            'attachment; filename="%s.csv"',
-            addslashes($job->getFilename()),
+            'attachment; filename="%s.%s"',
+            $basename,
+            $extension,
         ));
 
         return $response;
