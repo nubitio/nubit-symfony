@@ -126,14 +126,20 @@ jobs:
       - name: Validate package manifest
         run: composer validate --strict
 
+      # Each sibling is wired as a path repository with an explicit version,
+      # because a path repo has no tag to infer one from. That version has to
+      # satisfy the internal constraints in the package manifests — when those
+      # moved to ^1.0 while this said 0.15.2, every isolation job failed to
+      # resolve. Keep SIBLING_VERSION at the line being developed.
       - name: Wire current sibling packages
+        env:
+          SIBLING_VERSION: '1.0.0'
         run: |
-          composer config repositories.local-platform '{"type":"path","url":"../platform","options":{"versions":{"nubitio/platform":"0.15.2"}}}'
-          composer config repositories.local-api-platform '{"type":"path","url":"../api-platform","options":{"versions":{"nubitio/api-platform":"0.15.2"}}}'
-          composer config repositories.local-admin-bundle '{"type":"path","url":"../admin-bundle","options":{"versions":{"nubitio/admin-bundle":"0.15.2"}}}'
-          composer config repositories.local-sequence-bundle '{"type":"path","url":"../sequence-bundle","options":{"versions":{"nubitio/sequence-bundle":"0.15.2"}}}'
-          composer config repositories.local-tenant-bundle '{"type":"path","url":"../tenant-bundle","options":{"versions":{"nubitio/tenant-bundle":"0.15.2"}}}'
-          composer config repositories.local-workflow-bundle '{"type":"path","url":"../workflow-bundle","options":{"versions":{"nubitio/workflow-bundle":"0.15.2"}}}'
+          set -eu
+          for package in platform api-platform admin-bundle sequence-bundle tenant-bundle workflow-bundle; do
+            composer config "repositories.local-$package" \
+              "{\"type\":\"path\",\"url\":\"../$package\",\"options\":{\"versions\":{\"nubitio/$package\":\"$SIBLING_VERSION\"}}}"
+          done
 
       - name: Install package in isolation
         run: composer install --no-interaction --prefer-dist
