@@ -30,6 +30,9 @@ Until Packagist listing, consume via VCS repositories:
 }
 ```
 
+Coming from `0.15.x`? [`UPGRADE-1.0.md`](UPGRADE-1.0.md) covers the one required
+migration and the one storage default that changed.
+
 ## The contract with @nubitio/hydra
 
 Annotate an entity and the React frontend renders a full CRUD page for it:
