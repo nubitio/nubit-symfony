@@ -20,10 +20,7 @@ final readonly class PasswordPolicy
     public static function assertAcceptable(string $plainPassword): void
     {
         if (strlen($plainPassword) < self::MIN_LENGTH) {
-            throw new IdentityException(sprintf(
-                'Passwords must be at least %d characters.',
-                self::MIN_LENGTH,
-            ));
+            throw new IdentityException(sprintf('Passwords must be at least %d characters.', self::MIN_LENGTH));
         }
     }
 }

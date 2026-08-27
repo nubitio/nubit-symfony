@@ -13,6 +13,54 @@ message = "Assigning `mixed` type to a variable may lead to unexpected behavior.
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/Authorization/PermissionResolver.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Authorization/PermissionResolver.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$existing`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Authorization/PermissionResolver.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$roles`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Authorization/PermissionVoter.php"
+code = "ambiguous-object-property-access"
+message = "Cannot statically verify property access on a generic `object` type."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Authorization/PermissionVoter.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Authorization/PermissionVoter.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Authorization/RowScopeApplier.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`string`); its specific value cannot be statically determined."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Authorization/RowScopeApplier.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
 code = "ambiguous-object-method-access"
 message = "Cannot statically verify method call on a generic `object` type."
@@ -133,6 +181,42 @@ message = "Left operand in `<` comparison has `mixed` type."
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
+code = "ambiguous-object-property-access"
+message = "Cannot statically verify property access on a generic `object` type."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$documents`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$resourceClass`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/src/EmbeddedLines/Controller/EmbeddedLinesController.php"
 code = "redundant-docblock-type"
 message = "Redundant docblock type for variable `$entityClass`."
@@ -154,6 +238,150 @@ count = 2
 file = "packages/admin-bundle/src/EmbeddedLines/EmbeddedLinesRowSerializer.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Export/Entity/ExportJob.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$class`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Export/EventListener/ExportContentDispositionListener.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Export/ExportRequestService.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$jobs`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Export/ExportRowMapper.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Export/ExportableResourceMetadataFactory.php"
+code = "impossible-condition"
+message = "This condition (type `false`) will always evaluate to false."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Export/ExportableResourceMetadataFactory.php"
+code = "invalid-type-cast"
+message = "Casting `mixed` to `array`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Export/ExportableResourceMetadataFactory.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Identity/ApiKeyManager.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$keys`."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Identity/Controller/IdentityController.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Identity/Controller/IdentityController.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$roles`."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Identity/DoctrineIdentityUserGateway.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Identity/DoctrineIdentityUserGateway.php"
+code = "unsafe-instantiation"
+message = 'Potentially unsafe instantiation: `class-string<Symfony\Component\Security\Core\User\UserInterface>` may contain the interface `Symfony\Component\Security\Core\User\UserInterface` itself, which cannot be instantiated.'
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/Controller/ImportController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/ImportRunner.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/ImportRunner.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/Reader/CsvRowReader.php"
+code = "impossible-null-type-comparison"
+message = "Impossible condition: variable `$row` (type `array<array-key, mixed>`) can never be `null`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/Reader/CsvRowReader.php"
+code = "impossible-null-type-comparison"
+message = "Impossible condition: variable `$row` (type `array<array-key, mixed>`) will always be `null`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/Reader/CsvRowReader.php"
+code = "redundant-comparison"
+message = "Redundant `===` comparison: left-hand side is never identical to right-hand side."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/Reader/CsvRowReader.php"
+code = "redundant-logical-operation"
+message = "Redundant `||` operation: left operand is always false and right operand is evaluated."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/Reader/CsvRowReader.php"
+code = "redundant-logical-operation"
+message = "Redundant `||` operation: left operand is evaluated and right operand is always falsy."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/ValueCoercer.php"
+code = "possibly-false-operand"
+message = "Left operand in `<=` comparison might be `false` (type `false|positive-int`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/ValueCoercer.php"
+code = "possibly-false-operand"
+message = "Left operand in `>` comparison might be `false` (type `false|non-negative-int`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/ValueCoercer.php"
+code = "possibly-false-operand"
+message = "Right operand in arithmetic operation might be `false` (type `false|non-negative-int`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/ValueCoercer.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$matches`."
 count = 1
 
 [[issues]]
@@ -253,6 +481,48 @@ message = "Left operand in arithmetic operation might be `false` (type `false|no
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/OpenApi/GridScaleDocumentationNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/GridScaleDocumentationNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/GridScaleDocumentationNormalizer.php"
+code = "possibly-false-operand"
+message = "Left operand in arithmetic operation might be `false` (type `false|non-negative-int`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/ImportableDocumentationNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/ImportableDocumentationNormalizer.php"
+code = "possibly-false-operand"
+message = "Left operand in arithmetic operation might be `false` (type `false|non-negative-int`)."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/PrintableDocumentationNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/PrintableDocumentationNormalizer.php"
+code = "possibly-false-operand"
+message = "Left operand in arithmetic operation might be `false` (type `false|non-negative-int`)."
+count = 2
+
+[[issues]]
 file = "packages/admin-bundle/src/State/AbstractEmbeddedLinesProcessor.php"
 code = "mixed-argument"
 message = 'Invalid argument type for argument #1 of `Nubit\AdminBundle\State\AbstractEmbeddedLinesProcessor::readProperty`: expected `object`, but found `mixed`.'
@@ -337,6 +607,18 @@ message = "Possibly using `null` as an array index to access elementof variable 
 count = 2
 
 [[issues]]
+file = "packages/admin-bundle/tests/Export/ExportContentDispositionListenerTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/tests/Export/ExportableResourceMetadataFactoryTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php"
 code = "invalid-return-statement"
 message = "Invalid return type for function `{anonymous-class:packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php:126:16}::getUserIdentifier`: expected `non-empty-string`, but found `string`."
@@ -363,80 +645,8 @@ count = 1
 [[issues]]
 file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
 code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::dqlOperator`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::valueForOperator`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #2 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::findVirtualField`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #2 of `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::uniqueParameterName`: expected `string`, but found `mixed`.'
-count = 3
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #2 of `Nubit\ApiPlatform\Doctrine\Filter\GridFilterHelper::uniqueParameterName`: expected `string`, but found `nonnull`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
 message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
-count = 5
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::applyFilter`: expected `array<int, mixed>`, but found `mixed`.'
 count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::applySort`: expected `array<int, mixed>`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::resolveFieldExpression`: expected `string`, but found `mixed`.'
-count = 2
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter::resolveFieldExpression`: expected `string`, but found `nonnull`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #3 of `Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface::applyFilter`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #4 of `Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface::applyFilter`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
-code = "mixed-array-access"
-message = "Unsafe array access on type `mixed`."
-count = 3
 
 [[issues]]
 file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
@@ -448,7 +658,7 @@ count = 7
 file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
 code = "mixed-assignment"
 message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
-count = 1
+count = 2
 
 [[issues]]
 file = "packages/api-platform/src/Doctrine/Filter/GridFilterHelper.php"
@@ -475,10 +685,22 @@ message = 'Could not infer a precise return type for function `Nubit\ApiPlatform
 count = 1
 
 [[issues]]
+file = "packages/api-platform/src/Doctrine/GridScaleRegistry.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Type/UtcDateTimeImmutableType.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$converted`."
+count = 1
+
+[[issues]]
 file = "packages/api-platform/src/Http/ApiResponseListener.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 2
+count = 3
 
 [[issues]]
 file = "packages/api-platform/src/Http/ApiResponseListener.php"
@@ -551,6 +773,12 @@ file = "packages/api-platform/src/OpenApi/TranslatedDocumentationNormalizer.php"
 code = "mixed-property-type-coercion"
 message = "A value with a less specific type `array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
 count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Serializer/MoneyNormalizer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
 
 [[issues]]
 file = "packages/api-platform/tests/Doctrine/Filter/GridFilterHelperTest.php"
@@ -650,6 +878,18 @@ count = 1
 
 [[issues]]
 file = "packages/platform/src/Export/XlsCellWriter.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsCellWriter.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Export/XlsCellWriter.php"
 code = "mixed-operand"
 message = "Casting `mixed` to `bool`."
 count = 1
@@ -718,6 +958,36 @@ count = 1
 file = "packages/platform/src/Messenger/TenantContextMiddleware.php"
 code = "redundant-docblock-type"
 message = "Redundant docblock type for variable `$stamp`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Money/Internal/Decimal.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$matches`."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Money/Internal/IntegerMath.php"
+code = "match-arm-always-true"
+message = "This match arm is always true, making subsequent arms unreachable."
+count = 1
+
+[[issues]]
+file = "packages/platform/src/Money/Internal/IntegerMath.php"
+code = "redundant-condition"
+message = "Redundant ternary operator: condition is always truthy."
+count = 3
+
+[[issues]]
+file = "packages/platform/src/Money/Internal/IntegerMath.php"
+code = "redundant-type-comparison"
+message = "Redundant type assertion: `$result` is already `int`."
+count = 3
+
+[[issues]]
+file = "packages/platform/src/Money/Internal/IntegerMath.php"
+code = "unreachable-match-arm"
+message = "This match arm is unreachable."
 count = 1
 
 [[issues]]
@@ -883,6 +1153,12 @@ message = "Assigning `mixed` type to a variable may lead to unexpected behavior.
 count = 1
 
 [[issues]]
+file = "packages/sequence-bundle/src/NubitSequenceBundle.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
 file = "packages/sequence-bundle/src/OpenApi/SequenceDocumentationNormalizer.php"
 code = "invalid-return-statement"
 message = '''Invalid return type for function `Nubit\SequenceBundle\OpenApi\SequenceDocumentationNormalizer::getSupportedTypes`: expected `array<class-string, bool>`, but found `array<class-string|string|string('*')|string('object'), bool|null>`.'''
@@ -1034,6 +1310,12 @@ count = 2
 
 [[issues]]
 file = "packages/tenant-bundle/src/NubitTenantBundle.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/src/NubitTenantBundle.php"
 code = "mixed-operand"
 message = "Casting `mixed` to `bool`."
 count = 1
@@ -1157,3 +1439,135 @@ file = "packages/workflow-bundle/tests/WorkflowEngineTest.php"
 code = "ambiguous-object-property-access"
 message = "Cannot statically verify property access on a generic `object` type."
 count = 2
+
+[[issues]]
+file = "tests/Integration/ApiPlatform/DataGridFilterTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Auth/JwtAuthenticationTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Authorization/PermissionTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 7
+
+[[issues]]
+file = "tests/Integration/Authorization/PermissionTest.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Document/IssuedDocumentTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "tests/Integration/Document/IssuedDocumentTest.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Document/QueuedDocumentTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "tests/Integration/Fixture/Controller/TestQueryController.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Identity/IdentityLifecycleTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 8
+
+[[issues]]
+file = "tests/Integration/Identity/IdentityLifecycleTest.php"
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$tokens`."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Import/SpreadsheetImportTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "tests/Integration/IntegrationTestCase.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 7
+
+[[issues]]
+file = "tests/Integration/Money/MoneyRoundTripTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 8
+
+[[issues]]
+file = "tests/Integration/Money/MoneyRoundTripTest.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Money/UtcStorageTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Scale/GridScaleTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 6
+
+[[issues]]
+file = "tests/Integration/Scale/GridScaleTest.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Scale/QueuedExportTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Scale/XlsxExportTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Tenant/ColumnIsolationTest.php"
+code = "write-only-property"
+message = "Property `$noteIds` is written to but never read."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Tenant/SchemaIsolationTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "tests/Integration/TestKernel.php"
+code = "unsafe-instantiation"
+message = 'Potentially unsafe instantiation: `class-string<Symfony\Component\HttpKernel\Bundle\BundleInterface>` may contain the interface `Symfony\Component\HttpKernel\Bundle\BundleInterface` itself, which cannot be instantiated.'
+count = 1

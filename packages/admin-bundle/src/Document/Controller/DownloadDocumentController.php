@@ -53,11 +53,8 @@ final readonly class DownloadDocumentController
             ));
         }
 
-        $filename = preg_replace(
-            '/[\r\n"\\\\]/',
-            '',
-            $document->getDocumentNumber() ?? (string) $document->getId(),
-        ) ?: 'document';
+        $filename = preg_replace('/[\r\n"\\\\]/', '', $document->getDocumentNumber() ?? (string) $document->getId())
+        ?: 'document';
 
         return new Response($this->issuer->bytes($document), Response::HTTP_OK, [
             'Content-Type' => $document->getMediaType(),
