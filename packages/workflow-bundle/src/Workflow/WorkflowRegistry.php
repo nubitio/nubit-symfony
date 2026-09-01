@@ -104,6 +104,12 @@ final class WorkflowRegistry
                     if ($operation instanceof GetCollection) {
                         $template = $operation->getUriTemplate();
                         if (\is_string($template) && $template !== '') {
+                            // API Platform appends an optional `{._format}`
+                            // placeholder to the collection template; the
+                            // transition route builds its own path, so drop it
+                            // or it lands in the URL as a literal segment.
+                            $template = preg_replace('#\{\._format\}$#', '', $template) ?? $template;
+
                             return (
                                 $this->apiRoutePrefix . (str_starts_with($template, '/') ? $template : '/' . $template)
                             );

@@ -35,6 +35,23 @@ final class WorkflowRegistryTest extends TestCase
     }
 
     #[Test]
+    public function it_strips_the_api_platform_format_placeholder_from_the_uri_template(): void
+    {
+        // API Platform's own metadata carries the optional format suffix; if it
+        // survives into the route prefix the transition route path ends up as
+        // `/api/categories{._format}/{id}/transition/{name}`.
+        $registry = $this->createRegistry(WorkflowedCategory::class, new ApiResource(operations: [new GetCollection(
+            uriTemplate: '/categories{._format}',
+        )]));
+
+        $definition = $registry->getByEntityClass(WorkflowedCategory::class);
+
+        self::assertNotNull($definition);
+        self::assertSame('/api/categories', $definition->routePrefix);
+        self::assertSame('api_categories', $definition->routeKey);
+    }
+
+    #[Test]
     public function it_prefixes_a_uri_template_declared_without_a_leading_slash(): void
     {
         $registry = $this->createRegistry(WorkflowedCategory::class, new ApiResource(operations: [new GetCollection(

@@ -53,4 +53,8 @@ Transitions are exposed as:
 POST /api/orders/{id}/transition/{name}
 ```
 
+The route prefix is inferred from the resource's `GetCollection` URI template
+(`/api` + `/orders`). Pass `routePrefix: '/api/orders'` to the attribute only
+when you need to override that — e.g. a non-standard operation path.
+
 The Hydra API doc publishes `x-workflow` so `@nubitio/react-admin` can render row actions automatically.
