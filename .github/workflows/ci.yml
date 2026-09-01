@@ -133,7 +133,7 @@ jobs:
       # resolve. Keep SIBLING_VERSION at the line being developed.
       - name: Wire current sibling packages
         env:
-          SIBLING_VERSION: '1.0.0'
+          SIBLING_VERSION: '1.0.1'
         run: |
           set -eu
           for package in platform api-platform admin-bundle sequence-bundle tenant-bundle workflow-bundle; do
