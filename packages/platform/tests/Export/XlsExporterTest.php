@@ -7,10 +7,13 @@ namespace Nubit\Platform\Tests\Export;
 use Nubit\Platform\Export\XlsColumn;
 use Nubit\Platform\Export\XlsColumnSpec;
 use Nubit\Platform\Export\XlsExporter;
+use Nubit\Platform\Export\XlsExportTooLargeException;
 use Nubit\Platform\Export\XlsSheetOptions;
+use Nubit\Platform\Export\XlsSheetSpec;
 use Nubit\Platform\Export\XlsTableOptions;
 use Nubit\Platform\Export\XlsValidationSpec;
 use Nubit\Platform\Export\XlsWorkbookBuilder;
+use Nubit\Platform\Export\XlsWorkbookSpec;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Settings;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -220,6 +223,80 @@ final class XlsExporterTest extends TestCase
 
         static::assertSame(DataType::TYPE_NUMERIC, $sheet->getCell('B2')->getDataType());
         static::assertSame('=SUM(B2:B3)', $sheet->getCell('B4')->getValue());
+    }
+
+    public function testInlineExportRefusesADatasetOverTheRowLimit(): void
+    {
+        $exporter = new XlsExporter(maxInlineRows: 10);
+
+        $this->expectException(XlsExportTooLargeException::class);
+        $this->expectExceptionMessage('10-row limit');
+
+        $exporter->makeSpreadsheet($this->rows(11), ['n' => 'N']);
+    }
+
+    public function testInlineExportAcceptsADatasetAtTheRowLimit(): void
+    {
+        $exporter = new XlsExporter(maxInlineRows: 10);
+
+        $spreadsheet = $exporter->makeSpreadsheet($this->rows(10), ['n' => 'N']);
+
+        // Header (row 1) + the 10th (last) data row, no exception thrown.
+        static::assertSame('9', $spreadsheet->getActiveSheet()->getCell('A11')->getValue());
+    }
+
+    /**
+     * The check runs while rows are read, not after collecting them all, so a
+     * lazily-produced source (a database cursor, in production) is never
+     * fully materialized before the export is refused — the whole point of
+     * bounding memory rather than counting after the fact.
+     */
+    public function testTheLimitIsEnforcedWhileReadingAGenerator(): void
+    {
+        $seen = 0;
+        $rows = (function () use (&$seen): \Generator {
+            for ($i = 0; $i < 1_000; ++$i) {
+                ++$seen;
+                yield ['n' => (string) $i];
+            }
+        })();
+
+        $exporter = new XlsExporter(maxInlineRows: 5);
+
+        try {
+            $exporter->makeSpreadsheetFromIterable($rows, ['n' => 'N']);
+            static::fail('Expected XlsExportTooLargeException.');
+        } catch (XlsExportTooLargeException $exception) {
+            static::assertSame(5, $exception->maxRows);
+        }
+
+        static::assertLessThan(1_000, $seen, 'The generator was drained past the limit before failing.');
+    }
+
+    /** The limit sums rows across every sheet in a workbook, not per sheet. */
+    public function testTheLimitAppliesAcrossEverySheetInAWorkbook(): void
+    {
+        $exporter = new XlsExporter(maxInlineRows: 15);
+
+        $workbook = new XlsWorkbookSpec([
+            new XlsSheetSpec(rows: $this->rows(10), columns: ['n' => 'N']),
+            new XlsSheetSpec(rows: $this->rows(10), columns: ['n' => 'N']),
+        ]);
+
+        $this->expectException(XlsExportTooLargeException::class);
+
+        $exporter->makeWorkbook($workbook);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function rows(int $count): array
+    {
+        $rows = [];
+        for ($i = 0; $i < $count; ++$i) {
+            $rows[] = ['n' => (string) $i];
+        }
+
+        return $rows;
     }
 
     public function testCanInstallPsrCacheBeforeCreatingWorkbook(): void
