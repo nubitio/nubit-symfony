@@ -274,11 +274,11 @@ final class JwtAuthenticationTest extends IntegrationTestCase
      */
     public function testMobileRefreshWithTokenInBodyDoesNotRequireACsrfToken(): void
     {
-        $login = $this->jsonRequest(
-            'POST',
-            '/api/auth/login',
-            body: ['username' => self::EMAIL, 'password' => self::PASSWORD, 'response_mode' => 'json'],
-        );
+        $login = $this->jsonRequest('POST', '/api/auth/login', body: [
+            'username' => self::EMAIL,
+            'password' => self::PASSWORD,
+            'response_mode' => 'json',
+        ]);
         self::assertSame(Response::HTTP_OK, $login->getStatusCode());
 
         /** @var array{refreshToken: string} $payload */
