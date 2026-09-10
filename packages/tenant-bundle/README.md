@@ -1,5 +1,7 @@
 # @nubitio/tenant-bundle
 
+> **Read-only split** of [`nubitio/nubit-symfony`](https://github.com/nubitio/nubit-symfony). Open issues and pull requests there. Commits here are overwritten on every split from `main`.
+
 Opt-in multi-tenancy for Nubit Symfony apps: **column mode** (shared DB + Doctrine filter), **database mode** (per-tenant DSN), **schema mode** (PostgreSQL `search_path`), or **hybrid** routing, plus optional plan quota enforcement.
 
 ## Install

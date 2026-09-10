@@ -1,5 +1,7 @@
 # nubitio/sequence-bundle
 
+> **Read-only split** of [`nubitio/nubit-symfony`](https://github.com/nubitio/nubit-symfony). Open issues and pull requests there. Commits here are overwritten on every split from `main`.
+
 Opt-in atomic numbering for document fields.
 
 ## Install
