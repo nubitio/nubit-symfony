@@ -502,6 +502,109 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         self::assertNotNull($reloaded->getLastUsedAt());
     }
 
+    // ── API key scope enforcement ───────────────────────────────────────────
+
+    /**
+     * self::EMAIL is seeded with ROLE_ADMIN. A key scoped to ROLE_USER only
+     * must not be able to reach an admin-only route through it, even though
+     * the principal behind the key could.
+     */
+    public function testAKeyScopedBelowTheAdminRoleCannotReachAnAdminOnlyRoute(): void
+    {
+        $issued = $this->apiKeys()->create('Warehouse scanner', self::EMAIL, ['ROLE_USER']);
+
+        $response = $this->send('POST', '/api/invitations', apiKey: $issued['key'], body: [
+            'email' => 'newcomer@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** The same key still reaches a route that only needs the scope it was given. */
+    public function testAKeyScopedBelowTheAdminRoleCanStillReachAnUnprivilegedRoute(): void
+    {
+        $issued = $this->apiKeys()->create('Warehouse scanner', self::EMAIL, ['ROLE_USER']);
+
+        $response = $this->send('GET', '/api/me', apiKey: $issued['key']);
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** A key scoped to include ROLE_ADMIN keeps the privilege the principal already holds. */
+    public function testAKeyScopedToTheAdminRoleReachesTheAdminOnlyRoute(): void
+    {
+        $issued = $this->apiKeys()->create('Warehouse scanner', self::EMAIL, ['ROLE_ADMIN']);
+
+        $response = $this->send('POST', '/api/invitations', apiKey: $issued['key'], body: [
+            'email' => 'newcomer@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** No declared scope means the key inherits the principal unrestricted — never wider than it already is. */
+    public function testAKeyWithNoDeclaredScopeInheritsThePrincipalUnrestricted(): void
+    {
+        $issued = $this->apiKeys()->create('Warehouse scanner', self::EMAIL);
+
+        $response = $this->send('POST', '/api/invitations', apiKey: $issued['key'], body: [
+            'email' => 'newcomer@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /**
+     * A role a key never had stays absent even if the principal is later
+     * promoted: scope is recomputed against the principal's live roles on
+     * every request, but only ever narrows, never restores what the key
+     * itself was not given.
+     */
+    public function testARoleAbsentFromTheKeysScopeStaysAbsentAfterThePrincipalIsPromoted(): void
+    {
+        $this->seedUser('clerk@example.com', ['ROLE_USER']);
+        $issued = $this->apiKeys()->create('Warehouse scanner', 'clerk@example.com', ['ROLE_USER']);
+
+        // Promote the principal to admin after the key was scoped down.
+        $user = $this->entityManager()->getRepository(TestUser::class)->findOneBy(['email' => 'clerk@example.com']);
+        self::assertInstanceOf(TestUser::class, $user);
+        $user->setRoles(['ROLE_USER', 'ROLE_ADMIN']);
+        $this->entityManager()->flush();
+        $this->entityManager()->clear();
+
+        $response = $this->send('POST', '/api/invitations', apiKey: $issued['key'], body: [
+            'email' => 'newcomer@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    public function testCreatingAnApiKeyCannotGrantARoleTheIssuerDoesNotHold(): void
+    {
+        $this->seedUser('clerk@example.com', ['ROLE_USER']);
+        $token = $this->accessToken('clerk@example.com');
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Escalation attempt',
+            'roles' => ['ROLE_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    public function testCreatingAnApiKeyWithARoleTheIssuerHoldsSucceeds(): void
+    {
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Scoped integration',
+            'roles' => ['ROLE_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame(['ROLE_ADMIN'], $this->json($response)['roles']);
+    }
+
     // ── Sessions ──────────────────────────────────────────────────────────
 
     public function testSigningInOpensAListableSession(): void

@@ -213,6 +213,11 @@ final readonly class IdentityController
         $roles = self::arrayField($request, 'roles');
         $expires = self::field($request, 'expiresAt');
 
+        // A key's role scope is a restriction on the principal it acts as,
+        // not a grant of its own — so it can never be wider than what the
+        // caller minting it is themselves allowed to wield.
+        $this->access->assertRolesWithinAuthority($roles);
+
         try {
             $issued = $this->apiKeys->create(
                 self::field($request, 'name'),
