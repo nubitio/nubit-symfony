@@ -1,5 +1,7 @@
 # nubitio/admin-bundle
 
+> **Read-only split** of [`nubitio/nubit-symfony`](https://github.com/nubitio/nubit-symfony). Open issues and pull requests there. Commits here are overwritten on every split from `main`.
+
 One-line backend for the Nubit admin stack. Install it, point [`@nubitio/react-admin`](https://www.npmjs.com/package/@nubitio/react-admin) at your API, and you have a CRUD admin system.
 
 ```bash

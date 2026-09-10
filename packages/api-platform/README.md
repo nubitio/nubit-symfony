@@ -1,5 +1,7 @@
 # nubitio/api-platform
 
+> **Read-only split** of [`nubitio/nubit-symfony`](https://github.com/nubitio/nubit-symfony). Open issues and pull requests there. Commits here are overwritten on every split from `main`.
+
 API Platform bridge for the Nubit admin stack: everything a Symfony backend needs so [`@nubitio/react-admin`](https://www.npmjs.com/package/@nubitio/react-admin) can auto-generate CRUD screens from your API docs.
 
 ```bash
