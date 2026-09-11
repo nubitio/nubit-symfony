@@ -106,6 +106,18 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
  */
 final class NubitAdminBundle extends AbstractBundle
 {
+    /**
+     * Server-side ceiling on `itemsPerPage` for every grid, applied whether or
+     * not a resource opts into `paginationClientItemsPerPage`. Unset, API
+     * Platform's own default is unbounded — a client can ask for the whole
+     * table in one page, which is exactly the unbounded-query risk this bundle
+     * otherwise guards against with `ApproximateCounter` and cursor pagination.
+     * Application-level `api_platform.yaml` still wins (this is prepended),
+     * and a resource can still raise or lower it per-operation via
+     * `paginationMaximumItemsPerPage`.
+     */
+    private const int DEFAULT_MAX_ITEMS_PER_PAGE = 200;
+
     public function configure(DefinitionConfigurator $definition): void
     {
         $definition
@@ -679,7 +691,7 @@ final class NubitAdminBundle extends AbstractBundle
             'api_platform.hydra.normalizer.documentation',
             priority: -40,
         )->arg('$inner', service('.inner'));
-        $services->set(GridSummaryCalculator::class);
+        $services->set(GridSummaryCalculator::class)->arg('$filterLocator', service('api_platform.filter_locator'));
         $services->set(ApiResponseListener::class)->arg('$gridScales', service(GridScaleRegistry::class))->arg(
             '$approximateCounter',
             service(ApproximateCounter::class),
@@ -933,6 +945,9 @@ final class NubitAdminBundle extends AbstractBundle
                     'jsonopenapi' => ['application/vnd.openapi+json'],
                     'json' => ['application/json'],
                     'html' => ['text/html'],
+                ],
+                'defaults' => [
+                    'pagination_maximum_items_per_page' => self::DEFAULT_MAX_ITEMS_PER_PAGE,
                 ],
             ]);
         }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\Tests\Integration\Fixture\Entity;
 
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -17,10 +18,16 @@ use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
  * searchable field, and PostgreSQL refuses `LIKE` on numeric, date and boolean
  * columns outright — a resource made only of strings would pass while real
  * ERP resources 500.
+ *
+ * `total` is marked summable so `GridSummaryCalculatorTest` can assert that a
+ * filtered grid's `X-Grid-Summary` total matches the filtered rows rather than
+ * the whole table.
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'fixture_invoice')]
-#[ApiResource(operations: [new GetCollection(paginationClientItemsPerPage: true)])]
+#[ApiResource(operations: [new GetCollection(paginationClientItemsPerPage: true)], extraProperties: ['x-crud' => [
+    'summary' => true,
+]])]
 #[ApiFilter(DataGridFilter::class)]
 class Invoice implements FixtureEntity
 {
@@ -37,6 +44,7 @@ class Invoice implements FixtureEntity
 
     /** Decimal, not float: the column type an ERP actually uses for money. */
     #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    #[ApiProperty(openapiContext: ['x-crud' => ['summable' => true, 'summaryType' => 'sum']])]
     public string $total = '0.00';
 
     #[ORM\Column(type: 'date_immutable')]

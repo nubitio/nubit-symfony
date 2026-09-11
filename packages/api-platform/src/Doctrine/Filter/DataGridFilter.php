@@ -108,6 +108,8 @@ class DataGridFilter extends AbstractFilter
                 return;
             }
 
+            $value = self::boundSearchValue($value);
+
             $orX = $queryBuilder->expr()->orX();
             foreach ($fields as $field) {
                 $orX->add($this->searchComparison($queryBuilder, $resourceClass, $field, $value));
@@ -182,6 +184,29 @@ class DataGridFilter extends AbstractFilter
 
     /** Doctrine field types that PostgreSQL already compares with `LIKE`. */
     private const array STRING_FIELD_TYPES = ['string', 'text', 'ascii_string', 'guid'];
+
+    /**
+     * Caps how much text one global-search `LIKE` pattern scans.
+     *
+     * `searchValue` runs against every field named in `searchExpr` at once —
+     * that is the point of a global search — so an unbounded value (megabytes
+     * of text pasted into a search box) turns one request into a sequential
+     * scan comparing an oversized pattern against every field, every row. Real
+     * search terms are a handful of words; anything past this length is
+     * truncated rather than rejected, so a client that worked before keeps
+     * working with a merely less specific match instead of a slow request or
+     * a 500 from an implementation-defined parameter size limit.
+     */
+    private const int MAX_SEARCH_VALUE_LENGTH = 200;
+
+    private static function boundSearchValue(mixed $value): mixed
+    {
+        if (!is_string($value) || mb_strlen($value) <= self::MAX_SEARCH_VALUE_LENGTH) {
+            return $value;
+        }
+
+        return mb_substr($value, 0, self::MAX_SEARCH_VALUE_LENGTH);
+    }
 
     /** @return ClassMetadata<object>|null */
     private function fieldMetadata(string $resourceClass): ?ClassMetadata
