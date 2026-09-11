@@ -161,7 +161,12 @@ final readonly class GridSummaryCalculator
         }
 
         $filters = $request->attributes->get('_api_filters');
-        $context = ['filters' => \is_array($filters) ? $filters : $request->query->all()];
+        if (!\is_array($filters)) {
+            $filters = $request->query->all();
+        }
+
+        /** @var array<string, mixed> $filters */
+        $context = ['filters' => $filters];
 
         $queryNameGenerator = new QueryNameGenerator();
 

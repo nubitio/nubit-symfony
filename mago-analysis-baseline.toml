@@ -31,6 +31,12 @@ message = "Redundant docblock type for variable `$roles`."
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/Authorization/PermissionSecurityMetadataFactory.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$resourceClass` of `Nubit\AdminBundle\Authorization\PermissionSecurityMetadataFactory::create()` expects type `class-string` but parent `ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface::create()` expects type `class-string|string`'
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/src/Authorization/PermissionVoter.php"
 code = "ambiguous-object-property-access"
 message = "Cannot statically verify property access on a generic `object` type."
@@ -181,6 +187,12 @@ message = "Left operand in `<` comparison has `mixed` type."
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/Document/Controller/DownloadDocumentController.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Nubit\AdminBundle\Authorization\PermissionCatalog::prefixFor`: expected `class-string`, but possibly received `string`.'
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
 code = "ambiguous-object-property-access"
 message = "Cannot statically verify property access on a generic `object` type."
@@ -200,12 +212,6 @@ count = 1
 
 [[issues]]
 file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
-code = "redundant-docblock-type"
-message = "Redundant docblock type for variable `$resourceClass`."
-count = 1
-
-[[issues]]
-file = "packages/admin-bundle/src/Document/DocumentIssuer.php"
 code = "string-member-selector"
 message = "This member selector uses a non-literal string type (`string`); its specific value cannot be statically determined."
 count = 1
@@ -217,9 +223,15 @@ message = "This member selector uses a non-literal string type (`truthy-string`)
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/Document/PrintableRegistry.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Nubit\AdminBundle\Document\PrintableRegistry::normalizeClass`: expected `class-string`, but found `string`.'
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/src/EmbeddedLines/Controller/EmbeddedLinesController.php"
-code = "redundant-docblock-type"
-message = "Redundant docblock type for variable `$entityClass`."
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Doctrine\Persistence\ManagerRegistry::getManagerForClass`: expected `class-string`, but possibly received `string`.'
 count = 1
 
 [[issues]]
@@ -241,9 +253,9 @@ message = "Assigning `mixed` type to a variable may lead to unexpected behavior.
 count = 1
 
 [[issues]]
-file = "packages/admin-bundle/src/Export/Entity/ExportJob.php"
-code = "redundant-docblock-type"
-message = "Redundant docblock type for variable `$class`."
+file = "packages/admin-bundle/src/EmbeddedLines/EmbeddedLinesRowSerializer.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Doctrine\Persistence\ManagerRegistry::getManagerForClass`: expected `class-string`, but possibly received `string`.'
 count = 1
 
 [[issues]]
@@ -328,6 +340,12 @@ count = 2
 file = "packages/admin-bundle/src/Import/ImportRunner.php"
 code = "string-member-selector"
 message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/Import/ImportableRegistry.php"
+code = "invalid-property-assignment-value"
+message = 'Invalid type for property `$cache`: expected `array<class-string, Nubit\ApiPlatform\Attribute\Importable|null>`, but got `non-empty-array<class-string|string, Nubit\ApiPlatform\Attribute\Importable|null>`.'
 count = 1
 
 [[issues]]
@@ -436,7 +454,7 @@ count = 11
 file = "packages/admin-bundle/src/NubitAdminBundle.php"
 code = "mixed-operand"
 message = "Casting `mixed` to `bool`."
-count = 1
+count = 9
 
 [[issues]]
 file = "packages/admin-bundle/src/NubitAdminBundle.php"
@@ -496,6 +514,12 @@ count = 1
 file = "packages/admin-bundle/src/OpenApi/GridScaleDocumentationNormalizer.php"
 code = "possibly-false-operand"
 message = "Left operand in arithmetic operation might be `false` (type `false|non-negative-int`)."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/OpenApi/GridScaleDocumentationNormalizer.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Nubit\AdminBundle\OpenApi\GridScaleDocumentationNormalizer::enforcedPagination`: expected `class-string`, but possibly received `string`.'
 count = 1
 
 [[issues]]
@@ -652,7 +676,7 @@ count = 1
 file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 7
+count = 8
 
 [[issues]]
 file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
@@ -736,12 +760,42 @@ count = 1
 file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 3
+count = 6
 
 [[issues]]
 file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
 code = "mixed-assignment"
 message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Doctrine\ORM\QueryBuilder::from`: expected `class-string`, but possibly received `string`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "redundant-logical-operation"
+message = "Redundant `||` operation: left operand is always false and right operand is evaluated."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "redundant-type-comparison"
+message = "Redundant condition: variable `$filterId` (type `string`) is already known to be `string`."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "redundant-type-comparison"
+message = "Redundant type assertion: `$filterId` is already `string`."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Metadata/MoneyPropertyMetadataFactory.php"
+code = "incompatible-parameter-type"
+message = 'Parameter `$resourceClass` of `Nubit\ApiPlatform\Metadata\MoneyPropertyMetadataFactory::create()` expects type `class-string` but parent `ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface::create()` expects type `class-string|string`'
 count = 1
 
 [[issues]]
@@ -771,7 +825,7 @@ count = 4
 [[issues]]
 file = "packages/api-platform/src/OpenApi/TranslatedDocumentationNormalizer.php"
 code = "mixed-property-type-coercion"
-message = "A value with a less specific type `array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
+message = "A value with a less specific type `non-empty-array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
 count = 1
 
 [[issues]]
@@ -779,6 +833,18 @@ file = "packages/api-platform/src/Serializer/MoneyNormalizer.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
 count = 4
+
+[[issues]]
+file = "packages/api-platform/tests/Doctrine/Filter/DataGridFilterTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/tests/Doctrine/Filter/DataGridFilterTest.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Doctrine\ORM\Mapping\ClassMetadata::__construct`: expected `class-string`, but possibly received `string`.'
+count = 1
 
 [[issues]]
 file = "packages/api-platform/tests/Doctrine/Filter/GridFilterHelperTest.php"
@@ -812,15 +878,9 @@ count = 2
 
 [[issues]]
 file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #2 of `PHPUnit\Framework\Assert::assertArrayNotHasKey`: expected `ArrayAccess<array-key, mixed>|array<array-key, mixed>`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
 code = "mixed-array-access"
 message = "Unsafe array access on type `mixed`."
-count = 11
+count = 3
 
 [[issues]]
 file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
@@ -1094,14 +1154,14 @@ count = 4
 
 [[issues]]
 file = "packages/platform/tests/Export/XlsExporterTest.php"
-code = "less-specific-nested-argument-type"
-message = 'Argument type mismatch for argument #1 of `Nubit\Platform\Export\XlsExporter::makeSpreadsheetFromIterable`: expected `iterable<mixed, array<string, mixed>>`, but provided type `Generator<mixed, mixed, mixed, mixed>` is less specific.'
-count = 1
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
 
 [[issues]]
 file = "packages/platform/tests/Export/XlsExporterTest.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$rows`."
 count = 2
 
 [[issues]]
@@ -1185,7 +1245,7 @@ count = 2
 [[issues]]
 file = "packages/sequence-bundle/src/OpenApi/SequenceDocumentationNormalizer.php"
 code = "mixed-property-type-coercion"
-message = "A value with a less specific type `array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
+message = "A value with a less specific type `non-empty-array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
 count = 1
 
 [[issues]]
@@ -1303,6 +1363,12 @@ message = "Invalid type for property `$updateParams`: expected `list<list<mixed>
 count = 1
 
 [[issues]]
+file = "packages/tenant-bundle/src/Doctrine/Filter/TenantFilter.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Nubit\TenantBundle\Doctrine\Filter\TenantFilter::unscopedEntityClasses`: expected `list<class-string>`, but found `list<string>`.'
+count = 1
+
+[[issues]]
 file = "packages/tenant-bundle/src/EventListener/TenantStampListener.php"
 code = "string-member-selector"
 message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
@@ -1330,6 +1396,12 @@ count = 1
 file = "packages/tenant-bundle/tests/EventListener/QuotaEnforcementListenerTest.php"
 code = "less-specific-return-statement"
 message = 'Returned type `Doctrine\Persistence\Event\LifecycleEventArgs<Doctrine\Persistence\ObjectManager>&PHPUnit\Framework\MockObject\Stub` is less specific than the declared return type `Doctrine\Persistence\Event\LifecycleEventArgs<Doctrine\ORM\EntityManagerInterface>` for function `Nubit\TenantBundle\Tests\EventListener\QuotaEnforcementListenerTest::lifecycleArgs`.'
+count = 1
+
+[[issues]]
+file = "packages/tenant-bundle/tests/Provider/RegistryTenantDatabaseUrlProviderTest.php"
+code = "redundant-nullsafe-operator"
+message = "Redundant nullsafe operator (`?->`) used on an expression that is never `null`."
 count = 1
 
 [[issues]]
@@ -1383,7 +1455,7 @@ count = 2
 [[issues]]
 file = "packages/workflow-bundle/src/OpenApi/WorkflowDocumentationNormalizer.php"
 code = "mixed-property-type-coercion"
-message = "A value with a less specific type `array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
+message = "A value with a less specific type `non-empty-array<non-empty-string, ('V.iteratoraggregate extends mixed)>` is being assigned to property `$shortNameToClass` (array<string, string>|null)."
 count = 1
 
 [[issues]]
@@ -1442,6 +1514,12 @@ count = 2
 
 [[issues]]
 file = "tests/Integration/ApiPlatform/DataGridFilterTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "tests/Integration/ApiPlatform/GridSummaryCalculatorTest.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
 count = 2
@@ -1565,6 +1643,12 @@ file = "tests/Integration/Tenant/SchemaIsolationTest.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
 count = 2
+
+[[issues]]
+file = "tests/Integration/TestKernel.php"
+code = "deprecated-class"
+message = 'Class `Symfony\Component\HttpKernel\Bundle\BundleInterface` is deprecated and should no longer be used.'
+count = 1
 
 [[issues]]
 file = "tests/Integration/TestKernel.php"

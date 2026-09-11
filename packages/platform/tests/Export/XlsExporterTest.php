@@ -205,6 +205,7 @@ final class XlsExporterTest extends TestCase
 
     public function testSupportsIterableRowsWithConfiguredFields(): void
     {
+        /** @var \Generator<int, array<string, mixed>> $rows */
         $rows = (static function (): \Generator {
             yield ['name' => 'A', 'amount' => '10.00'];
             yield ['name' => 'B', 'amount' => '20.00'];
@@ -254,6 +255,7 @@ final class XlsExporterTest extends TestCase
     public function testTheLimitIsEnforcedWhileReadingAGenerator(): void
     {
         $seen = 0;
+        /** @var \Generator<int, array<string, mixed>> $rows */
         $rows = (function () use (&$seen): \Generator {
             for ($i = 0; $i < 1_000; ++$i) {
                 ++$seen;
