@@ -62,4 +62,28 @@ final readonly class PrivilegedAccess
     {
         return $this->identifier() === $ownerIdentifier || $this->isAdmin();
     }
+
+    /**
+     * Refuses a set of roles that reaches past what the caller already holds.
+     *
+     * Issuing a credential — an invitation, an API key — with a role the
+     * issuer does not themselves have is a privilege escalation regardless of
+     * who the credential is issued *for*: a clerk must not be able to mint an
+     * admin's API key any more than they could grant themselves ROLE_ADMIN
+     * directly. Checked with `isGranted()`, not a plain array comparison, so
+     * a role hierarchy is honoured the same way it would be anywhere else.
+     *
+     * @param list<string> $roles
+     */
+    public function assertRolesWithinAuthority(array $roles): void
+    {
+        foreach ($roles as $role) {
+            if (!$this->security->isGranted($role)) {
+                throw new AccessDeniedHttpException(\sprintf(
+                    'Cannot grant "%s": it is not part of your own roles.',
+                    $role,
+                ));
+            }
+        }
+    }
 }

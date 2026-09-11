@@ -402,6 +402,22 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
     }
 
+    /**
+     * Being an admin is what lets you invite at all — it is not a blank
+     * cheque for any role. self::EMAIL holds ROLE_ADMIN, not
+     * ROLE_SUPER_ADMIN, so inviting someone with the latter must be refused
+     * exactly like a clerk inviting an admin is.
+     */
+    public function testAnAdminCannotInviteWithARoleTheyDoNotHold(): void
+    {
+        $response = $this->send('POST', '/api/invitations', token: $this->accessToken(), body: [
+            'email' => 'newcomer@example.com',
+            'roles' => ['ROLE_SUPER_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
     /** The preview must not reveal anything for a token that is not valid. */
     public function testPreviewingAnUnknownInvitationIsNotFound(): void
     {
@@ -500,6 +516,174 @@ final class IdentityLifecycleTest extends IntegrationTestCase
 
         $reloaded = $this->apiKeys()->all()[0];
         self::assertNotNull($reloaded->getLastUsedAt());
+    }
+
+    // ── API key scope enforcement ───────────────────────────────────────────
+
+    /**
+     * self::EMAIL is seeded with ROLE_ADMIN. A key scoped to ROLE_USER only
+     * must not be able to reach an admin-only route through it, even though
+     * the principal behind the key could.
+     */
+    public function testAKeyScopedBelowTheAdminRoleCannotReachAnAdminOnlyRoute(): void
+    {
+        $issued = $this->apiKeys()->create('Warehouse scanner', self::EMAIL, ['ROLE_USER']);
+
+        $response = $this->send('POST', '/api/invitations', apiKey: $issued['key'], body: [
+            'email' => 'newcomer@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** The same key still reaches a route that only needs the scope it was given. */
+    public function testAKeyScopedBelowTheAdminRoleCanStillReachAnUnprivilegedRoute(): void
+    {
+        $issued = $this->apiKeys()->create('Warehouse scanner', self::EMAIL, ['ROLE_USER']);
+
+        $response = $this->send('GET', '/api/me', apiKey: $issued['key']);
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** A key scoped to include ROLE_ADMIN keeps the privilege the principal already holds. */
+    public function testAKeyScopedToTheAdminRoleReachesTheAdminOnlyRoute(): void
+    {
+        $issued = $this->apiKeys()->create('Warehouse scanner', self::EMAIL, ['ROLE_ADMIN']);
+
+        $response = $this->send('POST', '/api/invitations', apiKey: $issued['key'], body: [
+            'email' => 'newcomer@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** No declared scope means the key inherits the principal unrestricted — never wider than it already is. */
+    public function testAKeyWithNoDeclaredScopeInheritsThePrincipalUnrestricted(): void
+    {
+        $issued = $this->apiKeys()->create('Warehouse scanner', self::EMAIL);
+
+        $response = $this->send('POST', '/api/invitations', apiKey: $issued['key'], body: [
+            'email' => 'newcomer@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /**
+     * A role a key never had stays absent even if the principal is later
+     * promoted: scope is recomputed against the principal's live roles on
+     * every request, but only ever narrows, never restores what the key
+     * itself was not given.
+     */
+    public function testARoleAbsentFromTheKeysScopeStaysAbsentAfterThePrincipalIsPromoted(): void
+    {
+        $this->seedUser('clerk@example.com', ['ROLE_USER']);
+        $issued = $this->apiKeys()->create('Warehouse scanner', 'clerk@example.com', ['ROLE_USER']);
+
+        // Promote the principal to admin after the key was scoped down.
+        $user = $this->entityManager()->getRepository(TestUser::class)->findOneBy(['email' => 'clerk@example.com']);
+        self::assertInstanceOf(TestUser::class, $user);
+        $user->setRoles(['ROLE_USER', 'ROLE_ADMIN']);
+        $this->entityManager()->flush();
+        $this->entityManager()->clear();
+
+        $response = $this->send('POST', '/api/invitations', apiKey: $issued['key'], body: [
+            'email' => 'newcomer@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    public function testCreatingAnApiKeyCannotGrantARoleTheIssuerDoesNotHold(): void
+    {
+        $this->seedUser('clerk@example.com', ['ROLE_USER']);
+        $token = $this->accessToken('clerk@example.com');
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Escalation attempt',
+            'roles' => ['ROLE_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    public function testCreatingAnApiKeyWithARoleTheIssuerHoldsSucceeds(): void
+    {
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Scoped integration',
+            'roles' => ['ROLE_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame(['ROLE_ADMIN'], $this->json($response)['roles']);
+    }
+
+    /**
+     * `ownsOrAdmin()` lets an admin mint a key for anybody. Without a scope
+     * check on the *empty* case, that combination is a full privilege
+     * escalation: an admin who is not themselves a super-admin could mint an
+     * unscoped key for a super-admin account and then use that key to act
+     * with super-admin privileges — the exact bypass this issue is about.
+     * Omitting `roles` when acting on someone else's behalf must therefore be
+     * refused, not treated as "unrestricted".
+     */
+    public function testAnAdminCannotMintAnUnscopedKeyForAMorePrivilegedUser(): void
+    {
+        $this->seedUser('root@example.com', ['ROLE_SUPER_ADMIN']);
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Escalation via unscoped key',
+            'username' => 'root@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** Naming the escalated role explicitly is refused exactly as omitting it is. */
+    public function testAnAdminCannotMintAKeyForAnotherUserWithARoleTheyDoNotHold(): void
+    {
+        $this->seedUser('root@example.com', ['ROLE_SUPER_ADMIN']);
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Escalation attempt',
+            'username' => 'root@example.com',
+            'roles' => ['ROLE_SUPER_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** The legitimate case — a scope the issuer actually holds — keeps working. */
+    public function testAnAdminCanMintAScopedKeyForAnotherUser(): void
+    {
+        $this->seedUser('teammate@example.com', ['ROLE_USER']);
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Scoped for a teammate',
+            'username' => 'teammate@example.com',
+            'roles' => ['ROLE_USER'],
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** Omitting the scope is still fine when a caller mints a key for themselves. */
+    public function testAnUnscopedKeyForOneselfIsStillAllowed(): void
+    {
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Personal integration',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame([], $this->json($response)['roles']);
     }
 
     // ── Sessions ──────────────────────────────────────────────────────────
