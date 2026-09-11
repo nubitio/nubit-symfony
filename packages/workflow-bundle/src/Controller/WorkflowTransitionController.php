@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nubit\WorkflowBundle\Controller;
 
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
-use Doctrine\ORM\EntityManagerInterface;
+use Nubit\WorkflowBundle\Authorization\RowScopedEntityLoader;
 use Nubit\WorkflowBundle\Exception\WorkflowTransitionException;
 use Nubit\WorkflowBundle\Workflow\WorkflowEngine;
 use Nubit\WorkflowBundle\Workflow\WorkflowRegistry;
@@ -22,7 +22,7 @@ final readonly class WorkflowTransitionController
     public function __construct(
         private WorkflowRegistry $registry,
         private WorkflowEngine $engine,
-        private EntityManagerInterface $entityManager,
+        private RowScopedEntityLoader $entityLoader,
         private ResourceMetadataCollectionFactoryInterface $resourceMetadataFactory,
         private SerializerInterface&NormalizerInterface $serializer,
     ) {}
@@ -34,7 +34,14 @@ final readonly class WorkflowTransitionController
             throw WorkflowTransitionException::notFound($transition);
         }
 
-        $entity = $this->entityManager->getRepository($definition->entityClass)->find($id);
+        // Row-scope-aware, like the API Platform operations for this same
+        // entity class: a transition must not be reachable, by guessed id,
+        // for a row that the resource's own `Get` would have hidden. Tenant
+        // isolation still comes from the Doctrine filter this query goes
+        // through regardless.
+        /** @var class-string $entityClass */
+        $entityClass = $definition->entityClass;
+        $entity = $this->entityLoader->find($entityClass, $id);
         if (null === $entity) {
             return new JsonResponse(['message' => 'Not found.'], Response::HTTP_NOT_FOUND);
         }

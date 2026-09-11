@@ -7,6 +7,8 @@ namespace Nubit\AdminBundle\Audit\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Audit\Entity\AuditLog;
 use Nubit\AdminBundle\Authorization\PermissionResolver;
+use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
+use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
 use Nubit\AdminBundle\Security\PrivilegedAccess;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,12 +31,25 @@ final class AuditTrailController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly PrivilegedAccess $access,
+        private readonly ScopedEntityLocator $locator,
+        private readonly ResourceSegmentIndex $segments,
         private readonly ?PermissionResolver $permissions = null,
     ) {}
 
     public function __invoke(string $resource, string $id, Request $request): JsonResponse
     {
         $this->assertCanRead($resource);
+
+        // The trail is a read of the subject row: if the row is outside the
+        // caller's row scope, its history must be as unreachable as the row
+        // itself, or a small integer id becomes an enumeration oracle for
+        // field-level before/after diffs of rows the caller cannot see.
+        if (
+            $this->segments->knows($resource)
+            && null === $this->locator->find($this->segments->resolve($resource), $id)
+        ) {
+            return new JsonResponse([]);
+        }
 
         /** @var list<AuditLog> $rows */
         $rows = $this->entityManager

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Nubit\WorkflowBundle;
 
+use Nubit\ApiPlatform\Authorization\RowScopeApplier;
+use Nubit\ApiPlatform\Authorization\RowScopeRegistry;
+use Nubit\WorkflowBundle\Authorization\RowScopedEntityLoader;
 use Nubit\WorkflowBundle\Controller\WorkflowTransitionController;
 use Nubit\WorkflowBundle\OpenApi\WorkflowDocumentationNormalizer;
 use Nubit\WorkflowBundle\Routing\WorkflowRouteLoader;
@@ -55,6 +58,9 @@ final class NubitWorkflowBundle extends AbstractBundle
             'nubit.workflow_guard',
             indexAttribute: 'class',
         ));
+        $services->set(RowScopeRegistry::class);
+        $services->set(RowScopeApplier::class);
+        $services->set(RowScopedEntityLoader::class);
         $services->set(WorkflowTransitionController::class);
         $services->set(WorkflowRouteLoader::class)->tag('routing.loader', ['type' => 'nubit_workflow']);
 

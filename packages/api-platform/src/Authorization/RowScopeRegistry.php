@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Nubit\AdminBundle\Authorization;
+namespace Nubit\ApiPlatform\Authorization;
 
 use Nubit\ApiPlatform\Attribute\RowScoped;
 

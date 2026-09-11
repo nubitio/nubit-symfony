@@ -10,6 +10,7 @@ use Composer\Semver\VersionParser;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Nubit\AdminBundle\NubitAdminBundle;
 use Nubit\ApiPlatform\Document\DocumentRendererInterface;
+use Nubit\Tests\Integration\Fixture\Controller\ScopedFindController;
 use Nubit\Tests\Integration\Fixture\Controller\TestQueryController;
 use Nubit\Tests\Integration\Fixture\Document\InvoiceTemplate;
 use Nubit\Tests\Integration\Fixture\Document\RecordingRenderer;
@@ -175,6 +176,14 @@ final class TestKernel extends Kernel
 
         $services->set(TestQueryController::class)->autowire()->public()->tag('controller.service_arguments');
 
+        // ScopedEntityLocator (and the RowScopeApplier/RowScopeRegistry it
+        // depends on) is only registered when the admin bundle wires the
+        // authorization module, so this stand-in for a custom bundle route is
+        // registered the same way.
+        if (in_array(NubitAdminBundle::class, $this->extraBundles, true)) {
+            $services->set(ScopedFindController::class)->autowire()->public()->tag('controller.service_arguments');
+        }
+
         // Document fixtures. Registered unconditionally — unused private
         // services are pruned — and the renderer deliberately replaces the
         // bundled WeasyPrint one: the issuing rules under test are independent
@@ -204,6 +213,14 @@ final class TestKernel extends Kernel
         $routes->add('nubit_test_find', '/_test/find')->controller([TestQueryController::class, 'find']);
         $routes->add('nubit_test_join', '/_test/join')->controller([TestQueryController::class, 'join']);
         $routes->add('nubit_test_dql', '/_test/dql')->controller([TestQueryController::class, 'dql']);
+
+        if (in_array(NubitAdminBundle::class, $this->extraBundles, true)) {
+            // Under /api, not /_test, so it sits behind the same firewall a
+            // real custom bundle route (MediaFileController and friends) does
+            // in an application — the point under test is that authentication
+            // reaches this route the same way it reaches a generated one.
+            $routes->add('nubit_test_scoped_find', '/api/_test/scoped_find')->controller(ScopedFindController::class);
+        }
     }
 
     /**

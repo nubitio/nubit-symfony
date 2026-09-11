@@ -55,18 +55,6 @@ message = "This member selector uses a non-literal string type (`truthy-string`)
 count = 1
 
 [[issues]]
-file = "packages/admin-bundle/src/Authorization/RowScopeApplier.php"
-code = "string-member-selector"
-message = "This member selector uses a non-literal string type (`string`); its specific value cannot be statically determined."
-count = 2
-
-[[issues]]
-file = "packages/admin-bundle/src/Authorization/RowScopeApplier.php"
-code = "string-member-selector"
-message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
-count = 1
-
-[[issues]]
 file = "packages/admin-bundle/src/Command/DiscoverCommand.php"
 code = "ambiguous-object-method-access"
 message = "Cannot statically verify method call on a generic `object` type."
@@ -652,6 +640,18 @@ count = 1
 file = "packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php"
 code = "less-specific-nested-return-statement"
 message = "Returned type `array<array-key, mixed>` is less specific than the declared return type `array<array-key, string>` for function `{anonymous-class:packages/admin-bundle/tests/Session/DefaultMeResponseBuilderTest.php:126:16}::getRoles` due to nested 'mixed'."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Authorization/RowScopeApplier.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`string`); its specific value cannot be statically determined."
+count = 2
+
+[[issues]]
+file = "packages/api-platform/src/Authorization/RowScopeApplier.php"
+code = "string-member-selector"
+message = "This member selector uses a non-literal string type (`truthy-string`); its specific value cannot be statically determined."
 count = 1
 
 [[issues]]
@@ -1426,12 +1426,6 @@ count = 3
 file = "packages/workflow-bundle/src/Controller/WorkflowTransitionController.php"
 code = "less-specific-nested-return-statement"
 message = '''Returned type `list<mixed>` is less specific than the declared return type `list<string>` for function `Nubit\WorkflowBundle\Controller\WorkflowTransitionController::normalizationGroups` due to nested 'mixed'.'''
-count = 1
-
-[[issues]]
-file = "packages/workflow-bundle/src/Controller/WorkflowTransitionController.php"
-code = "possibly-invalid-argument"
-message = '''Possible argument type mismatch for argument #1 of `Doctrine\ORM\EntityManagerInterface::getRepository`: expected `class-string<'T.doctrine\orm\entitymanagerinterface::getrepository() extends object>`, but possibly received `string`.'''
 count = 1
 
 [[issues]]
