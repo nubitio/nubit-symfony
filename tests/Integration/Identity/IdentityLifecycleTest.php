@@ -402,6 +402,22 @@ final class IdentityLifecycleTest extends IntegrationTestCase
         self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
     }
 
+    /**
+     * Being an admin is what lets you invite at all — it is not a blank
+     * cheque for any role. self::EMAIL holds ROLE_ADMIN, not
+     * ROLE_SUPER_ADMIN, so inviting someone with the latter must be refused
+     * exactly like a clerk inviting an admin is.
+     */
+    public function testAnAdminCannotInviteWithARoleTheyDoNotHold(): void
+    {
+        $response = $this->send('POST', '/api/invitations', token: $this->accessToken(), body: [
+            'email' => 'newcomer@example.com',
+            'roles' => ['ROLE_SUPER_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
     /** The preview must not reveal anything for a token that is not valid. */
     public function testPreviewingAnUnknownInvitationIsNotFound(): void
     {
@@ -603,6 +619,71 @@ final class IdentityLifecycleTest extends IntegrationTestCase
 
         self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
         self::assertSame(['ROLE_ADMIN'], $this->json($response)['roles']);
+    }
+
+    /**
+     * `ownsOrAdmin()` lets an admin mint a key for anybody. Without a scope
+     * check on the *empty* case, that combination is a full privilege
+     * escalation: an admin who is not themselves a super-admin could mint an
+     * unscoped key for a super-admin account and then use that key to act
+     * with super-admin privileges — the exact bypass this issue is about.
+     * Omitting `roles` when acting on someone else's behalf must therefore be
+     * refused, not treated as "unrestricted".
+     */
+    public function testAnAdminCannotMintAnUnscopedKeyForAMorePrivilegedUser(): void
+    {
+        $this->seedUser('root@example.com', ['ROLE_SUPER_ADMIN']);
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Escalation via unscoped key',
+            'username' => 'root@example.com',
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** Naming the escalated role explicitly is refused exactly as omitting it is. */
+    public function testAnAdminCannotMintAKeyForAnotherUserWithARoleTheyDoNotHold(): void
+    {
+        $this->seedUser('root@example.com', ['ROLE_SUPER_ADMIN']);
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Escalation attempt',
+            'username' => 'root@example.com',
+            'roles' => ['ROLE_SUPER_ADMIN'],
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** The legitimate case — a scope the issuer actually holds — keeps working. */
+    public function testAnAdminCanMintAScopedKeyForAnotherUser(): void
+    {
+        $this->seedUser('teammate@example.com', ['ROLE_USER']);
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Scoped for a teammate',
+            'username' => 'teammate@example.com',
+            'roles' => ['ROLE_USER'],
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    /** Omitting the scope is still fine when a caller mints a key for themselves. */
+    public function testAnUnscopedKeyForOneselfIsStillAllowed(): void
+    {
+        $token = $this->accessToken();
+
+        $response = $this->send('POST', '/api/api-keys', token: $token, body: [
+            'name' => 'Personal integration',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame([], $this->json($response)['roles']);
     }
 
     // ── Sessions ──────────────────────────────────────────────────────────
