@@ -854,9 +854,15 @@ count = 2
 
 [[issues]]
 file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `PHPUnit\Framework\Assert::assertArrayNotHasKey`: expected `ArrayAccess<array-key, mixed>|array<array-key, mixed>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
 code = "mixed-array-access"
 message = "Unsafe array access on type `mixed`."
-count = 3
+count = 11
 
 [[issues]]
 file = "packages/api-platform/tests/Http/ExceptionListenerTest.php"
