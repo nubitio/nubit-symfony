@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\AdminBundle\Controller;
 
 use Nubit\AdminBundle\Auth\CookieFactory;
+use Nubit\AdminBundle\Auth\CsrfTokenPolicy;
 use Nubit\AdminBundle\Auth\JWTAuthenticator;
 use Nubit\AdminBundle\Auth\RefreshTokenStoreInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,6 +37,7 @@ final readonly class LogoutController
         $response = new JsonResponse(['message' => 'Logged out']);
         $response->headers->setCookie($this->cookieFactory->createExpiredCookie(JWTAuthenticator::AUTH_COOKIE));
         $response->headers->setCookie($this->cookieFactory->createExpiredCookie(JWTAuthenticator::REFRESH_COOKIE));
+        $response->headers->setCookie($this->cookieFactory->createExpiredCookie(CsrfTokenPolicy::COOKIE_NAME));
 
         return $response;
     }
