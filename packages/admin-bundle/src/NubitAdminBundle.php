@@ -7,6 +7,7 @@ namespace Nubit\AdminBundle;
 use Nubit\AdminBundle\Audit\AuditTrailListener;
 use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
 use Nubit\AdminBundle\Auth\CookieFactory;
+use Nubit\AdminBundle\Auth\CsrfProtectionListener;
 use Nubit\AdminBundle\Auth\DefaultTokenClaimsProvider;
 use Nubit\AdminBundle\Auth\DoctrineRefreshTokenStore;
 use Nubit\AdminBundle\Auth\JWTAuthenticator;
@@ -134,6 +135,12 @@ final class NubitAdminBundle extends AbstractBundle
             ->defaultValue(1209600)
             ->end()
             ->booleanNode('cookie_secure')
+            ->defaultTrue()
+            ->end()
+            ->booleanNode('csrf_protection')
+            ->info(
+                'Require a X-CSRF-Token header matching the CSRF_TOKEN cookie on POST/PUT/PATCH/DELETE requests authenticated via the AUTH_TOKEN/REFRESH_TOKEN cookie (double-submit policy). Bearer-token and X-Api-Key clients are never subject to it — only turn this off if CSRF is enforced some other way (e.g. at a reverse proxy).',
+            )
             ->defaultTrue()
             ->end()
             ->end()
@@ -706,7 +713,7 @@ final class NubitAdminBundle extends AbstractBundle
         }
 
         // ── Auth ─────────────────────────────────────────────────────────────
-        /** @var array{secret: string, access_token_ttl: int, refresh_token_ttl: int, cookie_secure: bool} $authConfig */
+        /** @var array{secret: string, access_token_ttl: int, refresh_token_ttl: int, cookie_secure: bool, csrf_protection: bool} $authConfig */
         $authConfig = $config['auth'];
 
         $services->set(JWTManager::class)->arg('$secret', $authConfig['secret']);
@@ -732,6 +739,8 @@ final class NubitAdminBundle extends AbstractBundle
         /** @var array{enabled: bool} $identityEnabled Read here because the authenticator is registered above the module. */
         $identityEnabled = $config['identity'];
         $services->set(JWTAuthenticator::class)->arg('$secondFactorEnabled', $identityEnabled['enabled']);
+
+        $services->set(CsrfProtectionListener::class)->arg('$enabled', $authConfig['csrf_protection']);
 
         $services->set(PurgeRefreshTokensCommand::class);
         $services->set(DiscoverCommand::class);

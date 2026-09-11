@@ -274,6 +274,15 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
             $tokenPair->refreshTokenExpiresAt,
         ));
 
+        // Double-submit CSRF token, valid for as long as the refresh cookie
+        // (the longer-lived of the two) so it never expires out from under a
+        // still-valid session — see CsrfProtectionListener.
+        $response->headers->setCookie($this->cookieFactory->createCsrfCookie(
+            CsrfTokenPolicy::COOKIE_NAME,
+            CsrfTokenPolicy::generate(),
+            $tokenPair->refreshTokenExpiresAt,
+        ));
+
         foreach ($this->responseDecorators as $decorator) {
             $decorator->decorate($response, $user, $tokenPair, $request);
         }

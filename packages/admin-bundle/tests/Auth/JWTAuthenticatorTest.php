@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\AdminBundle\Tests\Auth;
 
 use Nubit\AdminBundle\Auth\CookieFactory;
+use Nubit\AdminBundle\Auth\CsrfTokenPolicy;
 use Nubit\AdminBundle\Auth\DefaultTokenClaimsProvider;
 use Nubit\AdminBundle\Auth\JWTAuthenticator;
 use Nubit\AdminBundle\Auth\JWTManager;
@@ -14,7 +15,9 @@ use Nubit\AdminBundle\Auth\TokenGenerator;
 use Nubit\AdminBundle\Tests\Support\InMemoryRefreshTokenStore;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\InMemoryUser;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -121,5 +124,51 @@ final class JWTAuthenticatorTest extends TestCase
         $passport = $this->authenticator->authenticate($request);
 
         self::assertSame($pair->accessToken, $passport->getAttribute('token'));
+    }
+
+    public function testBuildCookieResponseSetsAReadableCsrfCookieAlongsideTheAuthCookies(): void
+    {
+        $user = new InMemoryUser('jane@example.com', null, ['ROLE_USER']);
+        $pair = $this->tokenGenerator->generateTokenPair($user);
+
+        $response = $this->authenticator->buildCookieResponse(Request::create('/api/auth/login'), $user, $pair);
+
+        $csrfCookie = self::findCookie($response, CsrfTokenPolicy::COOKIE_NAME);
+
+        self::assertNotNull($csrfCookie);
+        self::assertSame(CsrfTokenPolicy::COOKIE_NAME, $csrfCookie->getName());
+        self::assertNotSame('', $csrfCookie->getValue());
+        // Must be readable by frontend JavaScript — the whole point of the
+        // double-submit pattern is that the client echoes it back as a
+        // header, unlike the HttpOnly AUTH_TOKEN/REFRESH_TOKEN cookies.
+        self::assertFalse($csrfCookie->isHttpOnly());
+    }
+
+    public function testBuildCookieResponseGeneratesADifferentCsrfTokenEachTime(): void
+    {
+        $user = new InMemoryUser('jane@example.com', null, ['ROLE_USER']);
+        $pairA = $this->tokenGenerator->generateTokenPair($user);
+        $pairB = $this->tokenGenerator->generateTokenPair($user);
+
+        $responseA = $this->authenticator->buildCookieResponse(Request::create('/api/auth/login'), $user, $pairA);
+        $responseB = $this->authenticator->buildCookieResponse(Request::create('/api/auth/refresh'), $user, $pairB);
+
+        $tokenA = self::findCookie($responseA, CsrfTokenPolicy::COOKIE_NAME)?->getValue();
+        $tokenB = self::findCookie($responseB, CsrfTokenPolicy::COOKIE_NAME)?->getValue();
+
+        self::assertNotNull($tokenA);
+        self::assertNotNull($tokenB);
+        self::assertNotSame($tokenA, $tokenB);
+    }
+
+    private static function findCookie(Response $response, string $name): ?Cookie
+    {
+        foreach ($response->headers->getCookies() as $cookie) {
+            if ($cookie->getName() === $name) {
+                return $cookie;
+            }
+        }
+
+        return null;
     }
 }

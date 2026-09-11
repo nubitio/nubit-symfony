@@ -10,6 +10,7 @@ Registers automatically:
 
 - The **API Platform bridge** from `nubitio/api-platform`: `DataGridFilter`, translated OpenAPI docs with `x-crud` hints, pagination headers, domain-exception mapping.
 - **Dual JWT auth**: `POST /api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/change-password`, `GET /api/me`. Web clients get HttpOnly cookies; mobile/API clients get tokens in the body (`response_mode: json` or `X-Client-Type: android|ios`). Refresh tokens are rotated and stored hashed (Doctrine entity `nubit_refresh_token`); changing the password revokes every session and re-issues tokens for the current one. Purge old tokens with `bin/console nubit:auth:purge-refresh-tokens`.
+- **CSRF protection for cookie auth** (`nubit_admin.auth.csrf_protection`, on by default — see [CSRF policy](#csrf-policy-for-cookie-authenticated-mutations) below): `POST`/`PUT`/`PATCH`/`DELETE` requests authenticated via the `AUTH_TOKEN`/`REFRESH_TOKEN` cookie must carry a `X-CSRF-Token` header matching the readable `CSRF_TOKEN` cookie set on login/refresh. Bearer-token and `X-Api-Key` clients are exempt — the browser never attaches those automatically, so they are not exposed to CSRF the same way.
 - **Mercure** (`nubit_admin.mercure.enabled: true`): issues the `mercureAuthorization` subscriber-JWT cookie on login/refresh so the React grids receive live updates. Replace `MercureCookieDecorator` to scope topics per tenant/user.
 - **Fail-safe Mercure publishing** (`mercure.fail_safe`, on by default whenever MercureBundle is installed): API Platform publishes `mercure: true` updates after the flush, so a dead hub used to turn an already-persisted write into a 500 — clients retry and duplicate data. The bundle decorates the default hub: during HTTP requests publish failures are logged and swallowed (response stays 2xx, live refresh degrades to manual); in messenger workers and console commands they are rethrown, so routing `Symfony\Component\Mercure\Update` to an async transport keeps full retry/delivery semantics. Apps with a custom hub name decorate it themselves with `Nubit\AdminBundle\Mercure\FailSafeHub`.
 - **Soft delete**: mark entities with `#[Nubit\ApiPlatform\Attribute\SoftDeletable]` and the registered Doctrine filter (`nubit_soft_delete`) hides rows whose `deleted_at` is set. Opt-in per entity by design.
@@ -59,6 +60,58 @@ security:
 ```
 
 3. Create the refresh-token table: `bin/console make:migration && bin/console doctrine:migrations:migrate` (the bundle's `RefreshToken` entity is auto-mapped).
+
+## CSRF policy for cookie-authenticated mutations
+
+The API accepts the JWT either as a `Authorization: Bearer` header or as the
+HttpOnly `AUTH_TOKEN`/`REFRESH_TOKEN` cookie. A cookie is attached by the
+browser automatically, even on a cross-site request — `SameSite=Strict` on
+both cookies (`CookieFactory`) already blocks the simple case, but it is not
+a complete contract by itself: some reverse-proxy setups strip or rewrite
+`Set-Cookie`, and a cross-subdomain deployment (`domain: .example.com`) opts
+every subdomain back into being "same-site" for each other.
+
+`CsrfProtectionListener` closes that gap with a stateless double-submit
+token — no server-side session is needed, which matters because the `api`
+firewall is `stateless: true`:
+
+- On login and refresh, the bundle sets a **third**, JS-readable cookie:
+  `CSRF_TOKEN` (same `Secure`/`SameSite` policy as the auth cookies, but not
+  HttpOnly — the frontend has to read it).
+- The frontend must read that cookie and send its value back as a
+  `X-CSRF-Token` header on every `POST`/`PUT`/`PATCH`/`DELETE` request.
+- The listener rejects (`403`) any such request that is cookie-authenticated
+  (carries `AUTH_TOKEN` or `REFRESH_TOKEN`) and whose `X-CSRF-Token` header
+  does not match the `CSRF_TOKEN` cookie.
+- A cross-site page can make the browser attach the cookies, but same-origin
+  policy stops it from *reading* `CSRF_TOKEN` to also set the header, so it
+  cannot assemble a request that passes both checks — regardless of what
+  SameSite enforcement a proxy in front of the app does or does not honor.
+
+**Exempt by design**: requests authenticated with `Authorization: Bearer`
+(mobile/API clients) or `X-Api-Key` (`ApiKeyAuthenticator`, identity module)
+never carry the cookie automatically, so they are not vulnerable to CSRF the
+same way and need no token — this keeps them usable with zero browser
+coupling. `POST /api/auth/login` is exempt too: it is what issues the
+`CSRF_TOKEN` cookie in the first place, so it cannot require a token that
+does not exist yet (a stale cookie from a previous session must not block a
+fresh login, the same call `JWTAuthenticator` already makes for the JWT
+cookie itself).
+
+**Reverse proxies and cross-subdomain deployments**: the policy needs no
+special handling there — it never inspects `Origin`/`Referer` or depends on
+SameSite being honored, only on the `CSRF_TOKEN` cookie and the header
+reaching the app together. The one requirement is that `Set-Cookie` and
+custom request headers both pass through unmodified end to end; a proxy that
+strips either breaks the policy (and, for the CSRF cookie, breaks it closed
+— the request is rejected, not silently allowed). Set `cookie_secure: true`
+in production and terminate TLS before the app so `Secure` cookies survive
+the hop.
+
+Turn the policy off (`nubit_admin.auth.csrf_protection: false`) only if an
+application enforces CSRF some other way in front of it (e.g. a strict
+`Origin` allowlist at the edge) — turning it off does not weaken the
+existing `SameSite=Strict` cookies, it only removes this extra check.
 
 ## Session profile (`GET /api/me`)
 
@@ -599,6 +652,7 @@ nubit_admin:
         access_token_ttl: 3600
         refresh_token_ttl: 1209600    # 14 days
         cookie_secure: true
+        csrf_protection: true         # require X-CSRF-Token on cookie-authenticated mutations
     time:
         default_timezone: 'UTC'       # reported by GET /api/me
         enforce_utc: true             # write *and read* datetime_immutable in UTC

@@ -34,6 +34,35 @@ final readonly class CookieFactory
         );
     }
 
+    /**
+     * A CSRF double-submit token cookie: readable by JavaScript (not
+     * HttpOnly) so the frontend can echo its value back as the
+     * `X-CSRF-Token` header — same-origin policy keeps a cross-site page
+     * from reading it, which is the entire point.
+     *
+     * @param ''|'lax'|'none'|'strict' $sameSite
+     */
+    public function createCsrfCookie(
+        string $name,
+        string $value,
+        int $expiresAt,
+        string $path = '/',
+        ?string $domain = null,
+        string $sameSite = Cookie::SAMESITE_STRICT,
+    ): Cookie {
+        return Cookie::create(
+            $name,
+            $value,
+            $expiresAt,
+            $path,
+            $domain,
+            $this->cookieSecure,
+            false, // httpOnly — must be readable by JS
+            false, // raw
+            $sameSite,
+        );
+    }
+
     public function createExpiredCookie(string $name, string $path = '/', ?string $domain = null): Cookie
     {
         return Cookie::create(
