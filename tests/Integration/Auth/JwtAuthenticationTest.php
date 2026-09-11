@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nubit\Tests\Integration\Auth;
 
+use Nubit\AdminBundle\Auth\CsrfTokenPolicy;
 use Nubit\AdminBundle\Auth\JWTAuthenticator;
 use Nubit\AdminBundle\NubitAdminBundle;
 use Nubit\Tests\Integration\Fixture\Entity\TestUser;
@@ -121,10 +122,14 @@ final class JwtAuthenticationTest extends IntegrationTestCase
     {
         $login = $this->login();
         $refreshToken = $this->cookieValue($login, JWTAuthenticator::REFRESH_COOKIE);
+        $csrfToken = $this->cookieValue($login, CsrfTokenPolicy::COOKIE_NAME);
 
-        $refreshed = $this->jsonRequest('POST', '/api/auth/refresh', cookies: [
-            JWTAuthenticator::REFRESH_COOKIE => $refreshToken,
-        ]);
+        $refreshed = $this->jsonRequest(
+            'POST',
+            '/api/auth/refresh',
+            cookies: [JWTAuthenticator::REFRESH_COOKIE => $refreshToken, CsrfTokenPolicy::COOKIE_NAME => $csrfToken],
+            headers: [CsrfTokenPolicy::HEADER_NAME => $csrfToken],
+        );
 
         self::assertSame(Response::HTTP_OK, $refreshed->getStatusCode());
 
@@ -145,12 +150,16 @@ final class JwtAuthenticationTest extends IntegrationTestCase
     {
         $login = $this->login();
         $refreshToken = $this->cookieValue($login, JWTAuthenticator::REFRESH_COOKIE);
-
-        $this->jsonRequest('POST', '/api/auth/refresh', cookies: [JWTAuthenticator::REFRESH_COOKIE => $refreshToken]);
-
-        $replayed = $this->jsonRequest('POST', '/api/auth/refresh', cookies: [
+        $csrfToken = $this->cookieValue($login, CsrfTokenPolicy::COOKIE_NAME);
+        $refreshCookies = [
             JWTAuthenticator::REFRESH_COOKIE => $refreshToken,
-        ]);
+            CsrfTokenPolicy::COOKIE_NAME => $csrfToken,
+        ];
+        $csrfHeader = [CsrfTokenPolicy::HEADER_NAME => $csrfToken];
+
+        $this->jsonRequest('POST', '/api/auth/refresh', cookies: $refreshCookies, headers: $csrfHeader);
+
+        $replayed = $this->jsonRequest('POST', '/api/auth/refresh', cookies: $refreshCookies, headers: $csrfHeader);
 
         self::assertSame(
             Response::HTTP_UNAUTHORIZED,
@@ -164,7 +173,11 @@ final class JwtAuthenticationTest extends IntegrationTestCase
         $login = $this->login();
         $refreshToken = $this->cookieValue($login, JWTAuthenticator::REFRESH_COOKIE);
         $accessToken = $this->cookieValue($login, JWTAuthenticator::AUTH_COOKIE);
+        $csrfToken = $this->cookieValue($login, CsrfTokenPolicy::COOKIE_NAME);
 
+        // Logout is Bearer-authenticated here (a stateless credential, exempt
+        // from the CSRF check by design) — only the refresh call below is
+        // cookie-authenticated and needs the token.
         $logout = $this->jsonRequest(
             'POST',
             '/api/auth/logout',
@@ -173,15 +186,107 @@ final class JwtAuthenticationTest extends IntegrationTestCase
         );
         self::assertSame(Response::HTTP_OK, $logout->getStatusCode());
 
-        $afterLogout = $this->jsonRequest('POST', '/api/auth/refresh', cookies: [
-            JWTAuthenticator::REFRESH_COOKIE => $refreshToken,
-        ]);
+        $afterLogout = $this->jsonRequest(
+            'POST',
+            '/api/auth/refresh',
+            cookies: [
+                JWTAuthenticator::REFRESH_COOKIE => $refreshToken,
+                CsrfTokenPolicy::COOKIE_NAME => $csrfToken,
+            ],
+            headers: [CsrfTokenPolicy::HEADER_NAME => $csrfToken],
+        );
 
         self::assertSame(
             Response::HTTP_UNAUTHORIZED,
             $afterLogout->getStatusCode(),
             'The refresh token still worked after logout.',
         );
+    }
+
+    // ── CSRF policy (issue #3) ───────────────────────────────────────────────
+
+    /**
+     * The acceptance criteria this suite exists to prove: a cookie-
+     * authenticated mutation with no CSRF token is rejected outright — the
+     * scenario an attacker's cross-site page is in, since it can make the
+     * browser attach the REFRESH_TOKEN cookie but cannot read CSRF_TOKEN to
+     * also set the header.
+     */
+    public function testCookieAuthenticatedRefreshWithoutCsrfTokenIsRejected(): void
+    {
+        $login = $this->login();
+        $refreshToken = $this->cookieValue($login, JWTAuthenticator::REFRESH_COOKIE);
+
+        $response = $this->jsonRequest('POST', '/api/auth/refresh', cookies: [
+            JWTAuthenticator::REFRESH_COOKIE => $refreshToken,
+        ]);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+    }
+
+    public function testCookieAuthenticatedRefreshWithMismatchedCsrfTokenIsRejected(): void
+    {
+        $login = $this->login();
+        $refreshToken = $this->cookieValue($login, JWTAuthenticator::REFRESH_COOKIE);
+        $csrfToken = $this->cookieValue($login, CsrfTokenPolicy::COOKIE_NAME);
+
+        $response = $this->jsonRequest(
+            'POST',
+            '/api/auth/refresh',
+            cookies: [
+                JWTAuthenticator::REFRESH_COOKIE => $refreshToken,
+                CsrfTokenPolicy::COOKIE_NAME => $csrfToken,
+            ],
+            headers: [CsrfTokenPolicy::HEADER_NAME => $csrfToken . '-tampered'],
+        );
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+    }
+
+    /**
+     * The matching half of the criteria: the same request, with the header a
+     * same-origin frontend actually sends, is accepted. (Also exercised end
+     * to end by {@see testRefreshRotatesTheTokenPair}.)
+     */
+    public function testCookieAuthenticatedRefreshWithMatchingCsrfTokenSucceeds(): void
+    {
+        $login = $this->login();
+        $refreshToken = $this->cookieValue($login, JWTAuthenticator::REFRESH_COOKIE);
+        $csrfToken = $this->cookieValue($login, CsrfTokenPolicy::COOKIE_NAME);
+
+        $response = $this->jsonRequest(
+            'POST',
+            '/api/auth/refresh',
+            cookies: [
+                JWTAuthenticator::REFRESH_COOKIE => $refreshToken,
+                CsrfTokenPolicy::COOKIE_NAME => $csrfToken,
+            ],
+            headers: [CsrfTokenPolicy::HEADER_NAME => $csrfToken],
+        );
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+    }
+
+    /**
+     * Stateless clients need no token at all: a mobile client sends the
+     * refresh token in the JSON body, not as a cookie, so nothing here is
+     * ambient browser authority an attacker's page could ride on.
+     */
+    public function testMobileRefreshWithTokenInBodyDoesNotRequireACsrfToken(): void
+    {
+        $login = $this->jsonRequest('POST', '/api/auth/login', body: [
+            'username' => self::EMAIL,
+            'password' => self::PASSWORD,
+            'response_mode' => 'json',
+        ]);
+        self::assertSame(Response::HTTP_OK, $login->getStatusCode());
+
+        /** @var array{refreshToken: string} $payload */
+        $payload = json_decode((string) $login->getContent(), true, flags: JSON_THROW_ON_ERROR);
+
+        $response = $this->jsonRequest('POST', '/api/auth/refresh', body: ['refreshToken' => $payload['refreshToken']]);
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
     }
 
     public function testGarbageTokenIsRejected(): void

@@ -92,6 +92,43 @@ final class CookieFactoryTest extends TestCase
         self::assertSame('.efact.app', $cookie->getDomain());
     }
 
+    // ── createCsrfCookie ──────────────────────────────────────────────────────
+
+    public function testCreateCsrfCookieHasCorrectNameAndValue(): void
+    {
+        $factory = new CookieFactory();
+        $cookie = $factory->createCsrfCookie('CSRF_TOKEN', 'csrf-value', time() + 3600);
+
+        self::assertSame('CSRF_TOKEN', $cookie->getName());
+        self::assertSame('csrf-value', $cookie->getValue());
+    }
+
+    public function testCreateCsrfCookieIsNotHttpOnly(): void
+    {
+        $factory = new CookieFactory();
+        $cookie = $factory->createCsrfCookie('CSRF_TOKEN', 'v', time() + 3600);
+
+        // Unlike the auth cookies, this one must be readable by frontend
+        // JavaScript so it can be echoed back as the X-CSRF-Token header.
+        self::assertFalse($cookie->isHttpOnly());
+    }
+
+    public function testCreateCsrfCookieIsSecureWhenConfigured(): void
+    {
+        $factory = new CookieFactory(cookieSecure: true);
+        $cookie = $factory->createCsrfCookie('CSRF_TOKEN', 'v', time() + 3600);
+
+        self::assertTrue($cookie->isSecure());
+    }
+
+    public function testCreateCsrfCookieDefaultsSameSiteStrict(): void
+    {
+        $factory = new CookieFactory();
+        $cookie = $factory->createCsrfCookie('CSRF_TOKEN', 'v', time() + 3600);
+
+        self::assertSame(Cookie::SAMESITE_STRICT, $cookie->getSameSite());
+    }
+
     // ── createExpiredCookie ───────────────────────────────────────────────────
 
     public function testCreateExpiredCookieIsInThePast(): void
