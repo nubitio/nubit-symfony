@@ -151,6 +151,12 @@ final readonly class IdentityController
         /** @var list<string> $roles */
         $roles = self::arrayField($request, 'roles');
 
+        // Being an admin lets you invite; it does not let you invite with a
+        // role you do not yourself hold. An empty list is always safe here —
+        // there is no pre-existing account to inherit from, so it grants
+        // nothing beyond the invited account's baseline.
+        $this->access->assertRolesWithinAuthority($roles);
+
         try {
             $issued = $this->invitations->invite(
                 self::field($request, 'email'),
@@ -212,6 +218,24 @@ final readonly class IdentityController
         /** @var list<string> $roles */
         $roles = self::arrayField($request, 'roles');
         $expires = self::field($request, 'expiresAt');
+
+        // A key's role scope is a restriction on the principal it acts as,
+        // not a grant of its own — so it can never be wider than what the
+        // caller minting it is themselves allowed to wield.
+        $this->access->assertRolesWithinAuthority($roles);
+
+        // An empty scope means "inherit the acting principal unrestricted" —
+        // safe when that principal is the caller themselves (they are simply
+        // handed a credential for their own account) but not when it is
+        // someone else: an admin could otherwise mint an unscoped key for a
+        // more privileged account and use the key to act with roles the
+        // admin never held. Acting on someone else's behalf therefore
+        // requires an explicit, issuer-bounded scope.
+        if ($username !== $this->currentUserIdentifier() && [] === $roles) {
+            throw new AccessDeniedHttpException(
+                'A key created on behalf of another user must declare an explicit role scope.',
+            );
+        }
 
         try {
             $issued = $this->apiKeys->create(
