@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Nubit\ApiPlatform\Http;
 
+use ApiPlatform\Doctrine\Orm\Filter\FilterInterface;
+use ApiPlatform\Doctrine\Orm\Util\QueryNameGenerator;
+use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -15,15 +20,23 @@ use Symfony\Component\HttpFoundation\Request;
  * {@code openapiContext: ['x-crud' => ['summable' => true]]}.
  *
  * Runs on the same filtered entity manager as the collection query (tenant
- * filters and soft-delete apply automatically).
+ * filters and soft-delete apply automatically), and — critically — applies
+ * the same grid filters (`filter`, `searchValue`) the request used to build
+ * the collection. Without that, a filtered grid would show row data that
+ * matches the filter next to a summary total computed over every row: a
+ * total that visibly disagrees with what is on screen.
  */
 final readonly class GridSummaryCalculator
 {
+    /** Query builder alias every grid filter (and grid virtual field) assumes the root entity is bound to. */
+    private const string ROOT_ALIAS = 'o';
+
     public function __construct(
         private EntityManagerInterface $entityManager,
         private PropertyMetadataFactoryInterface $propertyMetadataFactory,
         private PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
         private ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
+        private ?ContainerInterface $filterLocator = null,
     ) {}
 
     /**
@@ -40,10 +53,9 @@ final readonly class GridSummaryCalculator
             return [];
         }
 
-        $alias = 'e';
         $selects = [];
         foreach ($fields as $property => $summaryType) {
-            $dqlField = $alias . '.' . $property;
+            $dqlField = self::ROOT_ALIAS . '.' . $property;
             $selects[] = match ($summaryType) {
                 'count' => sprintf('COUNT(%s) AS %s_summary', $dqlField, $property),
                 'avg' => sprintf('AVG(%s) AS %s_summary', $dqlField, $property),
@@ -53,7 +65,12 @@ final readonly class GridSummaryCalculator
             };
         }
 
-        $qb = $this->entityManager->createQueryBuilder()->select(implode(', ', $selects))->from($resourceClass, $alias);
+        $qb = $this->entityManager
+            ->createQueryBuilder()
+            ->select(implode(', ', $selects))
+            ->from($resourceClass, self::ROOT_ALIAS);
+
+        $this->applyGridFilters($qb, $resourceClass, $request);
 
         /** @var array<string, mixed> $row */
         $row = $qb->getQuery()->getSingleResult();
@@ -110,5 +127,60 @@ final readonly class GridSummaryCalculator
         }
 
         return $fields;
+    }
+
+    /**
+     * Applies the resource's configured collection filters (`DataGridFilter`
+     * among them) to the summary query, the same way
+     * `ApiPlatform\Doctrine\Orm\Extension\FilterExtension` applies them to the
+     * collection query — same filter services, same request parameters — so a
+     * filtered grid's footer total is computed over the rows the grid shows,
+     * not the whole table.
+     *
+     * Ordering has no meaning for a single aggregate row and this query has no
+     * `GROUP BY`, so any `ORDER BY` a filter adds (grid `sort`, or an
+     * unrelated `OrderFilter`) would make PostgreSQL reject the query outright
+     * ("column ... must appear in the GROUP BY clause"). It is stripped
+     * afterwards rather than guessed at by parameter name, so this stays
+     * correct regardless of which filters a resource configures.
+     */
+    private function applyGridFilters(QueryBuilder $queryBuilder, string $resourceClass, Request $request): void
+    {
+        if (null === $this->filterLocator) {
+            return;
+        }
+
+        $operation = $request->attributes->get('_api_operation');
+        if (!$operation instanceof Operation) {
+            return;
+        }
+
+        $filterIds = $operation->getFilters() ?? [];
+        if ([] === $filterIds) {
+            return;
+        }
+
+        $filters = $request->attributes->get('_api_filters');
+        if (!\is_array($filters)) {
+            $filters = $request->query->all();
+        }
+
+        /** @var array<string, mixed> $filters */
+        $context = ['filters' => $filters];
+
+        $queryNameGenerator = new QueryNameGenerator();
+
+        foreach ($filterIds as $filterId) {
+            if (!\is_string($filterId) || !$this->filterLocator->has($filterId)) {
+                continue;
+            }
+
+            $filter = $this->filterLocator->get($filterId);
+            if ($filter instanceof FilterInterface) {
+                $filter->apply($queryBuilder, $queryNameGenerator, $resourceClass, $operation, $context);
+            }
+        }
+
+        $queryBuilder->resetDQLPart('orderBy');
     }
 }

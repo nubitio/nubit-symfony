@@ -676,7 +676,7 @@ count = 1
 file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 7
+count = 8
 
 [[issues]]
 file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
@@ -760,7 +760,7 @@ count = 1
 file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 3
+count = 6
 
 [[issues]]
 file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
@@ -772,6 +772,24 @@ count = 1
 file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
 code = "possibly-invalid-argument"
 message = 'Possible argument type mismatch for argument #1 of `Doctrine\ORM\QueryBuilder::from`: expected `class-string`, but possibly received `string`.'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "redundant-logical-operation"
+message = "Redundant `||` operation: left operand is always false and right operand is evaluated."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "redundant-type-comparison"
+message = "Redundant condition: variable `$filterId` (type `string`) is already known to be `string`."
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Http/GridSummaryCalculator.php"
+code = "redundant-type-comparison"
+message = "Redundant type assertion: `$filterId` is already `string`."
 count = 1
 
 [[issues]]
@@ -815,6 +833,12 @@ file = "packages/api-platform/src/Serializer/MoneyNormalizer.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
 count = 4
+
+[[issues]]
+file = "packages/api-platform/tests/Doctrine/Filter/DataGridFilterTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
 
 [[issues]]
 file = "packages/api-platform/tests/Doctrine/Filter/DataGridFilterTest.php"
@@ -1136,14 +1160,14 @@ count = 4
 
 [[issues]]
 file = "packages/platform/tests/Export/XlsExporterTest.php"
-code = "less-specific-nested-argument-type"
-message = 'Argument type mismatch for argument #1 of `Nubit\Platform\Export\XlsExporter::makeSpreadsheetFromIterable`: expected `iterable<mixed, array<string, mixed>>`, but provided type `Generator<mixed, mixed, mixed, mixed>` is less specific.'
-count = 1
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
 
 [[issues]]
 file = "packages/platform/tests/Export/XlsExporterTest.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+code = "redundant-docblock-type"
+message = "Redundant docblock type for variable `$rows`."
 count = 2
 
 [[issues]]
@@ -1496,6 +1520,12 @@ count = 2
 
 [[issues]]
 file = "tests/Integration/ApiPlatform/DataGridFilterTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "tests/Integration/ApiPlatform/GridSummaryCalculatorTest.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
 count = 2

@@ -321,6 +321,40 @@ final class DataGridFilterTest extends TestCase
         self::assertNull($queryBuilder->getDQLPart('where'));
     }
 
+    /**
+     * `searchValue` runs across every field in `searchExpr` at once, so an
+     * unbounded value turns one request into a sequential scan comparing an
+     * oversized pattern against every field, every row. A value at or under
+     * the bound is untouched.
+     */
+    public function testAnOverlongSearchValueIsTruncatedRatherThanRejected(): void
+    {
+        $queryBuilder = self::queryBuilder();
+
+        self::filter(['name' => 'string'])->applyGridParam($queryBuilder, 'searchValue', str_repeat('a', 500), [
+            'filters' => ['searchExpr' => ['name']],
+        ]);
+
+        $bound = $queryBuilder->getParameter('name')?->getValue();
+        self::assertIsString($bound);
+        // Wrapped in LIKE wildcards ("%...%"), so 2 longer than the cap.
+        self::assertSame(202, strlen($bound));
+        self::assertSame('%' . str_repeat('a', 200) . '%', $bound);
+    }
+
+    public function testASearchValueAtTheBoundIsUntouched(): void
+    {
+        $queryBuilder = self::queryBuilder();
+
+        $value = str_repeat('a', 200);
+
+        self::filter(['name' => 'string'])->applyGridParam($queryBuilder, 'searchValue', $value, [
+            'filters' => ['searchExpr' => ['name']],
+        ]);
+
+        self::assertSame('%' . $value . '%', $queryBuilder->getParameter('name')?->getValue());
+    }
+
     // ── relaciones ────────────────────────────────────────────────────────
 
     /**
