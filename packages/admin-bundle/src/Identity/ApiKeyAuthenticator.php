@@ -15,6 +15,7 @@ use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
+use Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken;
 
 /**
  * Signs a request in with an `X-Api-Key` header.
@@ -24,13 +25,19 @@ use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPasspor
  * revocation stories, and overloading one header makes "which of the two failed"
  * unanswerable in a log.
  *
- * The key resolves to the principal it was issued for, so permissions, row
- * scope and the audit trail all keep working with no special case — an
- * integration is simply a user that never types a password.
+ * The key resolves to the principal it was issued for, so row scope and the
+ * audit trail all keep working with no special case — an integration is
+ * simply a user that never types a password. Permissions are the exception:
+ * a key carrying an explicit role scope authenticates as the intersection of
+ * that scope and the principal's own roles, never the principal's full grant.
+ * A key with no declared scope inherits the principal unrestricted, which is
+ * never wider than the principal already is.
  */
 final class ApiKeyAuthenticator extends AbstractAuthenticator
 {
     public const string HEADER = 'X-Api-Key';
+
+    private const string SCOPE_ATTRIBUTE = 'api_key_roles';
 
     /** @param UserProviderInterface<\Symfony\Component\Security\Core\User\UserInterface> $userProvider */
     public function __construct(
@@ -55,9 +62,45 @@ final class ApiKeyAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('Invalid API key.');
         }
 
-        return new SelfValidatingPassport(
+        $passport = new SelfValidatingPassport(
             new UserBadge($record->getUserIdentifier(), $this->userProvider->loadUserByIdentifier(...)),
         );
+
+        // Carried through to createToken() rather than read off the entity
+        // again there: the passport, not the authenticator instance, is what
+        // is guaranteed to belong to this one request.
+        $passport->setAttribute(self::SCOPE_ATTRIBUTE, $record->getRoles());
+
+        return $passport;
+    }
+
+    /**
+     * Restricts the token to the key's declared scope.
+     *
+     * An empty scope means the key was issued without a restriction and
+     * inherits the principal as-is — never wider than the principal already
+     * is. A non-empty scope narrows the principal's roles to their
+     * intersection with the key's roles, computed fresh on every request so
+     * a role revoked from the principal after the key was issued is revoked
+     * from the key too.
+     */
+    public function createToken(Passport $passport, string $firewallName): TokenInterface
+    {
+        $user = $passport->getUser();
+
+        /** @var list<string> $scope */
+        $scope = $passport->getAttribute(self::SCOPE_ATTRIBUTE, []);
+
+        $roles = $user->getRoles();
+        if ([] !== $scope) {
+            // ROLE_USER marks "authenticated", not a granted permission —
+            // access_control and the rest of the permission model both
+            // assume it is present, so a scope narrows what the key may *do*
+            // without being able to narrow away the fact that it is signed in.
+            $roles = array_values(array_unique([...array_intersect($roles, $scope), 'ROLE_USER']));
+        }
+
+        return new PostAuthenticationToken($user, $firewallName, $roles);
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
