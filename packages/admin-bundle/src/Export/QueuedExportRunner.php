@@ -6,9 +6,9 @@ namespace Nubit\AdminBundle\Export;
 
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGenerator;
 use Doctrine\ORM\EntityManagerInterface;
-use Nubit\AdminBundle\Authorization\RowScopeApplier;
 use Nubit\AdminBundle\Export\Entity\ExportJob;
 use Nubit\AdminBundle\Export\Writer\QueuedExportWriterInterface;
+use Nubit\ApiPlatform\Authorization\RowScopeApplier;
 use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;

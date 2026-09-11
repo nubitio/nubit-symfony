@@ -27,6 +27,7 @@ use Nubit\TenantBundle\Registry\DoctrineTenantRegistry;
 use Nubit\TenantBundle\Resolver\CompositeTenantResolver;
 use Nubit\TenantBundle\Resolver\HeaderTenantResolver;
 use Nubit\TenantBundle\Resolver\JwtClaimTenantResolver;
+use Nubit\TenantBundle\Resolver\MembershipVerifiedTenantResolver;
 use Nubit\TenantBundle\Resolver\SubdomainTenantResolver;
 use Nubit\TenantBundle\Resolver\TenantResolverInterface;
 use Nubit\TenantBundle\Resolver\UserTenantResolver;
@@ -123,6 +124,14 @@ final class NubitTenantBundle extends AbstractBundle
             ->info('Set PostgreSQL app.tenant_id per request (requires RLS policies).')
             ->defaultFalse()
             ->end()
+            ->arrayNode('privileged_roles')
+            ->info(
+                'Roles allowed to select a tenant via header/subdomain resolution that differs from their own membership.',
+            )
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue(['ROLE_SUPER_ADMIN'])
+            ->end()
             ->end();
     }
 
@@ -212,7 +221,7 @@ final class NubitTenantBundle extends AbstractBundle
          *     base_schemas: list<string>, quotas_enabled: bool, resolution: list<string>,
          *     tenant_entity: string, unscoped_entities: list<string>, jwt_secret: string,
          *     jwt_id_claim: string, jwt_name_claim: string, tenant_header: string,
-         *     base_domain: ?string, rls_enabled: bool
+         *     base_domain: ?string, rls_enabled: bool, privileged_roles: list<string>
          * } $config
          */
         $this->registerResolvers($config, $services);
@@ -237,6 +246,7 @@ final class NubitTenantBundle extends AbstractBundle
      *     tenant_header: string,
      *     base_domain: ?string,
      *     rls_enabled: bool,
+     *     privileged_roles: list<string>,
      * } $config
      */
     private function registerResolvers(array $config, ServicesConfigurator $services): void
@@ -249,13 +259,27 @@ final class NubitTenantBundle extends AbstractBundle
         $services->set(HeaderTenantResolver::class)->arg('$header', $config['tenant_header']);
         $services->set(SubdomainTenantResolver::class)->arg('$baseDomain', $config['base_domain'] ?? '');
 
+        // Header and subdomain values are attacker-controlled, so an
+        // authenticated caller cannot be allowed to use them to claim a
+        // tenant they are not a member of. `user` and `jwt_claim` need no such
+        // check: one reads the caller's own record, the other reads a signed
+        // token nobody but the server issued.
+        $services->set('nubit_tenant.resolver.header_verified', MembershipVerifiedTenantResolver::class)->arg(
+            '$inner',
+            service(HeaderTenantResolver::class),
+        )->arg('$privilegedRoles', $config['privileged_roles']);
+        $services->set('nubit_tenant.resolver.subdomain_verified', MembershipVerifiedTenantResolver::class)->arg(
+            '$inner',
+            service(SubdomainTenantResolver::class),
+        )->arg('$privilegedRoles', $config['privileged_roles']);
+
         $resolverRefs = [];
         foreach ($config['resolution'] as $strategy) {
             $resolverRefs[] = match ($strategy) {
                 'user' => service(UserTenantResolver::class),
                 'jwt_claim' => service(JwtClaimTenantResolver::class),
-                'header' => service(HeaderTenantResolver::class),
-                'subdomain' => service(SubdomainTenantResolver::class),
+                'header' => service('nubit_tenant.resolver.header_verified'),
+                'subdomain' => service('nubit_tenant.resolver.subdomain_verified'),
                 default => throw new \InvalidArgumentException(sprintf(
                     'Unknown tenant resolution strategy "%s".',
                     $strategy,
@@ -285,6 +309,7 @@ final class NubitTenantBundle extends AbstractBundle
      *     tenant_header: string,
      *     base_domain: ?string,
      *     rls_enabled: bool,
+     *     privileged_roles: list<string>,
      * } $config
      */
     private function registerCoreServices(

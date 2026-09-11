@@ -19,8 +19,7 @@ use Nubit\AdminBundle\Auth\RefreshTokenStoreInterface;
 use Nubit\AdminBundle\Auth\ResponseModeResolver;
 use Nubit\AdminBundle\Auth\TokenClaimsProviderInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
-use Nubit\AdminBundle\Authorization\RowScopeApplier;
-use Nubit\AdminBundle\Authorization\RowScopeRegistry;
+use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
 use Nubit\AdminBundle\Command\DiscoverCommand;
 use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
@@ -64,6 +63,8 @@ use Nubit\AdminBundle\Tenant\AllowAllFeatureChecker;
 use Nubit\AdminBundle\Tenant\SingleTenantConnectionSwitcher;
 use Nubit\AdminBundle\Tenant\SingleTenantRegistry;
 use Nubit\AdminBundle\Tenant\UnlimitedQuotaEnforcer;
+use Nubit\ApiPlatform\Authorization\RowScopeApplier;
+use Nubit\ApiPlatform\Authorization\RowScopeRegistry;
 use Nubit\ApiPlatform\Doctrine\ApproximateCounter;
 use Nubit\ApiPlatform\Doctrine\Filter\DataGridFilter;
 use Nubit\ApiPlatform\Doctrine\Filter\GridVirtualFieldInterface;
@@ -659,6 +660,7 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(ResourceSegmentIndex::class);
         $services->set(RowScopeRegistry::class);
         $services->set(RowScopeApplier::class);
+        $services->set(ScopedEntityLocator::class);
 
         $services->set(GridScaleRegistry::class);
         $services->set(ApproximateCounter::class)->arg('$connection', service('doctrine.dbal.default_connection'));

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\Document;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
 use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
 use Nubit\Platform\Exception\NotFoundException;
 
@@ -16,11 +16,18 @@ use Nubit\Platform\Exception\NotFoundException;
  * in the application and have it loaded, so the lookup is restricted to
  * resources API Platform already publishes, and the mapping is built once from
  * that list rather than parsed out of the request.
+ *
+ * The lookup itself goes through {@see ScopedEntityLocator}, the same
+ * row-scope-aware finder every other custom route uses, so a document or its
+ * history is never reachable for a row the caller's own API operations would
+ * have hidden — issuing and history are both document-shaped reads on
+ * whatever the resource is, so they owe it the same scope that resource's
+ * `GET` would enforce.
  */
 final readonly class ResourceLocator
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
+        private ScopedEntityLocator $locator,
         private ResourceSegmentIndex $segments,
         private PrintableRegistry $printables,
     ) {}
@@ -29,7 +36,7 @@ final readonly class ResourceLocator
     {
         $class = $this->resolveClass($resource);
 
-        $subject = $this->entityManager->find($class, $id);
+        $subject = $this->locator->find($class, $id);
         if (null === $subject) {
             throw NotFoundException::forResource($resource, $id);
         }

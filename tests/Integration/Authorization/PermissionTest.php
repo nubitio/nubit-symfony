@@ -165,6 +165,37 @@ final class PermissionTest extends IntegrationTestCase
         self::assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
     }
 
+    /**
+     * A custom bundle route — the shape of `MediaFileController`,
+     * `WorkflowTransitionController`, `ResourceLocator` — must apply the same
+     * row scope as the generated `GET` operation for the same entity. This
+     * asserts it through {@see \Nubit\AdminBundle\Authorization\ScopedEntityLocator},
+     * the shared finder those routes use instead of a raw `find()`.
+     */
+    public function testACustomRouteCannotReachAForeignRowByItsIdentifier(): void
+    {
+        $this->seedRole('ROLE_CLERK', ['movement.read']);
+        $foreign = $this->seedMovement('M-2', 2, '100.00');
+
+        $token = $this->login($this->seedUser('clerk@example.com', ['ROLE_CLERK'], [1]));
+
+        $payload = $this->json($this->send('GET', '/api/_test/scoped_find?id=' . $foreign, $token));
+
+        self::assertFalse($payload['found'] ?? null);
+    }
+
+    public function testACustomRouteReachesARowWithinScope(): void
+    {
+        $this->seedRole('ROLE_CLERK', ['movement.read']);
+        $own = $this->seedMovement('M-1', 1, '100.00');
+
+        $token = $this->login($this->seedUser('clerk@example.com', ['ROLE_CLERK'], [1]));
+
+        $payload = $this->json($this->send('GET', '/api/_test/scoped_find?id=' . $own, $token));
+
+        self::assertTrue($payload['found'] ?? null);
+    }
+
     public function testAnUnscopedUserSeesEverything(): void
     {
         $this->seedRole('ROLE_MANAGER', ['movement.read']);

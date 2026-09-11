@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Nubit\AdminBundle\Authorization;
+namespace Nubit\ApiPlatform\Authorization;
 
 use Doctrine\ORM\QueryBuilder;
 use Nubit\ApiPlatform\Attribute\RowScoped;
@@ -11,14 +11,13 @@ use Symfony\Component\Security\Core\User\UserInterface;
 /**
  * Applies `#[RowScoped]` to a query for a given user.
  *
- * Extracted from the API Platform extension because a queued export runs in a
- * worker, with no session and no `Security` to ask. That is exactly the
- * situation where scope is most likely to be quietly dropped — and an export
- * that ignores row scope hands a warehouse supervisor the whole company in a
- * spreadsheet, asynchronously, with nobody watching.
- *
- * One implementation, two callers: the request path and the worker cannot
- * disagree about what a user may see.
+ * This is the canonical implementation, shared by every package that builds
+ * or loads a scoped entity: API Platform's own query extension, the queued
+ * export worker (no session, no request — the situation scope is most likely
+ * to get quietly dropped), and any custom bundle route that looks an entity
+ * up outside API Platform's generated query path. One implementation, every
+ * caller — a request path and a worker, or a generated route and a custom
+ * one, cannot disagree about what a user may see.
  */
 final readonly class RowScopeApplier
 {

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\Media\Controller;
 
-use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\FilesystemException;
+use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
 use Nubit\AdminBundle\Media\Entity\Media;
 use Nubit\AdminBundle\Media\MediaStorage;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,17 +17,22 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * for local storage and private S3 buckets, behind the same auth as the rest
  * of /api. Apps wanting direct CDN/S3 URLs implement MediaUrlResolverInterface
  * instead and this route simply goes unused.
+ *
+ * The lookup goes through {@see ScopedEntityLocator} rather than a raw
+ * `find()` so a guessed id cannot reach a row that row-scoping and tenant
+ * isolation would have hidden from the `GET /media/{id}` API Platform
+ * operation — the two must agree on what "this media" means.
  */
 final class MediaFileController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly ScopedEntityLocator $locator,
         private readonly MediaStorage $storage,
     ) {}
 
     public function __invoke(string $id): Response
     {
-        $media = $this->entityManager->find(Media::class, $id);
+        $media = $this->locator->find(Media::class, $id);
         if (!$media instanceof Media) {
             throw new NotFoundHttpException('Media not found.');
         }
