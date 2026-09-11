@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\AdminBundle\EmbeddedLines\Controller;
 
 use Doctrine\Persistence\ManagerRegistry;
+use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRegistry;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRowSerializer;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,6 +22,7 @@ final readonly class EmbeddedLinesController
         private EmbeddedLinesRegistry $registry,
         private ManagerRegistry $managerRegistry,
         private EmbeddedLinesRowSerializer $rowSerializer,
+        private ScopedEntityLocator $locator,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -32,6 +34,15 @@ final readonly class EmbeddedLinesController
 
         $parentId = $request->query->get($definition->parentQueryParam);
         if ($parentId === null || $parentId === '' || $parentId === '0') {
+            return new JsonResponse([]);
+        }
+
+        // The lines belong to the parent, so they are exactly as reachable as
+        // the parent is. Loading it through the row-scope-aware locator keeps
+        // a guessed parent id from listing another row's children.
+        /** @var class-string $parentEntityClass */
+        $parentEntityClass = $definition->parentEntityClass;
+        if (null === $this->locator->find($parentEntityClass, $parentId)) {
             return new JsonResponse([]);
         }
 

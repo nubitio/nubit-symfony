@@ -7,6 +7,7 @@ namespace Nubit\AdminBundle\Document\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Authorization\PermissionCatalog;
 use Nubit\AdminBundle\Authorization\PermissionResolver;
+use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
 use Nubit\AdminBundle\Document\DocumentIssuer;
 use Nubit\AdminBundle\Document\Entity\IssuedDocument;
 use Nubit\AdminBundle\Security\PrivilegedAccess;
@@ -27,6 +28,7 @@ final readonly class DownloadDocumentController
         private EntityManagerInterface $entityManager,
         private DocumentIssuer $issuer,
         private PrivilegedAccess $access,
+        private ScopedEntityLocator $locator,
         private ?PermissionResolver $permissions = null,
     ) {}
 
@@ -38,6 +40,19 @@ final readonly class DownloadDocumentController
         }
 
         $this->assertCanRead($document);
+
+        // The `.read` permission answers "may this user read this resource
+        // type"; it says nothing about *which rows*. Resolve the subject the
+        // document was issued for through the row-scope-aware locator, so a
+        // document whose row the same user's generated `GET` would have
+        // hidden is not reachable by its id either.
+        $resourceClass = $document->getResourceClass();
+        if ('' !== $resourceClass) {
+            /** @var class-string $resourceClass */
+            if (null === $this->locator->find($resourceClass, $document->getResourceId())) {
+                throw new NotFoundHttpException('Document not found.');
+            }
+        }
 
         if (IssuedDocument::STATUS_PENDING === $document->getStatus()) {
             return new Response('', Response::HTTP_ACCEPTED, [

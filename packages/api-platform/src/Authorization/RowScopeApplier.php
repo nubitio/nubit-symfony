@@ -34,6 +34,16 @@ final readonly class RowScopeApplier
             return;
         }
 
+        // A scope whose claim the principal cannot answer at all is not the
+        // same as one the principal answers with null. The former is a
+        // configuration/identity mismatch and must fail closed; treating it
+        // like "explicitly unscoped" silently grants every row.
+        if (!$this->hasClaim($user, $scope)) {
+            $queryBuilder->andWhere('1 = 0');
+
+            return;
+        }
+
         $values = $this->claimValues($user, $scope);
 
         // Null means the user is explicitly unscoped — a manager, a controller.
@@ -62,10 +72,22 @@ final readonly class RowScopeApplier
         );
     }
 
+    /** True when the principal exposes the configured claim at all. */
+    private function hasClaim(UserInterface $user, RowScoped $scope): bool
+    {
+        $getter = 'get' . ucfirst($scope->claim);
+
+        return (
+            method_exists($user, $getter)
+            || method_exists($user, $scope->claim)
+            || property_exists($user, $scope->claim)
+        );
+    }
+
     /**
      * Reads the user's claim.
      *
-     * @return list<mixed>|null null when the user has no such claim at all
+     * @return list<mixed>|null null when the claim is explicitly null
      */
     private function claimValues(UserInterface $user, RowScoped $scope): ?array
     {
