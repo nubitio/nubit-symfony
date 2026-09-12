@@ -17,6 +17,7 @@ use Nubit\AdminBundle\Identity\PasswordResetService;
 use Nubit\AdminBundle\Identity\SessionRegistry;
 use Nubit\AdminBundle\Identity\TotpManager;
 use Nubit\AdminBundle\Identity\TotpPolicy;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -78,5 +79,23 @@ final class IdentityModule
         $services->set(SessionRegistry::class);
 
         $services->set(IdentityController::class)->tag('controller.service_arguments');
+    }
+
+    /**
+     * Mapping only — none of TOTP credentials, single-use tokens or API keys
+     * is an ApiResource: a credential store has no business being CRUD-able.
+     */
+    public static function prepend(ContainerBuilder $container): void
+    {
+        if (!BundleConfig::isFeatureEnabled($container, 'identity')) {
+            return;
+        }
+
+        BundleConfig::mapEntities(
+            $container,
+            'NubitAdminIdentity',
+            __DIR__ . '/../Identity/Entity',
+            'Nubit\\AdminBundle\\Identity\\Entity',
+        );
     }
 }

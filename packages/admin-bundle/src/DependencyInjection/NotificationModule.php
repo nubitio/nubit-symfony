@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Nubit\AdminBundle\DependencyInjection;
 
 use Nubit\AdminBundle\Notification\EmailNotificationChannel;
+use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilterListener;
 use Nubit\AdminBundle\Notification\InAppNotificationChannel;
 use Nubit\AdminBundle\Notification\MessengerNotificationDispatcher;
 use Nubit\AdminBundle\Notification\SendNotificationHandler;
 use Nubit\Platform\Notification\Contract\NotificationDispatcherInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 use Symfony\Component\Mailer\MailerInterface;
 
@@ -43,5 +45,40 @@ final class NotificationModule
 
         $services->set(MessengerNotificationDispatcher::class);
         $services->alias(NotificationDispatcherInterface::class, MessengerNotificationDispatcher::class);
+    }
+
+    /**
+     * Gated on `notification.in_app.enabled` specifically, not
+     * `notification.enabled` — the parent channel can be on with only email
+     * active. Notification IS an ApiResource (unlike most opt-in entities),
+     * so it needs both the api_platform mapping path and the Doctrine
+     * mapping, plus the row-scope filter that limits a list to its recipient.
+     */
+    public static function prependInApp(ContainerBuilder $container): void
+    {
+        if (!BundleConfig::isFeatureEnabled($container, 'notification', 'in_app')) {
+            return;
+        }
+
+        BundleConfig::addApiResourcePath($container, __DIR__ . '/../Notification/Entity');
+        BundleConfig::mapEntities(
+            $container,
+            'NubitAdminNotificationBundle',
+            __DIR__ . '/../Notification/Entity',
+            'Nubit\\AdminBundle\\Notification\\Entity',
+        );
+
+        if ($container->hasExtension('doctrine')) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'filters' => [
+                        'nubit_notification_recipient' => [
+                            'class' => CurrentRecipientFilter::class,
+                            'enabled' => false, // enabled per-request by CurrentRecipientFilterListener
+                        ],
+                    ],
+                ],
+            ]);
+        }
     }
 }

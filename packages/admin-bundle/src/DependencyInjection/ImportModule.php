@@ -62,4 +62,19 @@ final class ImportModule
             priority: -30,
         )->arg('$inner', service('.inner'));
     }
+
+    /** Mapping only, same reasoning as documents. */
+    public static function prepend(ContainerBuilder $container): void
+    {
+        if (!BundleConfig::isFeatureEnabled($container, 'imports')) {
+            return;
+        }
+
+        BundleConfig::mapEntities(
+            $container,
+            'NubitAdminImport',
+            __DIR__ . '/../Import/Entity',
+            'Nubit\\AdminBundle\\Import\\Entity',
+        );
+    }
 }
