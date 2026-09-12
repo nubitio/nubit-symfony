@@ -220,6 +220,12 @@ final class TestKernel extends Kernel
             // in an application — the point under test is that authentication
             // reaches this route the same way it reaches a generated one.
             $routes->add('nubit_test_scoped_find', '/api/_test/scoped_find')->controller(ScopedFindController::class);
+
+            // Same reasoning as scoped_find: under /api so tenant resolution
+            // and the security firewall both apply the way they would to a
+            // real route, for tests asserting on tenant isolation for an
+            // authenticated (not anonymous) caller.
+            $routes->add('nubit_test_list_api', '/api/_test/list')->controller([TestQueryController::class, 'list']);
         }
     }
 
