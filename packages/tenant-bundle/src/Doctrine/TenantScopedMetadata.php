@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nubit\TenantBundle\Doctrine;
 
+use Nubit\Platform\Tenant\Contract\TenantOwnedInterface;
 use Nubit\TenantBundle\Attribute\TenantScoped;
-use Nubit\TenantBundle\Contract\TenantOwnedInterface;
 use ReflectionClass;
 
 final readonly class TenantScopedMetadata
