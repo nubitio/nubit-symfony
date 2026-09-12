@@ -25,6 +25,7 @@ use Nubit\TenantBundle\Quota\FeatureQuotaEnforcer;
 use Nubit\TenantBundle\Quota\QuotaResourceRegistry;
 use Nubit\TenantBundle\Registry\DoctrineTenantRegistry;
 use Nubit\TenantBundle\Resolver\CompositeTenantResolver;
+use Nubit\TenantBundle\Resolver\CredentialTenantResolver;
 use Nubit\TenantBundle\Resolver\HeaderTenantResolver;
 use Nubit\TenantBundle\Resolver\JwtClaimTenantResolver;
 use Nubit\TenantBundle\Resolver\MembershipVerifiedTenantResolver;
@@ -86,10 +87,10 @@ final class NubitTenantBundle extends AbstractBundle
             ->defaultFalse()
             ->end()
             ->arrayNode('resolution')
-            ->info('Ordered tenant resolution strategies: user, jwt_claim, header, subdomain.')
+            ->info('Ordered tenant resolution strategies: user, jwt_claim, credential, header, subdomain.')
             ->scalarPrototype()
             ->end()
-            ->defaultValue(['user', 'jwt_claim'])
+            ->defaultValue(['user', 'jwt_claim', 'credential'])
             ->end()
             ->scalarNode('tenant_entity')
             ->info('FQCN of the tenant root entity used by the registry and self-filter.')
@@ -252,6 +253,7 @@ final class NubitTenantBundle extends AbstractBundle
     private function registerResolvers(array $config, ServicesConfigurator $services): void
     {
         $services->set(UserTenantResolver::class);
+        $services->set(CredentialTenantResolver::class);
         $services->set(JwtClaimTenantResolver::class)->arg('$jwtSecret', $config['jwt_secret'])->arg(
             '$idClaim',
             $config['jwt_id_claim'],
@@ -261,9 +263,11 @@ final class NubitTenantBundle extends AbstractBundle
 
         // Header and subdomain values are attacker-controlled, so an
         // authenticated caller cannot be allowed to use them to claim a
-        // tenant they are not a member of. `user` and `jwt_claim` need no such
-        // check: one reads the caller's own record, the other reads a signed
-        // token nobody but the server issued.
+        // tenant they are not a member of. `user`, `jwt_claim` and
+        // `credential` need no such check: one reads the caller's own record,
+        // the others read state nobody but the server produced — a signed
+        // token, or a request attribute an authenticator set after verifying
+        // the credential itself.
         $services->set('nubit_tenant.resolver.header_verified', MembershipVerifiedTenantResolver::class)->arg(
             '$inner',
             service(HeaderTenantResolver::class),
@@ -278,6 +282,7 @@ final class NubitTenantBundle extends AbstractBundle
             $resolverRefs[] = match ($strategy) {
                 'user' => service(UserTenantResolver::class),
                 'jwt_claim' => service(JwtClaimTenantResolver::class),
+                'credential' => service(CredentialTenantResolver::class),
                 'header' => service('nubit_tenant.resolver.header_verified'),
                 'subdomain' => service('nubit_tenant.resolver.subdomain_verified'),
                 default => throw new \InvalidArgumentException(sprintf(

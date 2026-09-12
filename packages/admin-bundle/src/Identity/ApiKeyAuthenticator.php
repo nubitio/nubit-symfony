@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\Identity;
 
+use Nubit\Platform\Tenant\Http\TenantCredentialRequestAttribute;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -61,6 +62,13 @@ final class ApiKeyAuthenticator extends AbstractAuthenticator
             // tells whoever is probing which keys are worth probing further.
             throw new CustomUserMessageAuthenticationException('Invalid API key.');
         }
+
+        // Published unconditionally, whether or not tenant-bundle is even
+        // installed: a request attribute nobody reads costs nothing, and a
+        // key minted inside one tenant must resolve to that tenant on every
+        // request it authenticates, not to whatever a header or subdomain
+        // happens to claim.
+        $request->attributes->set(TenantCredentialRequestAttribute::NAME, $record->getTenantId());
 
         $passport = new SelfValidatingPassport(
             new UserBadge($record->getUserIdentifier(), $this->userProvider->loadUserByIdentifier(...)),
