@@ -21,6 +21,7 @@ use Nubit\Platform\Privacy\DataRedactor;
 use Nubit\Platform\Privacy\Metadata\SensitiveDataMetadataReader;
 use Nubit\Platform\Privacy\Policy\DefaultSensitiveDataPolicy;
 use Nubit\Platform\Privacy\Policy\SensitiveDataPolicyInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -68,5 +69,19 @@ final class AnalyticsModule
         );
         $services->set(DispatchAnalyticsOutboxCommand::class)->arg('$batchSize', $config['batch_size']);
         $services->set(PurgeAnalyticsOutboxCommand::class)->arg('$retentionDays', $config['retention_days']);
+    }
+
+    public static function prepend(ContainerBuilder $container): void
+    {
+        if (!BundleConfig::isFeatureEnabled($container, 'analytics')) {
+            return;
+        }
+
+        BundleConfig::mapEntities(
+            $container,
+            'NubitAdminAnalyticsBundle',
+            __DIR__ . '/../Analytics/Entity',
+            'Nubit\\AdminBundle\\Analytics\\Entity',
+        );
     }
 }

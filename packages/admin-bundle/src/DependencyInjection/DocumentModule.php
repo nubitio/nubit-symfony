@@ -111,4 +111,22 @@ final class DocumentModule
             priority: -20,
         )->arg('$inner', service('.inner'));
     }
+
+    /**
+     * Mapping only — an archive of issued records has no business exposing
+     * create/update/delete operations, so it is never an ApiResource.
+     */
+    public static function prepend(ContainerBuilder $container): void
+    {
+        if (!BundleConfig::isFeatureEnabled($container, 'documents')) {
+            return;
+        }
+
+        BundleConfig::mapEntities(
+            $container,
+            'NubitAdminDocument',
+            __DIR__ . '/../Document/Entity',
+            'Nubit\\AdminBundle\\Document\\Entity',
+        );
+    }
 }

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle;
 
-use Nubit\AdminBundle\Audit\AuditTrailListener;
-use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
 use Nubit\AdminBundle\Auth\CookieFactory;
 use Nubit\AdminBundle\Auth\CsrfProtectionListener;
 use Nubit\AdminBundle\Auth\DefaultTokenClaimsProvider;
@@ -14,15 +12,12 @@ use Nubit\AdminBundle\Auth\JWTAuthenticator;
 use Nubit\AdminBundle\Auth\JWTManager;
 use Nubit\AdminBundle\Auth\JWTManagerInterface;
 use Nubit\AdminBundle\Auth\LoginResponseDecoratorInterface;
-use Nubit\AdminBundle\Auth\MercureCookieDecorator;
-use Nubit\AdminBundle\Auth\MercureSubscriberTokenService;
 use Nubit\AdminBundle\Auth\RefreshTokenStoreInterface;
 use Nubit\AdminBundle\Auth\ResponseModeResolver;
 use Nubit\AdminBundle\Auth\TokenClaimsProviderInterface;
 use Nubit\AdminBundle\Auth\TokenGenerator;
 use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
 use Nubit\AdminBundle\Command\DiscoverCommand;
-use Nubit\AdminBundle\Command\PurgeAuditLogCommand;
 use Nubit\AdminBundle\Command\PurgeRefreshTokensCommand;
 use Nubit\AdminBundle\Command\SecurityAuditCommand;
 use Nubit\AdminBundle\Controller\ChangePasswordController;
@@ -32,14 +27,17 @@ use Nubit\AdminBundle\Controller\LogoutController;
 use Nubit\AdminBundle\Controller\MeController;
 use Nubit\AdminBundle\Controller\RefreshController;
 use Nubit\AdminBundle\DependencyInjection\AnalyticsModule;
+use Nubit\AdminBundle\DependencyInjection\AuditModule;
 use Nubit\AdminBundle\DependencyInjection\AuthorizationModule;
 use Nubit\AdminBundle\DependencyInjection\BackupModule;
+use Nubit\AdminBundle\DependencyInjection\BundleConfig;
 use Nubit\AdminBundle\DependencyInjection\Compiler\RemoveEmailChannelWithoutMailerPass;
 use Nubit\AdminBundle\DependencyInjection\DocumentModule;
 use Nubit\AdminBundle\DependencyInjection\ExportModule;
 use Nubit\AdminBundle\DependencyInjection\IdentityModule;
 use Nubit\AdminBundle\DependencyInjection\ImportModule;
 use Nubit\AdminBundle\DependencyInjection\MediaModule;
+use Nubit\AdminBundle\DependencyInjection\MercureModule;
 use Nubit\AdminBundle\DependencyInjection\NotificationModule;
 use Nubit\AdminBundle\DependencyInjection\ObservabilityModule;
 use Nubit\AdminBundle\DependencyInjection\OidcModule;
@@ -50,8 +48,6 @@ use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRouteLoader;
 use Nubit\AdminBundle\EmbeddedLines\EmbeddedLinesRowSerializer;
 use Nubit\AdminBundle\EventListener\SoftDeleteFilterListener;
 use Nubit\AdminBundle\Export\XlsxEncoder;
-use Nubit\AdminBundle\Mercure\FailSafeHub;
-use Nubit\AdminBundle\Notification\EventListener\CurrentRecipientFilter;
 use Nubit\AdminBundle\OpenApi\EmbeddedLinesDocumentationNormalizer;
 use Nubit\AdminBundle\OpenApi\GridScaleDocumentationNormalizer;
 use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
@@ -88,7 +84,6 @@ use Nubit\Platform\Tenant\Contract\TenantRegistryInterface;
 use Nubit\Platform\Time\TimeZoneResolver;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
@@ -792,33 +787,9 @@ final class NubitAdminBundle extends AbstractBundle
             $services->set(SoftDeleteFilterListener::class);
         }
 
-        // Fail-safe hub: independent of mercure.enabled (which only gates the
-        // subscriber cookie) — it matters to ANY app with mercure: true
-        // resources. class_exists, NOT hasExtension: loadExtension runs in a
-        // per-extension temporary container that only knows nubit_admin, so
-        // hasExtension is always false here. IGNORE_ON_INVALID_REFERENCE skips
-        // the decoration when MercureBundle is installed but no default hub is
-        // configured (apps with custom hub names decorate manually).
-        if ($config['mercure']['fail_safe'] && class_exists('Symfony\\Bundle\\MercureBundle\\MercureBundle')) {
-            $services->set(FailSafeHub::class)->decorate(
-                'mercure.hub.default',
-                null,
-                0,
-                ContainerInterface::IGNORE_ON_INVALID_REFERENCE,
-            )->arg('$inner', service('.inner'));
-        }
-
-        if ($config['mercure']['enabled']) {
-            $services->set(MercureSubscriberTokenService::class)->arg(
-                '$mercureJwtSecret',
-                $config['mercure']['secret'],
-            )->arg('$tokenTtl', $authConfig['access_token_ttl']);
-            $services
-                ->set(MercureCookieDecorator::class)
-                ->arg('$topics', $config['mercure']['topics'])
-                ->arg('$hubPath', $config['mercure']['hub_path'])
-                ->tag('nubit.admin.login_response_decorator');
-        }
+        /** @var array{enabled: bool, fail_safe: bool, secret: string, topics: list<string>, hub_path: string} $mercureConfig */
+        $mercureConfig = $config['mercure'];
+        MercureModule::load($mercureConfig, $authConfig['access_token_ttl'], $services);
 
         if ($config['media']['enabled']) {
             MediaModule::load($config['media'], $configurator, $services);
@@ -888,20 +859,10 @@ final class NubitAdminBundle extends AbstractBundle
         // env var actually gets consumed by the container.
         AnalyticsModule::load($analyticsConfig, $services);
 
-        if ($config['audit']['enabled']) {
-            $services->set(AuditTrailListener::class)->arg(
-                '$ignoredFields',
-                $config['audit']['ignored_fields'],
-            )->tag('doctrine.event_listener', ['event' => 'onFlush'])->tag('doctrine.event_listener', [
-                'event' => 'postFlush',
-            ]);
-
-            $services->set(AuditTrailController::class)->tag('controller.service_arguments');
-
-            $services->set(PurgeAuditLogCommand::class)->arg(
-                '$retentionDays',
-                $config['audit']['purge_retention_days'],
-            );
+        /** @var array{enabled: bool, ignored_fields: list<string>, purge_retention_days: int} $auditConfig */
+        $auditConfig = $config['audit'];
+        if ($auditConfig['enabled']) {
+            AuditModule::load($auditConfig, $services);
         }
 
         $services->set(DefaultMeResponseBuilder::class)->arg('$appProfile', AppProfile::from($config['app_profile']));
@@ -962,7 +923,7 @@ final class NubitAdminBundle extends AbstractBundle
             // with the *first* configured format. A separate prependExtensionConfig
             // would land ahead of these — prepending reverses the order — and a
             // grid asking for rows would be handed a spreadsheet it cannot parse.
-            if ($this->isFeatureEnabled($container, 'export')) {
+            if (BundleConfig::isFeatureEnabled($container, 'export')) {
                 $formats[XlsxEncoder::FORMAT] = [
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 ];
@@ -982,164 +943,19 @@ final class NubitAdminBundle extends AbstractBundle
             ]);
         }
 
-        // Media library (opt-in): map the entity and expose it as an
-        // ApiResource. Conditional on the raw config because an unconditional
-        // mapping would surface the nubit_media table and /api/media routes
-        // in apps that never enabled the feature.
-        // Issued documents (opt-in): only the Doctrine mapping. The entity is
-        // deliberately not an ApiResource — an archive of issued records has no
-        // business exposing create/update/delete operations.
-        if ($this->isFeatureEnabled($container, 'documents') && $container->hasExtension('doctrine')) {
-            $container->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminDocument' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Document/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Document\\Entity',
-                            'alias' => 'NubitAdminDocument',
-                        ],
-                    ],
-                ],
-            ]);
-        }
-
-        // Identity lifecycle (opt-in): TOTP credentials, single-use tokens and
-        // API keys. Mapping only — none of these is an ApiResource, because a
-        // credential store has no business being CRUD-able.
-        if ($this->isFeatureEnabled($container, 'identity') && $container->hasExtension('doctrine')) {
-            $container->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminIdentity' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Identity/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Identity\\Entity',
-                            'alias' => 'NubitAdminIdentity',
-                        ],
-                    ],
-                ],
-            ]);
-        }
-
-        // Roles (opt-in). Mapped *and* exposed as an ApiResource: the role
-        // administration screen is the CRUD engine reading the same contract as
-        // every other resource, rather than a bespoke page.
-        if ($this->isFeatureEnabled($container, 'authorization') && $container->hasExtension('doctrine')) {
-            $container->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminAuthorization' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Authorization/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Authorization\\Entity',
-                            'alias' => 'NubitAdminAuthorization',
-                        ],
-                    ],
-                ],
-            ]);
-
-            $this->prependApiPlatformMappingPath($container, __DIR__ . '/Authorization/Entity');
-        }
-
-        // Queued exports (opt-in): mapping only.
-        if (
-            $this->readBoolean($container, ['export', 'queued'], default: false) && $container->hasExtension('doctrine')
-        ) {
-            $container->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminExport' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Export/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Export\\Entity',
-                            'alias' => 'NubitAdminExport',
-                        ],
-                    ],
-                ],
-            ]);
-        }
-
-        // Import sessions (opt-in): mapping only, same reasoning as documents.
-        if ($this->isFeatureEnabled($container, 'imports') && $container->hasExtension('doctrine')) {
-            $container->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminImport' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Import/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Import\\Entity',
-                            'alias' => 'NubitAdminImport',
-                        ],
-                    ],
-                ],
-            ]);
-        }
-
-        if ($this->isFeatureEnabled($container, 'media')) {
-            $this->prependMediaMappings($container);
-        }
-
-        // Audit trail (opt-in): same reasoning — only map nubit_audit_log
-        // when the feature is on. AuditLog is not an ApiResource (the plain
-        // route serves it), so only the Doctrine mapping is needed.
-        if ($this->isFeatureEnabled($container, 'audit') && $container->hasExtension('doctrine')) {
-            $container->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminAuditBundle' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Audit/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Audit\\Entity',
-                            'alias' => 'NubitAdminAudit',
-                        ],
-                    ],
-                ],
-            ]);
-        }
-
-        // In-app notifications (opt-in, nested under notification.in_app):
-        // Notification IS an ApiResource (unlike AuditLog), so it needs both
-        // the api_platform mapping path (for resource discovery) and the
-        // Doctrine mapping — same two-part treatment as prependMediaMappings.
-        if ($this->isFeatureEnabled($container, 'notification', 'in_app')) {
-            $this->prependNotificationMappings($container);
-
-            if ($container->hasExtension('doctrine')) {
-                $container->prependExtensionConfig('doctrine', [
-                    'orm' => [
-                        'filters' => [
-                            'nubit_notification_recipient' => [
-                                'class' => CurrentRecipientFilter::class,
-                                'enabled' => false, // enabled per-request by CurrentRecipientFilterListener
-                            ],
-                        ],
-                    ],
-                ]);
-            }
-        }
-
-        if ($this->isFeatureEnabled($container, 'analytics') && $container->hasExtension('doctrine')) {
-            $container->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminAnalyticsBundle' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Analytics/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Analytics\\Entity',
-                            'alias' => 'NubitAdminAnalytics',
-                        ],
-                    ],
-                ],
-            ]);
-        }
+        // Each optional module owns its own mapping (and, where relevant,
+        // ApiResource path) and decides for itself, from the raw config, when
+        // it applies — nothing here has to know which flag gates which
+        // module, only that every one of them gets a chance to prepend.
+        DocumentModule::prepend($container);
+        IdentityModule::prepend($container);
+        AuthorizationModule::prepend($container);
+        ExportModule::prepend($container);
+        ImportModule::prepend($container);
+        MediaModule::prepend($container);
+        AuditModule::prepend($container);
+        NotificationModule::prependInApp($container);
+        AnalyticsModule::prepend($container);
 
         if (!$container->hasExtension('doctrine')) {
             return;
@@ -1161,7 +977,7 @@ final class NubitAdminBundle extends AbstractBundle
         // One meaning per timestamp column. Doctrine's stock type both writes
         // and reads in the server's local zone, so two deployments of the same
         // application disagree about what a stored instant was.
-        if ($this->readBoolean($container, ['time', 'enforce_utc'], default: true)) {
+        if (BundleConfig::readBoolean($container, ['time', 'enforce_utc'], default: true)) {
             $container->prependExtensionConfig('doctrine', [
                 'dbal' => ['types' => ['datetime_immutable' => UtcDateTimeImmutableType::class]],
             ]);
@@ -1230,139 +1046,6 @@ final class NubitAdminBundle extends AbstractBundle
             foreach ($classes as $class) {
                 $services->set($class)->class(DisabledModuleController::class)->tag('controller.service_arguments');
             }
-        }
-    }
-
-    /**
-     * Reads a plain boolean leaf out of the raw (pre-processing) bundle config.
-     *
-     * {@see isFeatureEnabled} answers a different question — whether a module's
-     * `enabled` sub-key is on — and cannot express a leaf that defaults to true.
-     *
-     * @param list<string> $path
-     */
-    private function readBoolean(ContainerBuilder $builder, array $path, bool $default): bool
-    {
-        $value = $default;
-
-        foreach ($builder->getExtensionConfig('nubit_admin') as $config) {
-            $node = $config;
-            foreach ($path as $segment) {
-                if (!is_array($node) || !array_key_exists($segment, $node)) {
-                    continue 2;
-                }
-                /** @var array<string, mixed>|bool $node */
-                $node = $node[$segment];
-            }
-
-            if (is_bool($node)) {
-                $value = $node;
-            }
-        }
-
-        return $value;
-    }
-
-    private function isFeatureEnabled(ContainerBuilder $builder, string ...$path): bool
-    {
-        $enabled = false;
-        foreach ($builder->getExtensionConfig('nubit_admin') as $config) {
-            $node = $config;
-            foreach ($path as $segment) {
-                if (!isset($node[$segment]) || !is_array($node[$segment])) {
-                    continue 2;
-                }
-                /** @var array<string, mixed> $node */
-                $node = $node[$segment];
-            }
-
-            if (isset($node['enabled'])) {
-                $enabled = (bool) $node['enabled'];
-            }
-        }
-
-        return $enabled;
-    }
-
-    /**
-     * Adds one bundle-owned entity directory to api_platform.mapping.paths.
-     *
-     * API Platform skips its project-dir defaults (src/Entity,
-     * src/ApiResource, config/api_platform) as soon as mapping.paths is
-     * non-empty — our prepend must not displace the app's own entities, so
-     * re-add those defaults when the app relied on them.
-     */
-    private function prependApiPlatformMappingPath(ContainerBuilder $builder, string $entityDir): void
-    {
-        if (!$builder->hasExtension('api_platform')) {
-            return;
-        }
-
-        $appPaths = [];
-        foreach ($builder->getExtensionConfig('api_platform') as $config) {
-            $appPaths = array_merge($appPaths, (array) ($config['mapping']['paths'] ?? []));
-        }
-
-        $paths = [$entityDir];
-
-        if ($appPaths === []) {
-            /** @var string $projectDir */
-            $projectDir = $builder->getParameter('kernel.project_dir');
-            foreach ([
-                "$projectDir/config/api_platform",
-                "$projectDir/src/ApiResource",
-                "$projectDir/src/Entity",
-            ] as $dir) {
-                if (is_dir($dir)) {
-                    $paths[] = $dir;
-                }
-            }
-        }
-
-        $builder->prependExtensionConfig('api_platform', [
-            'mapping' => ['paths' => $paths],
-        ]);
-    }
-
-    private function prependNotificationMappings(ContainerBuilder $builder): void
-    {
-        $this->prependApiPlatformMappingPath($builder, __DIR__ . '/Notification/Entity');
-
-        if ($builder->hasExtension('doctrine')) {
-            $builder->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminNotificationBundle' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Notification/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Notification\\Entity',
-                            'alias' => 'NubitAdminNotification',
-                        ],
-                    ],
-                ],
-            ]);
-        }
-    }
-
-    private function prependMediaMappings(ContainerBuilder $builder): void
-    {
-        $this->prependApiPlatformMappingPath($builder, __DIR__ . '/Media/Entity');
-
-        if ($builder->hasExtension('doctrine')) {
-            $builder->prependExtensionConfig('doctrine', [
-                'orm' => [
-                    'mappings' => [
-                        'NubitAdminMediaBundle' => [
-                            'is_bundle' => false,
-                            'type' => 'attribute',
-                            'dir' => __DIR__ . '/Media/Entity',
-                            'prefix' => 'Nubit\\AdminBundle\\Media\\Entity',
-                            'alias' => 'NubitAdminMedia',
-                        ],
-                    ],
-                ],
-            ]);
         }
     }
 }

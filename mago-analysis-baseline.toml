@@ -175,6 +175,18 @@ message = "Left operand in `<` comparison has `mixed` type."
 count = 1
 
 [[issues]]
+file = "packages/admin-bundle/src/DependencyInjection/BundleConfig.php"
+code = "invalid-type-cast"
+message = "Casting `mixed` to `array`."
+count = 1
+
+[[issues]]
+file = "packages/admin-bundle/src/DependencyInjection/BundleConfig.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
 file = "packages/admin-bundle/src/Document/Controller/DownloadDocumentController.php"
 code = "possibly-invalid-argument"
 message = 'Possible argument type mismatch for argument #1 of `Nubit\AdminBundle\Authorization\PermissionCatalog::prefixFor`: expected `class-string`, but possibly received `string`.'
@@ -410,12 +422,6 @@ count = 1
 
 [[issues]]
 file = "packages/admin-bundle/src/NubitAdminBundle.php"
-code = "invalid-type-cast"
-message = "Casting `mixed` to `array`."
-count = 1
-
-[[issues]]
-file = "packages/admin-bundle/src/NubitAdminBundle.php"
 code = "mixed-argument"
 message = '''Invalid argument type for argument #1 of `Nubit\AdminBundle\DependencyInjection\MediaModule::load`: expected `array{'allowed_mimes': list<string>, 'directory': string, 'max_size': int, 'purge_retention_days': int, 'storage': array{'filesystem': null|string, 'local_directory': string}}`, but found `mixed`.'''
 count = 1
@@ -436,19 +442,13 @@ count = 1
 file = "packages/admin-bundle/src/NubitAdminBundle.php"
 code = "mixed-array-access"
 message = "Unsafe array access on type `mixed`."
-count = 11
+count = 3
 
 [[issues]]
 file = "packages/admin-bundle/src/NubitAdminBundle.php"
 code = "mixed-operand"
 message = "Casting `mixed` to `bool`."
-count = 9
-
-[[issues]]
-file = "packages/admin-bundle/src/NubitAdminBundle.php"
-code = "mixed-operand"
-message = "Left operand in `&&` operation has `mixed` type."
-count = 1
+count = 8
 
 [[issues]]
 file = "packages/admin-bundle/src/OpenApi/EmbeddedLinesDocumentationNormalizer.php"

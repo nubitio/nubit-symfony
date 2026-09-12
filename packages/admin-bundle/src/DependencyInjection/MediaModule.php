@@ -15,6 +15,7 @@ use Nubit\AdminBundle\Media\RouteMediaUrlResolver;
 use Nubit\AdminBundle\Media\Serializer\MediaNormalizer;
 use Nubit\AdminBundle\Media\State\MediaSoftDeleteProcessor;
 use Nubit\Platform\Filesystem\FileManager;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 
@@ -67,5 +68,20 @@ final class MediaModule
         $services->set(MediaUploadController::class)->tag('controller.service_arguments');
         $services->set(MediaFileController::class)->tag('controller.service_arguments');
         $services->set(PurgeMediaCommand::class)->arg('$retentionDays', $config['purge_retention_days']);
+    }
+
+    public static function prepend(ContainerBuilder $container): void
+    {
+        if (!BundleConfig::isFeatureEnabled($container, 'media')) {
+            return;
+        }
+
+        BundleConfig::addApiResourcePath($container, __DIR__ . '/../Media/Entity');
+        BundleConfig::mapEntities(
+            $container,
+            'NubitAdminMediaBundle',
+            __DIR__ . '/../Media/Entity',
+            'Nubit\\AdminBundle\\Media\\Entity',
+        );
     }
 }

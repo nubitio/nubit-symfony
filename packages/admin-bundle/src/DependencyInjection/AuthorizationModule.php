@@ -13,6 +13,7 @@ use Nubit\AdminBundle\Authorization\PermissionVoter;
 use Nubit\AdminBundle\Authorization\RowScopeExtension;
 use Nubit\AdminBundle\Command\PermissionListCommand;
 use Nubit\AdminBundle\Security\UnguardedOperationScanner;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
@@ -84,5 +85,25 @@ final class AuthorizationModule
             '$requirePermissionOnReads',
             $config['enforce_by_default'],
         );
+    }
+
+    /**
+     * Mapped *and* exposed as an ApiResource: the role administration screen
+     * is the CRUD engine reading the same contract as every other resource,
+     * rather than a bespoke page.
+     */
+    public static function prepend(ContainerBuilder $container): void
+    {
+        if (!BundleConfig::isFeatureEnabled($container, 'authorization')) {
+            return;
+        }
+
+        BundleConfig::mapEntities(
+            $container,
+            'NubitAdminAuthorization',
+            __DIR__ . '/../Authorization/Entity',
+            'Nubit\\AdminBundle\\Authorization\\Entity',
+        );
+        BundleConfig::addApiResourcePath($container, __DIR__ . '/../Authorization/Entity');
     }
 }

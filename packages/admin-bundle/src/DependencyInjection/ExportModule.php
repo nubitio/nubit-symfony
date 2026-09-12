@@ -19,6 +19,7 @@ use Nubit\AdminBundle\Export\Writer\XlsxExportWriter;
 use Nubit\AdminBundle\Export\XlsxEncoder;
 use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -89,5 +90,24 @@ final class ExportModule
         $services->set(RunExportHandler::class);
         $services->set(ExportRequestService::class)->arg('$defaultInlineLimit', $config['inline_limit']);
         $services->set(ExportJobController::class)->tag('controller.service_arguments');
+    }
+
+    /**
+     * Mapping only. Gated on `export.queued` specifically, not
+     * `export.enabled` — a queued job record only exists once a job can be
+     * queued.
+     */
+    public static function prepend(ContainerBuilder $container): void
+    {
+        if (!BundleConfig::readBoolean($container, ['export', 'queued'], default: false)) {
+            return;
+        }
+
+        BundleConfig::mapEntities(
+            $container,
+            'NubitAdminExport',
+            __DIR__ . '/../Export/Entity',
+            'Nubit\\AdminBundle\\Export\\Entity',
+        );
     }
 }
