@@ -9,7 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Events;
 use Nubit\Platform\Tenant\Context\TenantContext;
-use Nubit\TenantBundle\Contract\TenantOwnedInterface;
+use Nubit\Platform\Tenant\Contract\TenantOwnedInterface;
 use Nubit\TenantBundle\Doctrine\TenantScopedMetadata;
 
 #[AsDoctrineListener(event: Events::prePersist)]

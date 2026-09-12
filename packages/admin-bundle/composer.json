@@ -25,7 +25,6 @@
         "league/flysystem": "^3.0",
         "nubitio/api-platform": "^1.0",
         "nubitio/platform": "^1.0",
-        "nubitio/tenant-bundle": "^1.0",
         "psr/cache": "^3.0",
         "psr/log": "^3.0",
         "symfony/cache-contracts": "^3.0",

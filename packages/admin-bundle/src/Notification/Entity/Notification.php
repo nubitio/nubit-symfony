@@ -11,8 +11,8 @@ use ApiPlatform\Metadata\Patch;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Nubit\TenantBundle\Contract\TenantOwnedInterface;
-use Nubit\TenantBundle\Entity\TenantOwnedTrait;
+use Nubit\Platform\Tenant\Contract\TenantOwnedInterface;
+use Nubit\Platform\Tenant\Entity\TenantOwnedTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 /**

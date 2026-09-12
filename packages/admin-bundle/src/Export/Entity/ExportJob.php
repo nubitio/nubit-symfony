@@ -6,8 +6,8 @@ namespace Nubit\AdminBundle\Export\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Nubit\TenantBundle\Contract\TenantOwnedInterface;
-use Nubit\TenantBundle\Entity\TenantOwnedTrait;
+use Nubit\Platform\Tenant\Contract\TenantOwnedInterface;
+use Nubit\Platform\Tenant\Entity\TenantOwnedTrait;
 
 /**
  * A spreadsheet somebody asked for that is too big to hand over in a response.

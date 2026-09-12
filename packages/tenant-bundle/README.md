@@ -34,10 +34,12 @@ nubit_admin:
 
 Mark tenant-owned entities with `#[TenantScoped]` and implement `TenantOwnedInterface`. The Doctrine `nubit_tenant` filter scopes queries to the active tenant.
 
+`TenantOwnedInterface`/`TenantOwnedTrait` live in `nubitio/platform`, so a package can declare its entities tenant-owned without requiring this bundle at all — the `tenant_id` column exists either way, and is only ever read or stamped once tenant-bundle is installed and configured. Import from `Nubit\Platform\Tenant\...` in new code; `Nubit\TenantBundle\Contract\TenantOwnedInterface` and `Nubit\TenantBundle\Entity\TenantOwnedTrait` still work as aliases of the platform originals.
+
 ```php
+use Nubit\Platform\Tenant\Contract\TenantOwnedInterface;
+use Nubit\Platform\Tenant\Entity\TenantOwnedTrait;
 use Nubit\TenantBundle\Attribute\TenantScoped;
-use Nubit\TenantBundle\Contract\TenantOwnedInterface;
-use Nubit\TenantBundle\Entity\TenantOwnedTrait;
 
 #[TenantScoped]
 #[ORM\Entity]

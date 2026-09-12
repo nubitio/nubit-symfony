@@ -15,8 +15,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Nubit\ApiPlatform\Attribute\Authorized;
 use Nubit\Platform\Money\Currency;
 use Nubit\Platform\Money\Money;
-use Nubit\TenantBundle\Contract\TenantOwnedInterface;
-use Nubit\TenantBundle\Entity\TenantOwnedTrait;
+use Nubit\Platform\Tenant\Contract\TenantOwnedInterface;
+use Nubit\Platform\Tenant\Entity\TenantOwnedTrait;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
