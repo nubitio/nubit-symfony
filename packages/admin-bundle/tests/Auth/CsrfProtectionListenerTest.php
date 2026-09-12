@@ -20,7 +20,9 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * Covers the acceptance criteria in issue #3: a cookie-authenticated
  * mutation without a matching CSRF token is rejected, one with a valid token
  * is accepted, and stateless (Bearer / API key) clients are never subject to
- * the check at all.
+ * the check at all. Also covers issue #16: a browser-supplied `Origin` that
+ * disagrees with the request's own host — or an explicitly configured
+ * trusted origin — is rejected independently of the token pair.
  */
 final class CsrfProtectionListenerTest extends TestCase
 {
@@ -56,6 +58,70 @@ final class CsrfProtectionListenerTest extends TestCase
     }
 
     public function testAcceptsCookieAuthenticatedMutationWithMatchingCsrfToken(): void
+    {
+        $request = self::cookieAuthenticatedRequest('POST');
+        $token = CsrfTokenPolicy::generate();
+        $request->cookies->set(CsrfTokenPolicy::COOKIE_NAME, $token);
+        $request->headers->set(CsrfTokenPolicy::HEADER_NAME, $token);
+
+        $event = self::dispatch($request);
+
+        self::assertNull($event->getResponse());
+    }
+
+    /**
+     * The browser sets `Origin` itself — no script on the page can override
+     * it — so a mismatch is rejected even with a token pair that matches
+     * exactly. This is the case a shared `cookie_domain` opens up: a script
+     * on a sibling subdomain can read the CSRF cookie too, and the token
+     * check alone would not catch that.
+     */
+    public function testRejectsAMatchingCsrfTokenPairFromAMismatchedOrigin(): void
+    {
+        $request = self::cookieAuthenticatedRequest('POST');
+        $token = CsrfTokenPolicy::generate();
+        $request->cookies->set(CsrfTokenPolicy::COOKIE_NAME, $token);
+        $request->headers->set(CsrfTokenPolicy::HEADER_NAME, $token);
+        $request->headers->set('Origin', 'https://evil.example.test');
+
+        $event = self::dispatch($request);
+
+        self::assertNotNull($event->getResponse());
+        self::assertSame(Response::HTTP_FORBIDDEN, $event->getResponse()?->getStatusCode());
+    }
+
+    public function testAcceptsAMatchingCsrfTokenPairFromTheRequestsOwnOrigin(): void
+    {
+        $request = self::cookieAuthenticatedRequest('POST');
+        $token = CsrfTokenPolicy::generate();
+        $request->cookies->set(CsrfTokenPolicy::COOKIE_NAME, $token);
+        $request->headers->set(CsrfTokenPolicy::HEADER_NAME, $token);
+        $request->headers->set('Origin', $request->getSchemeAndHttpHost());
+
+        $event = self::dispatch($request);
+
+        self::assertNull($event->getResponse());
+    }
+
+    /** A SPA deliberately served from a different host, explicitly trusted. */
+    public function testAcceptsAMatchingCsrfTokenPairFromAConfiguredTrustedOrigin(): void
+    {
+        $request = self::cookieAuthenticatedRequest('POST');
+        $token = CsrfTokenPolicy::generate();
+        $request->cookies->set(CsrfTokenPolicy::COOKIE_NAME, $token);
+        $request->headers->set(CsrfTokenPolicy::HEADER_NAME, $token);
+        $request->headers->set('Origin', 'https://app.example.test');
+
+        $event = self::dispatch($request, trustedOrigins: ['https://app.example.test']);
+
+        self::assertNull($event->getResponse());
+    }
+
+    /**
+     * Not every client sends `Origin` on a same-origin request — its
+     * absence carries no signal either way, only its presence does.
+     */
+    public function testAcceptsAMatchingCsrfTokenPairWithNoOriginHeaderAtAll(): void
     {
         $request = self::cookieAuthenticatedRequest('POST');
         $token = CsrfTokenPolicy::generate();
@@ -168,14 +234,16 @@ final class CsrfProtectionListenerTest extends TestCase
         return $request;
     }
 
+    /** @param list<string> $trustedOrigins */
     private static function dispatch(
         Request $request,
         bool $enabled = true,
         int $requestType = HttpKernelInterface::MAIN_REQUEST,
+        array $trustedOrigins = [],
     ): RequestEvent {
         $event = new RequestEvent(self::createStub(HttpKernelInterface::class), $request, $requestType);
 
-        (new CsrfProtectionListener(new NullLogger(), enabled: $enabled))($event);
+        (new CsrfProtectionListener(new NullLogger(), enabled: $enabled, trustedOrigins: $trustedOrigins))($event);
 
         return $event;
     }
