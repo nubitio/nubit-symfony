@@ -92,6 +92,30 @@ final class CookieFactoryTest extends TestCase
         self::assertSame('.efact.app', $cookie->getDomain());
     }
 
+    public function testCreateSecureCookieFallsBackToTheConfiguredDomain(): void
+    {
+        $factory = new CookieFactory(cookieDomain: '.example.com');
+        $cookie = $factory->createSecureCookie('token', 'v', time() + 3600);
+
+        self::assertSame('.example.com', $cookie->getDomain());
+    }
+
+    public function testCreateSecureCookieCallSitePrevailsOverTheConfiguredDomain(): void
+    {
+        $factory = new CookieFactory(cookieDomain: '.example.com');
+        $cookie = $factory->createSecureCookie('token', 'v', time() + 3600, '/', '.other.test');
+
+        self::assertSame('.other.test', $cookie->getDomain());
+    }
+
+    public function testCreateSecureCookieHasNoDomainWhenNoneIsConfigured(): void
+    {
+        $factory = new CookieFactory();
+        $cookie = $factory->createSecureCookie('token', 'v', time() + 3600);
+
+        self::assertNull($cookie->getDomain());
+    }
+
     // ── createCsrfCookie ──────────────────────────────────────────────────────
 
     public function testCreateCsrfCookieHasCorrectNameAndValue(): void
@@ -129,6 +153,14 @@ final class CookieFactoryTest extends TestCase
         self::assertSame(Cookie::SAMESITE_STRICT, $cookie->getSameSite());
     }
 
+    public function testCreateCsrfCookieFallsBackToTheConfiguredDomain(): void
+    {
+        $factory = new CookieFactory(cookieDomain: '.example.com');
+        $cookie = $factory->createCsrfCookie('CSRF_TOKEN', 'v', time() + 3600);
+
+        self::assertSame('.example.com', $cookie->getDomain());
+    }
+
     // ── createExpiredCookie ───────────────────────────────────────────────────
 
     public function testCreateExpiredCookieIsInThePast(): void
@@ -162,5 +194,19 @@ final class CookieFactoryTest extends TestCase
         $cookie = $factory->createExpiredCookie('token');
 
         self::assertSame(Cookie::SAMESITE_STRICT, $cookie->getSameSite());
+    }
+
+    /**
+     * A cookie expired with a different `Domain` than the one it was set
+     * with does not clear it — the browser sees them as unrelated cookies.
+     * The configured domain must be the default here too, or a deployment
+     * using `cookie_domain` could never log out.
+     */
+    public function testCreateExpiredCookieFallsBackToTheConfiguredDomain(): void
+    {
+        $factory = new CookieFactory(cookieDomain: '.example.com');
+        $cookie = $factory->createExpiredCookie('token');
+
+        self::assertSame('.example.com', $cookie->getDomain());
     }
 }

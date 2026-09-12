@@ -149,11 +149,25 @@ final class NubitAdminBundle extends AbstractBundle
             ->booleanNode('cookie_secure')
             ->defaultTrue()
             ->end()
+            ->scalarNode('cookie_domain')
+            ->info(
+                'Domain attribute for the auth/CSRF cookies. Unset (the default) makes a host-only cookie. Set to a shared parent domain (e.g. ".example.com") only when the frontend and API are deliberately split across subdomains of the same site and must share the cookies — doing so also widens which origins can read the CSRF cookie, so pair it with trusted_origins.',
+            )
+            ->defaultNull()
+            ->end()
             ->booleanNode('csrf_protection')
             ->info(
                 'Require a X-CSRF-Token header matching the CSRF_TOKEN cookie on POST/PUT/PATCH/DELETE requests authenticated via the AUTH_TOKEN/REFRESH_TOKEN cookie (double-submit policy). Bearer-token and X-Api-Key clients are never subject to it — only turn this off if CSRF is enforced some other way (e.g. at a reverse proxy).',
             )
             ->defaultTrue()
+            ->end()
+            ->arrayNode('trusted_origins')
+            ->info(
+                'Origins besides the request\'s own host allowed to present the double-submit CSRF pair. Only needed when cookie_domain is shared with a frontend served from a different host (e.g. "https://app.example.com") — every other mutating cookie-authenticated request whose Origin header disagrees with its own host is rejected regardless of a matching token.',
+            )
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue([])
             ->end()
             ->end()
             ->end()
@@ -725,7 +739,17 @@ final class NubitAdminBundle extends AbstractBundle
         }
 
         // ── Auth ─────────────────────────────────────────────────────────────
-        /** @var array{secret: string, access_token_ttl: int, refresh_token_ttl: int, cookie_secure: bool, csrf_protection: bool} $authConfig */
+        /**
+         * @var array{
+         *     secret: string,
+         *     access_token_ttl: int,
+         *     refresh_token_ttl: int,
+         *     cookie_secure: bool,
+         *     cookie_domain: ?string,
+         *     csrf_protection: bool,
+         *     trusted_origins: list<string>,
+         * } $authConfig
+         */
         $authConfig = $config['auth'];
 
         $services->set(JWTManager::class)->arg('$secret', $authConfig['secret']);
@@ -733,7 +757,10 @@ final class NubitAdminBundle extends AbstractBundle
 
         $services->set(ResponseModeResolver::class);
 
-        $services->set(CookieFactory::class)->arg('$cookieSecure', $authConfig['cookie_secure']);
+        $services->set(CookieFactory::class)->arg('$cookieSecure', $authConfig['cookie_secure'])->arg(
+            '$cookieDomain',
+            $authConfig['cookie_domain'],
+        );
 
         $services->set(DefaultTokenClaimsProvider::class);
         $services->alias(TokenClaimsProviderInterface::class, DefaultTokenClaimsProvider::class);
@@ -752,7 +779,10 @@ final class NubitAdminBundle extends AbstractBundle
         $identityEnabled = $config['identity'];
         $services->set(JWTAuthenticator::class)->arg('$secondFactorEnabled', $identityEnabled['enabled']);
 
-        $services->set(CsrfProtectionListener::class)->arg('$enabled', $authConfig['csrf_protection']);
+        $services->set(CsrfProtectionListener::class)->arg('$enabled', $authConfig['csrf_protection'])->arg(
+            '$trustedOrigins',
+            $authConfig['trusted_origins'],
+        );
 
         $services->set(PurgeRefreshTokensCommand::class);
         $services->set(DiscoverCommand::class);
