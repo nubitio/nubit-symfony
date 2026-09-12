@@ -10,6 +10,15 @@ final readonly class CookieFactory
 {
     public function __construct(
         private bool $cookieSecure = true,
+        /**
+         * Default `Domain` attribute for every cookie this factory creates,
+         * unless a call site overrides it. Unset (the default) makes a
+         * host-only cookie — the right choice unless the frontend and API
+         * are deliberately split across subdomains of the same site and
+         * need to share the auth/CSRF cookies (e.g. `.example.com` so both
+         * `app.example.com` and `api.example.com` see them).
+         */
+        private ?string $cookieDomain = null,
     ) {}
 
     /** @param ''|'lax'|'none'|'strict' $sameSite */
@@ -26,7 +35,7 @@ final readonly class CookieFactory
             $value,
             $expiresAt,
             $path,
-            $domain,
+            $domain ?? $this->cookieDomain,
             $this->cookieSecure,
             true, // httpOnly
             false, // raw
@@ -55,7 +64,7 @@ final readonly class CookieFactory
             $value,
             $expiresAt,
             $path,
-            $domain,
+            $domain ?? $this->cookieDomain,
             $this->cookieSecure,
             false, // httpOnly — must be readable by JS
             false, // raw
@@ -70,7 +79,7 @@ final readonly class CookieFactory
             '',
             time() - 3600,
             $path,
-            $domain,
+            $domain ?? $this->cookieDomain,
             $this->cookieSecure,
             true, // httpOnly
             false, // raw

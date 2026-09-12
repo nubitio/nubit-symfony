@@ -32,6 +32,15 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
  * Bearer-token and `X-Api-Key` clients are exempt: those credentials are
  * never attached by the browser automatically, so they are not vulnerable to
  * CSRF the same way and stay usable with no token coupling.
+ *
+ * The double-submit token alone assumes a cross-site page cannot read the
+ * `CSRF_TOKEN` cookie — true under same-origin policy for the API's own
+ * origin, but no longer strictly true once `cookie_domain` widens the
+ * cookie to a shared parent domain: a script on any sibling subdomain can
+ * then read it too. `Origin` is checked as a second, independent signal for
+ * exactly that case: it is set by the browser itself on every mutating
+ * request and cannot be forged by page content the way a header a script
+ * chooses to send can be.
  */
 #[AsEventListener]
 final readonly class CsrfProtectionListener
@@ -39,6 +48,14 @@ final readonly class CsrfProtectionListener
     /** @var list<string> */
     private const array MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+    /**
+     * @param list<string> $trustedOrigins Origins besides the request's own
+     *                                      that may present the double-submit
+     *                                      pair — for a SPA deliberately
+     *                                      served from a different host than
+     *                                      the API under a shared
+     *                                      `cookie_domain`.
+     */
     public function __construct(
         private LoggerInterface $logger,
         /**
@@ -48,6 +65,7 @@ final readonly class CsrfProtectionListener
          * unless an application explicitly opts out.
          */
         private bool $enabled = true,
+        private array $trustedOrigins = [],
     ) {}
 
     public function __invoke(RequestEvent $event): void
@@ -81,7 +99,7 @@ final readonly class CsrfProtectionListener
             return;
         }
 
-        if ($this->hasValidCsrfToken($request)) {
+        if ($this->hasValidCsrfToken($request) && $this->hasTrustedOrigin($request)) {
             return;
         }
 
@@ -119,6 +137,23 @@ final readonly class CsrfProtectionListener
             $request->cookies->has(JWTAuthenticator::AUTH_COOKIE)
             || $request->cookies->has(JWTAuthenticator::REFRESH_COOKIE)
         );
+    }
+
+    /**
+     * Absence of the header is not a signal either way — not every client
+     * sends `Origin` on same-origin requests, and the token check above is
+     * what carries the actual guarantee. Its presence is authoritative,
+     * though: unlike `X-CSRF-Token`, a browser sets `Origin` itself and no
+     * script running on the page can override it.
+     */
+    private function hasTrustedOrigin(Request $request): bool
+    {
+        $origin = $request->headers->get('Origin');
+        if (null === $origin || '' === $origin) {
+            return true;
+        }
+
+        return $origin === $request->getSchemeAndHttpHost() || in_array($origin, $this->trustedOrigins, true);
     }
 
     private function hasValidCsrfToken(Request $request): bool
