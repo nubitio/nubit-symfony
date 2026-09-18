@@ -34,6 +34,7 @@ final class ResolveApproximateCounterConnectionPass implements CompilerPassInter
         $connectionName = $container->hasParameter('doctrine.default_connection')
             ? $container->getParameter('doctrine.default_connection')
             : 'default';
+        $connectionName = \is_string($connectionName) ? $connectionName : 'default';
 
         $container->getDefinition(ApproximateCounter::class)->setArgument(
             '$connection',
