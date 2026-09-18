@@ -24,8 +24,11 @@ final class MercureModule
      *     topics: list<string>,
      *     hub_path: string,
      * } $config
+     * @param int|string $accessTokenTtl int once resolved, but auth.access_token_ttl
+     *     accepts `%env(int:...)%`, which is still an unresolved placeholder string
+     *     at this point — only ->arg() resolves it, later, at container compile time.
      */
-    public static function load(array $config, int $accessTokenTtl, DefaultsConfigurator $services): void
+    public static function load(array $config, int|string $accessTokenTtl, DefaultsConfigurator $services): void
     {
         // Fail-safe hub: independent of mercure.enabled (which only gates the
         // subscriber cookie) — it matters to ANY app with mercure: true
