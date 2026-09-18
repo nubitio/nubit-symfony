@@ -32,6 +32,7 @@ use Nubit\AdminBundle\DependencyInjection\AuthorizationModule;
 use Nubit\AdminBundle\DependencyInjection\BackupModule;
 use Nubit\AdminBundle\DependencyInjection\BundleConfig;
 use Nubit\AdminBundle\DependencyInjection\Compiler\RemoveEmailChannelWithoutMailerPass;
+use Nubit\AdminBundle\DependencyInjection\Compiler\ResolveApproximateCounterConnectionPass;
 use Nubit\AdminBundle\DependencyInjection\DocumentModule;
 use Nubit\AdminBundle\DependencyInjection\ExportModule;
 use Nubit\AdminBundle\DependencyInjection\IdentityModule;
@@ -691,7 +692,10 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(ScopedEntityLocator::class);
 
         $services->set(GridScaleRegistry::class);
-        $services->set(ApproximateCounter::class)->arg('$connection', service('doctrine.dbal.default_connection'));
+        // '$connection' is bound by ResolveApproximateCounterConnectionPass, once
+        // DoctrineExtension has run and the app's actual default connection name
+        // is known — see the pass's docblock.
+        $services->set(ApproximateCounter::class);
         $services->set(DataGridFilter::class)->arg('$gridScales', service(GridScaleRegistry::class));
 
         // Publishing how a resource expects to be read is what lets the grid
@@ -905,6 +909,7 @@ final class NubitAdminBundle extends AbstractBundle
         parent::build($container);
 
         $container->addCompilerPass(new RemoveEmailChannelWithoutMailerPass());
+        $container->addCompilerPass(new ResolveApproximateCounterConnectionPass());
     }
 
     public function prependExtension(ContainerConfigurator $configurator, ContainerBuilder $container): void
