@@ -30,9 +30,14 @@ final readonly class MercureCookieDecorator implements LoginResponseDecoratorInt
 
     public function decorate(JsonResponse $response, UserInterface $user, TokenPair $tokenPair, Request $request): void
     {
+        // The token's `aud` must equal the exact URL the browser uses to reach
+        // the hub (the hub derives its resource identifier from the request),
+        // which varies by host in multi-domain/multi-tenant setups.
+        $audience = $request->getSchemeAndHttpHost() . $this->hubPath;
+
         $response->headers->setCookie($this->cookieFactory->createSecureCookie(
             self::MERCURE_COOKIE,
-            $this->tokenService->generateSubscriberToken($this->topics),
+            $this->tokenService->generateSubscriberToken($audience, $this->topics),
             $tokenPair->accessTokenExpiresAt,
             $this->hubPath,
             null,
