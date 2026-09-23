@@ -60,10 +60,10 @@ final readonly class MercureSubscriberTokenService
                 [
                     'type' => 'https://mercure.rocks/authorization-detail',
                     'actions' => ['subscribe'],
-                    'topics' => array_map(
-                        static fn (string $topic): array => ['match' => $topic, 'match_type' => 'urlpattern'],
-                        $subscribe,
-                    ),
+                    'topics' => array_map(static fn(string $topic): array => [
+                        'match' => $topic,
+                        'match_type' => 'urlpattern',
+                    ], $subscribe),
                 ],
             ],
         ];
