@@ -40,6 +40,11 @@ $config = ORMSetup::createAttributeMetadataConfig([dirname(__DIR__, 3) . '/packa
 if (PHP_VERSION_ID >= 80400) {
     // Symfony 8's var-exporter no longer ships LazyGhost; PHP 8.4 covers it natively.
     $config->enableNativeLazyObjects(true);
+} else {
+    // ORM 2 on PHP 8.3 generates proxy classes and insists on a directory for them.
+    $config->setProxyDir(sys_get_temp_dir() . '/nubit-sequence-worker-proxies');
+    $config->setProxyNamespace('NubitSequenceWorkerProxies');
+    $config->setAutoGenerateProxyClasses(true);
 }
 $entityManager = new EntityManager($connection, $config);
 
