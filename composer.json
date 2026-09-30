@@ -52,7 +52,7 @@
         "symfony/cache": "^7.4 || ^8.0",
         "symfony/http-client": "^7.4 || ^8.0",
         "symfony/mailer": "^7.4 || ^8.0",
-        "symfony/mercure": "^0.6",
+        "symfony/mercure": "^0.8",
         "symfony/yaml": "^7.4"
     },
     "autoload": {
