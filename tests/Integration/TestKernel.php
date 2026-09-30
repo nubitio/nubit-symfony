@@ -209,6 +209,11 @@ final class TestKernel extends Kernel
             );
         }
 
+        // Applications import the workflow bundle's transition routes the same way.
+        if (in_array(\Nubit\WorkflowBundle\NubitWorkflowBundle::class, $this->extraBundles, true)) {
+            $routes->import('.', 'nubit_workflow');
+        }
+
         $routes->add('nubit_test_list', '/_test/list')->controller([TestQueryController::class, 'list']);
         $routes->add('nubit_test_find', '/_test/find')->controller([TestQueryController::class, 'find']);
         $routes->add('nubit_test_join', '/_test/join')->controller([TestQueryController::class, 'join']);
