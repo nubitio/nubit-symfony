@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  # composer.lock is not committed (this is a library monorepo), so every run
+  # resolves the newest dependencies. A weekly run on an otherwise idle main
+  # surfaces upstream drift — e.g. a type change that breaks static analysis —
+  # before it lands on someone's unrelated pull request.
+  schedule:
+    - cron: '0 6 * * 1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
