@@ -29,15 +29,12 @@ final class SequenceConcurrencyTest extends IntegrationTestCase
     {
         // NubitSequenceBundle decorates the API Platform bridge's documentation
         // normalizer, which NubitAdminBundle is what registers in an application.
-        $this->boot(
-            [NubitAdminBundle::class, NubitSequenceBundle::class],
-            [
-                'nubit_admin' => [
-                    'app_profile' => 'internal',
-                    'auth' => ['secret' => '%env(APP_SECRET)%'],
-                ],
+        $this->boot([NubitAdminBundle::class, NubitSequenceBundle::class], [
+            'nubit_admin' => [
+                'app_profile' => 'internal',
+                'auth' => ['secret' => '%env(APP_SECRET)%'],
             ],
-        );
+        ]);
         $this->resetSchema();
     }
 
@@ -79,12 +76,20 @@ final class SequenceConcurrencyTest extends IntegrationTestCase
         $processes = [];
 
         for ($i = 0; $i < self::WORKERS; ++$i) {
-            $command = array_merge(
-                [PHP_BINARY, '-d', 'memory_limit=256M', $script, self::databaseUrl(), (string) $startAt, (string) self::PER_WORKER, 'invoice'],
-                $scopes,
-            );
+            $command = array_merge([
+                PHP_BINARY,
+                '-d',
+                'memory_limit=256M',
+                $script,
+                self::databaseUrl(),
+                (string) $startAt,
+                (string) self::PER_WORKER,
+                'invoice',
+            ], $scopes);
+            $pipes = [];
             $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
             self::assertIsResource($process);
+            self::assertTrue(isset($pipes[1], $pipes[2]) && is_resource($pipes[1]) && is_resource($pipes[2]));
             $processes[] = [$process, $pipes];
         }
 

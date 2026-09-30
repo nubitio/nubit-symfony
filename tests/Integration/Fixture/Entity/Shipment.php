@@ -19,13 +19,10 @@ use Nubit\WorkflowBundle\Attribute\Workflow;
 #[ORM\Table(name: 'fixture_shipment')]
 #[ApiResource(operations: [new GetCollection(), new Get()])]
 #[RowScoped(field: 'warehouse', claim: 'warehouses')]
-#[Workflow(
-    field: 'status',
-    transitions: [
-        'dispatch' => ['from' => ['packed'], 'to' => 'dispatched', 'set' => ['carrier' => 'DHL']],
-        'audit' => ['from' => ['packed', 'dispatched'], 'to' => 'audited', 'roles' => ['ROLE_AUDITOR']],
-    ],
-)]
+#[Workflow(field: 'status', transitions: [
+    'dispatch' => ['from' => ['packed'], 'to' => 'dispatched', 'set' => ['carrier' => 'DHL']],
+    'audit' => ['from' => ['packed', 'dispatched'], 'to' => 'audited', 'roles' => ['ROLE_AUDITOR']],
+])]
 class Shipment implements FixtureEntity
 {
     #[ORM\Id]

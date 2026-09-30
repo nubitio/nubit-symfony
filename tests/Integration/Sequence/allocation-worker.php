@@ -23,15 +23,20 @@ use Symfony\Component\PropertyAccess\PropertyAccess;
 
 require dirname(__DIR__, 3) . '/vendor/autoload.php';
 
-[, $url, $startAt, $count, $name] = $argv;
+$url = $argv[1] ?? '';
+$startAt = floatval($argv[2] ?? '0');
+$count = (int) ($argv[3] ?? 0);
+$name = $argv[4] ?? '';
 $scopes = array_slice($argv, 5);
+
+if ('' === $url || '' === $name || [] === $scopes) {
+    fwrite(STDERR, "usage: allocation-worker.php <database-url> <start-at> <count> <name> <scope>...\n");
+    exit(2);
+}
 
 $parser = new DsnParser(['postgresql' => 'pdo_pgsql', 'postgres' => 'pdo_pgsql']);
 $connection = DriverManager::getConnection($parser->parse($url));
-$config = ORMSetup::createAttributeMetadataConfig(
-    [dirname(__DIR__, 3) . '/packages/sequence-bundle/src/Entity'],
-    true,
-);
+$config = ORMSetup::createAttributeMetadataConfig([dirname(__DIR__, 3) . '/packages/sequence-bundle/src/Entity'], true);
 if (PHP_VERSION_ID >= 80400) {
     // Symfony 8's var-exporter no longer ships LazyGhost; PHP 8.4 covers it natively.
     $config->enableNativeLazyObjects(true);
@@ -44,11 +49,11 @@ $allocator = new SequenceAllocator(
     new SequenceMetadata(),
 );
 
-while (microtime(true) < (float) $startAt) {
+while (microtime(true) < $startAt) {
     usleep(200);
 }
 
-for ($i = 0; $i < (int) $count; ++$i) {
+for ($i = 0; $i < $count; ++$i) {
     foreach ($scopes as $scope) {
         echo $scope, ' ', $allocator->allocate($scope, $name), "\n";
     }
