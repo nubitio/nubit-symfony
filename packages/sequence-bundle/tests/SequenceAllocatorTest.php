@@ -188,6 +188,17 @@ final class ScriptedConnectionStub extends Connection
 
     public bool $rolledBack = false;
 
+    /**
+     * Declared explicitly: without it the analyzer inherits the parent
+     * Connection constructor's `@param array{...} $params` for the first
+     * argument and reports every `new ScriptedConnectionStub(rowExists: …)`.
+     *
+     * @param bool $rowExists
+     * @param string $lockedValue
+     * @param bool $insertThrowsUniqueViolation
+     * @param int $deadlockOnAttempt
+     * @param \Throwable|null $failLockingSelectWith
+     */
     public function __construct(
         private readonly bool $rowExists,
         private readonly string $lockedValue,

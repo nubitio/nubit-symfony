@@ -656,6 +656,12 @@ count = 1
 
 [[issues]]
 file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
+code = "deprecated-class"
+message = 'Use of deprecated class `ApiPlatform\Doctrine\Orm\Filter\AbstractFilter` in `extends` clause'
+count = 1
+
+[[issues]]
+file = "packages/api-platform/src/Doctrine/Filter/DataGridFilter.php"
 code = "invalid-type-cast"
 message = "Casting `mixed` to `array`."
 count = 1
@@ -1262,98 +1268,14 @@ count = 2
 
 [[issues]]
 file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "docblock-type-mismatch"
-message = 'Docblock type `Doctrine\DBAL\Configuration|null` for parameter `$insertThrowsUniqueViolation` is incompatible with native type `bool`.'
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "docblock-type-mismatch"
-message = 'Docblock type `Doctrine\DBAL\Driver` for parameter `$lockedValue` is incompatible with native type `string`.'
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "docblock-type-mismatch"
-message = '''Docblock type `array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'keepReplica'?: bool, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'primary'?: array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}, 'replica'?: array<array-key, array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}>, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}` for parameter `$rowExists` is incompatible with native type `bool`.'''
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "false-argument"
-message = '''Argument #1 of method `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct` is `false`, but parameter type `array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'keepReplica'?: bool, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'primary'?: array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}, 'replica'?: array<array-key, array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}>, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}` does not accept it.'''
-count = 2
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "incompatible-parameter-name"
-message = 'Parameter #1 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct()` is named `$rowExists` but parent `Doctrine\DBAL\Connection::__construct()` names it `$params`'
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
 code = "incompatible-parameter-name"
 message = 'Parameter #1 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::fetchone()` is named `$sql` but parent `Doctrine\DBAL\Connection::fetchone()` names it `$query`'
 count = 1
 
 [[issues]]
 file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "incompatible-parameter-name"
-message = 'Parameter #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct()` is named `$lockedValue` but parent `Doctrine\DBAL\Connection::__construct()` names it `$driver`'
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "incompatible-parameter-name"
-message = 'Parameter #3 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct()` is named `$insertThrowsUniqueViolation` but parent `Doctrine\DBAL\Connection::__construct()` names it `$config`'
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "invalid-argument"
-message = '''Invalid argument type for argument #1 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'keepReplica'?: bool, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'primary'?: array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}, 'replica'?: array<array-key, array{'application_name'?: string, 'charset'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'host'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'port'?: int, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}>, 'serverVersion'?: string, 'sessionMode'?: int, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}`, but found `true`.'''
-count = 5
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "invalid-argument"
-message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('1')`.'''
-count = 2
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "invalid-argument"
-message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('3')`.'''
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "invalid-argument"
-message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('4')`.'''
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "invalid-argument"
-message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('7')`.'''
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "invalid-argument"
-message = '''Invalid argument type for argument #2 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Driver`, but found `string('9')`.'''
-count = 2
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "invalid-argument"
-message = 'Invalid argument type for argument #3 of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct`: expected `Doctrine\DBAL\Configuration|null`, but found `true`.'
-count = 1
-
-[[issues]]
-file = "packages/sequence-bundle/tests/SequenceAllocatorTest.php"
-code = "invalid-parameter-default-value"
-message = "Default value for parameter `$insertThrowsUniqueViolation` is not assignable to its declared type."
+code = "incompatible-parameter-type"
+message = '''Parameter `$rowExists` of `Nubit\SequenceBundle\Tests\ScriptedConnectionStub::__construct()` expects type `bool` but parent `Doctrine\DBAL\Connection::__construct()` expects type `array{'application_name'?: string, 'charset'?: string, 'connectstring'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'gssencmode'?: string, 'host'?: string, 'instancename'?: string, 'keepReplica'?: bool, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'pooled'?: bool, 'port'?: int, 'primary'?: array{'application_name'?: string, 'charset'?: string, 'connectstring'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'gssencmode'?: string, 'host'?: string, 'instancename'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'pooled'?: bool, 'port'?: int, 'serverVersion'?: string, 'service'?: bool, 'servicename'?: string, 'sessionMode'?: int, 'ssl_ca'?: string, 'ssl_capath'?: string, 'ssl_cert'?: string, 'ssl_cipher'?: string, 'ssl_key'?: string, 'sslcert'?: string, 'sslcrl'?: string, 'sslkey'?: string, 'sslmode'?: string, 'sslrootcert'?: string, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}, 'replica'?: array<array-key, array{'application_name'?: string, 'charset'?: string, 'connectstring'?: string, 'dbname'?: string, 'defaultTableOptions'?: array<string, mixed>, 'driver'?: string('ibm_db2')|string('mysqli')|string('oci8')|string('pdo_mysql')|string('pdo_oci')|string('pdo_pgsql')|string('pdo_sqlite')|string('pdo_sqlsrv')|string('pgsql')|string('sqlite3')|string('sqlsrv'), 'driverClass'?: class-string<Doctrine\DBAL\Driver>, 'driverOptions'?: array<array-key, mixed>, 'gssencmode'?: string, 'host'?: string, 'instancename'?: string, 'memory'?: bool, 'password'?: string, 'path'?: string, 'persistent'?: bool, 'pooled'?: bool, 'port'?: int, 'serverVersion'?: string, 'service'?: bool, 'servicename'?: string, 'sessionMode'?: int, 'ssl_ca'?: string, 'ssl_capath'?: string, 'ssl_cert'?: string, 'ssl_cipher'?: string, 'ssl_key'?: string, 'sslcert'?: string, 'sslcrl'?: string, 'sslkey'?: string, 'sslmode'?: string, 'sslrootcert'?: string, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}>, 'serverVersion'?: string, 'service'?: bool, 'servicename'?: string, 'sessionMode'?: int, 'sid'?: string, 'ssl_ca'?: string, 'ssl_capath'?: string, 'ssl_cert'?: string, 'ssl_cipher'?: string, 'ssl_key'?: string, 'sslcert'?: string, 'sslcrl'?: string, 'sslkey'?: string, 'sslmode'?: string, 'sslrootcert'?: string, 'unix_socket'?: string, 'user'?: string, 'wrapperClass'?: class-string<Doctrine\DBAL\Connection>}`'''
 count = 1
 
 [[issues]]
