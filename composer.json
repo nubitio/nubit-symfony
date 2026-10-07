@@ -4,7 +4,7 @@
     "type": "project",
     "license": "MIT",
     "require": {
-        "api-platform/core": "^4.3.12",
+        "api-platform/core": "^5.0.2",
         "doctrine/doctrine-bundle": "^2.13 || ^3.0",
         "doctrine/orm": "^3.0",
         "doctrine/persistence": "^4.0",
