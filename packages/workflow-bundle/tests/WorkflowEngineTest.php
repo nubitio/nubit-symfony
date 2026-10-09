@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nubit\WorkflowBundle\Tests;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Nubit\Platform\Exception\ServiceException;
 use Nubit\WorkflowBundle\Exception\WorkflowTransitionException;
 use Nubit\WorkflowBundle\Workflow\TransitionDefinition;
 use Nubit\WorkflowBundle\Workflow\WorkflowDefinition;
@@ -74,6 +75,20 @@ final class WorkflowEngineTest extends TestCase
 
         $this->expectException(WorkflowTransitionException::class);
         $engine->apply($entity, $definition, 'pay');
+    }
+
+    public function testTransitionExceptionsAreServiceExceptionsCarryingTheirHttpStatus(): void
+    {
+        $forbidden = WorkflowTransitionException::forbidden('Falta la foto del pesaje.');
+        $notFound = WorkflowTransitionException::notFound('ship');
+        $invalid = WorkflowTransitionException::invalidState('pay', 'paid', 'status');
+
+        // ExceptionListener only exposes the message of ServiceException subclasses.
+        self::assertInstanceOf(ServiceException::class, $forbidden);
+        self::assertSame('Falta la foto del pesaje.', $forbidden->getMessage());
+        self::assertSame(403, $forbidden->getCode());
+        self::assertSame(404, $notFound->getCode());
+        self::assertSame(422, $invalid->getCode());
     }
 
     private function createEntityManagerStub(object $entity, bool $willPersist = true): EntityManagerInterface
