@@ -95,8 +95,9 @@ class JWTAuthenticator extends AbstractAuthenticator implements AuthenticationEn
             return $this->authenticateWithCredentials($request);
         }
 
-        $jwtToken =
-            $this->extractBearerToken($request->headers->get(self::AUTH_HEADER)) ?? $request->cookies->get(self::AUTH_COOKIE);
+        $jwtToken = $this->extractBearerToken($request->headers->get(self::AUTH_HEADER)) ?? $request->cookies->get(
+            self::AUTH_COOKIE,
+        );
 
         if (null !== $jwtToken && '' !== $jwtToken) {
             return $this->authenticateWithJWT($jwtToken);

@@ -26,9 +26,9 @@ final readonly class LogoutController
     public function __invoke(Request $request): Response
     {
         $body = json_decode($request->getContent(), true);
-        $refreshToken = (
-            is_array($body) ? $body['refreshToken'] ?? null : null
-        ) ?? $request->cookies->get(JWTAuthenticator::REFRESH_COOKIE);
+        $refreshToken = (is_array($body) ? $body['refreshToken'] ?? null : null) ?? $request->cookies->get(
+            JWTAuthenticator::REFRESH_COOKIE,
+        );
 
         if (is_string($refreshToken) && '' !== $refreshToken) {
             $this->refreshTokenStore->revokeByHash(hash('sha256', $refreshToken));
