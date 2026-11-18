@@ -31,7 +31,7 @@ final readonly class IdTokenVerifier
     ): array {
         try {
             $keys = $this->jwksKeyProvider->keysFor($discovery->jwksUri);
-            $claims = (array) JWT::decode($idToken, $keys);
+            $claims = self::stringKeyedClaims((array) JWT::decode($idToken, $keys));
         } catch (Throwable $e) {
             throw new OidcAuthenticationException('Invalid ID token: ' . $e->getMessage(), previous: $e);
         }
@@ -106,5 +106,23 @@ final readonly class IdTokenVerifier
         }
 
         return false;
+    }
+
+    /**
+     * @param array<array-key, mixed> $claims
+     * @return array<string, mixed>
+     */
+    private static function stringKeyedClaims(array $claims): array
+    {
+        $stringClaims = [];
+        foreach ($claims as $key => $value) {
+            if (!\is_string($key)) {
+                continue;
+            }
+
+            $stringClaims[$key] = $value;
+        }
+
+        return $stringClaims;
     }
 }

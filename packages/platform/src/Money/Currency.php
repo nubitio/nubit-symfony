@@ -92,7 +92,7 @@ final readonly class Currency implements \Stringable, \JsonSerializable
     /** The factor between one major unit and one minor unit — 100 for EUR, 1 for JPY. */
     public function subunits(): int
     {
-        return 10 ** $this->scale;
+        return (int) 10 ** $this->scale;
     }
 
     public function __toString(): string

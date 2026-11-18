@@ -11,6 +11,8 @@ use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Mercure\HubInterface;
+use Symfony\Component\Mercure\ProtocolVersion;
+use Symfony\Component\Mercure\RemoteHubInterface;
 use Symfony\Component\Mercure\Update;
 
 final class FailSafeHubTest extends TestCase
@@ -52,6 +54,34 @@ final class FailSafeHubTest extends TestCase
 
         self::assertSame('https://hub.example.test/.well-known/mercure', $hub->getPublicUrl());
         self::assertNull($hub->getFactory());
+    }
+
+    public function testProtocolMetadataGettersDelegate(): void
+    {
+        if (!method_exists(HubInterface::class, 'getProtocolVersion')) {
+            self::markTestSkipped('Mercure 0.8 or newer is required.');
+        }
+
+        $inner = $this->createStub(HubInterface::class);
+        $inner->method('getProtocolVersion')->willReturn(ProtocolVersion::V1);
+        $inner->method('getCookieName')->willReturn('__Secure-mercure_access_token');
+        $hub = $this->makeHub($inner, withRequest: true);
+
+        self::assertSame(ProtocolVersion::V1, $hub->getProtocolVersion());
+        self::assertSame('__Secure-mercure_access_token', $hub->getCookieName());
+    }
+
+    public function testInternalUrlDelegatesWhenTheHubIsRemote(): void
+    {
+        if (!interface_exists(RemoteHubInterface::class)) {
+            self::markTestSkipped('Mercure 0.8 or newer is required.');
+        }
+
+        $inner = $this->createStub(RemoteHubInterface::class);
+        $inner->method('getUrl')->willReturn('http://mercure.internal/.well-known/mercure');
+        $hub = $this->makeHub($inner, withRequest: true);
+
+        self::assertSame('http://mercure.internal/.well-known/mercure', $hub->getUrl());
     }
 
     private function makeHub(HubInterface $inner, bool $withRequest): FailSafeHub

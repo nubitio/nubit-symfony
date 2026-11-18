@@ -49,6 +49,7 @@ final class ExceptionListenerTest extends TestCase
         self::assertSame('application/problem+json', $response->headers->get('Content-Type'));
 
         $payload = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
         self::assertSame(409, $payload['status']);
         self::assertSame(
             'No se puede completar la operación: el registro está siendo referenciado por otro registro.',
@@ -75,6 +76,7 @@ final class ExceptionListenerTest extends TestCase
         (new ExceptionListener(new NullLogger(), 'dev'))($event);
 
         $payload = json_decode((string) $event->getResponse()?->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
         self::assertSame('SQLSTATE[23503]: Foreign key violation', $payload['sqlMessage']);
     }
 
@@ -103,6 +105,7 @@ final class ExceptionListenerTest extends TestCase
         self::assertSame('application/problem+json', $response->headers->get('Content-Type'));
 
         $payload = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
         self::assertSame('/errors/sale-cash-session-required', $payload['type']);
         self::assertSame('Cash register session required', $payload['title']);
         self::assertSame(422, $payload['status']);
