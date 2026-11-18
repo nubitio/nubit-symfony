@@ -19,7 +19,7 @@ use Doctrine\Common\Collections\Collection;
  */
 abstract readonly class AbstractEmbeddedLinesProcessor implements ProcessorInterface
 {
-    /** @param ProcessorInterface<mixed, mixed> $persistProcessor */
+    /** @param ProcessorInterface<TParent, TParent> $persistProcessor */
     public function __construct(
         private readonly ProcessorInterface $persistProcessor,
     ) {}

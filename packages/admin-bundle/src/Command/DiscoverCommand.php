@@ -121,6 +121,13 @@ final class DiscoverCommand extends Command
         }
 
         $registry = $this->container->get('Nubit\SequenceBundle\Sequence\SequenceRegistry');
+        if (!$registry instanceof \Nubit\SequenceBundle\Sequence\SequenceRegistry) {
+            $io->section('Sequences');
+            $io->text('Sequence registry is unavailable.');
+
+            return;
+        }
+
         $rows = [];
 
         foreach ($this->resourceNames->create() as $resourceClass) {
@@ -158,6 +165,13 @@ final class DiscoverCommand extends Command
         }
 
         $registry = $this->container->get('Nubit\WorkflowBundle\Workflow\WorkflowRegistry');
+        if (!$registry instanceof \Nubit\WorkflowBundle\Workflow\WorkflowRegistry) {
+            $io->section('Workflows');
+            $io->text('Workflow registry is unavailable.');
+
+            return;
+        }
+
         $rows = [];
 
         foreach ($registry->all() as $definition) {

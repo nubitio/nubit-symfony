@@ -154,8 +154,9 @@ final class SequenceAllocatorTest extends TestCase
         );
     }
 
-    private function entityManagerMock(Connection $connection): EntityManagerInterface&\PHPUnit\Framework\MockObject\MockObject
-    {
+    private function entityManagerMock(
+        Connection $connection,
+    ): EntityManagerInterface&\PHPUnit\Framework\MockObject\MockObject {
         $classMetadata = $this->createStub(ClassMetadata::class);
         $classMetadata->method('getTableName')->willReturn('nubit_sequence_counter');
 

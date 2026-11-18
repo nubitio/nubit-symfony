@@ -106,6 +106,10 @@ final readonly class GridSummaryCalculator
     {
         $fields = [];
         foreach ($this->propertyNameCollectionFactory->create($resourceClass) as $propertyName) {
+            if (!\is_string($propertyName)) {
+                continue;
+            }
+
             try {
                 $propertyMetadata = $this->propertyMetadataFactory->create($resourceClass, $propertyName);
             } catch (\Throwable) {

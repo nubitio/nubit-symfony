@@ -9,6 +9,8 @@ use Doctrine\Persistence\ConnectionRegistry;
 use Nubit\Platform\Exception\ServiceException;
 use Nubit\TenantBundle\Switcher\PostgresSchemaTenantConnectionSwitcher;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
@@ -100,7 +102,7 @@ final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
         $switcher->schemaForTenantId(1);
     }
 
-    private function connection(bool $transactionActive): Connection
+    private function connection(bool $transactionActive): Connection&MockObject
     {
         $connection = $this->createMock(Connection::class);
         $connection->method('isTransactionActive')->willReturn($transactionActive);
@@ -108,7 +110,7 @@ final class PostgresSchemaTenantConnectionSwitcherTest extends TestCase
         return $connection;
     }
 
-    private function stubConnection(): Connection
+    private function stubConnection(): Connection&Stub
     {
         return $this->createStub(Connection::class);
     }
