@@ -34,7 +34,7 @@ jobs:
           - { dir: workflow-bundle, repo: workflow-bundle }
           - { dir: tenant-bundle, repo: tenant-bundle }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # subtree split walks the full history
           # checkout persists the workflow token as an extraheader that
