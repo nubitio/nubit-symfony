@@ -286,6 +286,10 @@ final class TranslatedDocumentationNormalizer implements NormalizerInterface
         if ($this->shortNameToClass === null) {
             $this->shortNameToClass = [];
             foreach ($this->resourceNameCollectionFactory->create() as $resourceClass) {
+                if (!\is_string($resourceClass)) {
+                    continue;
+                }
+
                 $metadataCollection = $this->resourceMetadataCollectionFactory->create($resourceClass);
                 foreach ($metadataCollection as $metadata) {
                     $name = $metadata->getShortName();

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Nubit\AdminBundle\Mercure;
 
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Jwt\TokenFactoryInterface;
-use Symfony\Component\Mercure\Jwt\TokenProviderInterface;
+use Symfony\Component\Mercure\ProtocolVersion;
+use Symfony\Component\Mercure\RemoteHubInterface;
 use Symfony\Component\Mercure\Update;
 use Throwable;
 
@@ -55,6 +57,10 @@ final class FailSafeHub implements HubInterface
 
     public function getUrl(): string
     {
+        if (!$this->inner instanceof RemoteHubInterface) {
+            throw new LogicException('The decorated Mercure hub does not expose an internal URL.');
+        }
+
         return $this->inner->getUrl();
     }
 
@@ -63,13 +69,18 @@ final class FailSafeHub implements HubInterface
         return $this->inner->getPublicUrl();
     }
 
-    public function getProvider(): TokenProviderInterface
-    {
-        return $this->inner->getProvider();
-    }
-
     public function getFactory(): ?TokenFactoryInterface
     {
         return $this->inner->getFactory();
+    }
+
+    public function getProtocolVersion(): ProtocolVersion
+    {
+        return $this->inner->getProtocolVersion();
+    }
+
+    public function getCookieName(): string
+    {
+        return $this->inner->getCookieName();
     }
 }

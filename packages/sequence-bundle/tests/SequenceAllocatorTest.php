@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Nubit\SequenceBundle\Tests;
 
+use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -200,8 +202,11 @@ final class ScriptedConnectionStub extends Connection
      * @param \Throwable|null $failLockingSelectWith
      */
     public function __construct(
-        private readonly bool $rowExists,
-        private readonly string $lockedValue,
+        array $params = [],
+        ?Driver $driver = null,
+        ?Configuration $config = null,
+        private readonly bool $rowExists = false,
+        private readonly string $lockedValue = '0',
         private readonly bool $insertThrowsUniqueViolation = false,
         private readonly int $deadlockOnAttempt = 0,
         private readonly ?\Throwable $failLockingSelectWith = null,
