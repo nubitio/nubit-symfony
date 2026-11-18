@@ -1,5 +1,7 @@
 # nubitio/platform
 
+> **Read-only split** of [`nubitio/nubit-symfony`](https://github.com/nubitio/nubit-symfony). Open issues and pull requests there. Commits here are overwritten on every split from `main`.
+
 Platform foundation for Nubit Symfony apps: the framework-agnostic contracts and helpers that the rest of the stack builds on.
 
 ```bash
