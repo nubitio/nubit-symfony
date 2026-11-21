@@ -147,8 +147,11 @@ final class ModuleWiringTest extends IntegrationTestCase
     public function testRouteSecurityExpressionsReachTheControllers(): void
     {
         $config = $this->config(['audit' => true, 'media' => true]);
-        $config['media']['upload_security'] = "is_granted('catalog.edit')";
-        $config['audit']['read_security'] = "is_granted('catalog.edit') and subject['resource'] == 'product'";
+        $config['media'] = ['enabled' => true, 'upload_security' => "is_granted('catalog.edit')"];
+        $config['audit'] = [
+            'enabled' => true,
+            'read_security' => "is_granted('catalog.edit') and subject['resource'] == 'product'",
+        ];
 
         $this->boot([NubitAdminBundle::class], ['nubit_admin' => $config], self::fixtureMapping());
 
@@ -175,10 +178,13 @@ final class ModuleWiringTest extends IntegrationTestCase
         self::assertNull($this->routeSecurityOf($this->container()->get(AuditTrailController::class)));
     }
 
-    private function routeSecurityOf(object $controller): ?string
+    private function routeSecurityOf(mixed $controller): ?string
     {
-        $value = (new \ReflectionProperty($controller, 'routeSecurity'))->getValue($controller);
-        self::assertTrue(null === $value || is_string($value));
+        self::assertIsObject($controller);
+        $property = new \ReflectionProperty($controller, 'routeSecurity');
+
+        /** @var ?string $value */
+        $value = $property->getValue($controller);
 
         return $value;
     }

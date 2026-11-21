@@ -41,21 +41,22 @@ final class RouteGuardTest extends TestCase
 
     public function testTheExpressionAndItsSubjectReachTheChecker(): void
     {
-        $seen = [];
-        $checker = $this->createStub(AuthorizationCheckerInterface::class);
+        $checker = $this->createMock(AuthorizationCheckerInterface::class);
         $checker
+            ->expects($this->once())
             ->method('isGranted')
-            ->willReturnCallback(static function (mixed $attribute, mixed $subject) use (&$seen): bool {
-                $seen = [$attribute, $subject];
-
-                return true;
-            });
+            ->with(
+                $this->callback(
+                    static fn(mixed $attribute): bool => (
+                        $attribute instanceof Expression
+                        && "subject['resource'] == 'product'" === (string) $attribute
+                    ),
+                ),
+                ['resource' => 'product', 'id' => '7'],
+            )
+            ->willReturn(true);
 
         (new RouteGuard($checker))->assert("subject['resource'] == 'product'", ['resource' => 'product', 'id' => '7']);
-
-        $this->assertInstanceOf(Expression::class, $seen[0]);
-        $this->assertSame("subject['resource'] == 'product'", (string) $seen[0]);
-        $this->assertSame(['resource' => 'product', 'id' => '7'], $seen[1]);
     }
 
     public function testAnAvailableExpressionLanguageLetsAConfiguredExpressionCompile(): void

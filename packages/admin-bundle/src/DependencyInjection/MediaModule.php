@@ -28,6 +28,7 @@ final class MediaModule
 
     /**
      * @param array{
+     *     enabled: bool,
      *     storage: array{filesystem: ?string, local_directory: string},
      *     directory: string,
      *     purge_retention_days: int,

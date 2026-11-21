@@ -827,8 +827,10 @@ final class NubitAdminBundle extends AbstractBundle
         $mercureConfig = $config['mercure'];
         MercureModule::load($mercureConfig, $authConfig['access_token_ttl'], $services);
 
-        if ($config['media']['enabled']) {
-            MediaModule::load($config['media'], $configurator, $services);
+        /** @var array{enabled: bool, storage: array{filesystem: ?string, local_directory: string}, directory: string, purge_retention_days: int, max_size: int, allowed_mimes: list<string>, upload_security: ?string} $mediaConfig */
+        $mediaConfig = $config['media'];
+        if ($mediaConfig['enabled']) {
+            MediaModule::load($mediaConfig, $configurator, $services);
         }
 
         /** @var array{enabled: bool, issuer: string, totp: array{required_for_all: bool, required_for_roles: list<string>}, password_reset: array{lifetime_minutes: int, max_attempts: int, window_seconds: int}, invitations: array{lifetime_days: int}, user_class: ?string, user_identifier_property: string} $identityConfig */
@@ -843,19 +845,19 @@ final class NubitAdminBundle extends AbstractBundle
             AuthorizationModule::load($authorizationConfig, $services);
         }
 
-        /** @var array{enabled: bool, async: bool, directory: string, weasyprint_binary: string, storage: array{filesystem: ?string, local_directory: string}} $documentConfig */
+        /** @var array{enabled: bool, async: bool, directory: string, weasyprint_binary: string, security: ?string, storage: array{filesystem: ?string, local_directory: string}} $documentConfig */
         $documentConfig = $config['documents'];
         if ($documentConfig['enabled']) {
             DocumentModule::load($documentConfig, $configurator, $services, $container);
         }
 
-        /** @var array{enabled: bool, directory: string, default_currency: string} $importConfig */
+        /** @var array{enabled: bool, directory: string, default_currency: string, security: ?string} $importConfig */
         $importConfig = $config['imports'];
         if ($importConfig['enabled']) {
             ImportModule::load($importConfig, $services, $container);
         }
 
-        /** @var array{enabled: bool, queued: bool, directory: string, inline_limit: int, queued_format: string} $exportConfig */
+        /** @var array{enabled: bool, queued: bool, directory: string, inline_limit: int, queued_format: string, queued_security: ?string} $exportConfig */
         $exportConfig = $config['export'];
         if ($exportConfig['enabled']) {
             ExportModule::load($exportConfig, $services);
@@ -895,7 +897,7 @@ final class NubitAdminBundle extends AbstractBundle
         // env var actually gets consumed by the container.
         AnalyticsModule::load($analyticsConfig, $services);
 
-        /** @var array{enabled: bool, ignored_fields: list<string>, purge_retention_days: int} $auditConfig */
+        /** @var array{enabled: bool, ignored_fields: list<string>, purge_retention_days: int, read_security: ?string} $auditConfig */
         $auditConfig = $config['audit'];
         if ($auditConfig['enabled']) {
             AuditModule::load($auditConfig, $services);
