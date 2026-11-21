@@ -1,0 +1,470 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\Component\Messenger;
+
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Clock\Clock;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
+use Symfony\Component\Messenger\Event\WorkerMessageHandledEvent;
+use Symfony\Component\Messenger\Event\WorkerMessageReceivedEvent;
+use Symfony\Component\Messenger\Event\WorkerRateLimitedEvent;
+use Symfony\Component\Messenger\Event\WorkerRunningEvent;
+use Symfony\Component\Messenger\Event\WorkerStartedEvent;
+use Symfony\Component\Messenger\Event\WorkerStoppedEvent;
+use Symfony\Component\Messenger\Exception\DelayedMessageHandlingException;
+use Symfony\Component\Messenger\Exception\EnvelopeAwareExceptionInterface;
+use Symfony\Component\Messenger\Exception\HandlerFailedException;
+use Symfony\Component\Messenger\Exception\RejectRedeliveredMessageException;
+use Symfony\Component\Messenger\Exception\RuntimeException;
+use Symfony\Component\Messenger\Execution\DeferredBatchMessageQueue;
+use Symfony\Component\Messenger\Execution\MessageExecutionCallback;
+use Symfony\Component\Messenger\Execution\MessageExecutionStrategyInterface;
+use Symfony\Component\Messenger\Execution\SyncMessageExecutionStrategy;
+use Symfony\Component\Messenger\Stamp\AckStamp;
+use Symfony\Component\Messenger\Stamp\ConsumedByWorkerStamp;
+use Symfony\Component\Messenger\Stamp\FlushBatchHandlersStamp;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
+use Symfony\Component\Messenger\Stamp\NoAutoAckStamp;
+use Symfony\Component\Messenger\Stamp\ReceivedStamp;
+use Symfony\Component\Messenger\Stamp\TransportMessageIdStamp;
+use Symfony\Component\Messenger\Transport\Receiver\KeepaliveReceiverInterface;
+use Symfony\Component\Messenger\Transport\Receiver\QueueReceiverInterface;
+use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
+use Symfony\Component\RateLimiter\LimiterInterface;
+
+/**
+ * @author Samuel Roze <samuel.roze@gmail.com>
+ * @author Tobias Schultze <http://tobion.de>
+ *
+ * @final
+ */
+class Worker
+{
+    private bool $shouldStop = false;
+    private WorkerMetadata $metadata;
+    private array $acks = [];
+    private ?DeferredBatchMessageQueue $unacks = null;
+    /**
+     * @var \SplObjectStorage<object, array{0: string, 1: Envelope}>
+     */
+    private \SplObjectStorage $keepalives;
+    private \WeakMap $batchReceipts;
+    private readonly MessageExecutionCallback $completionCallback;
+
+    private readonly MessageExecutionStrategyInterface $messageExecutionStrategy;
+
+    /**
+     * @param ReceiverInterface[] $receivers Where the key is the transport name
+     */
+    public function __construct(
+        private array $receivers,
+        private MessageBusInterface $bus,
+        private ?EventDispatcherInterface $eventDispatcher = null,
+        private ?LoggerInterface $logger = null,
+        private ?array $rateLimiters = null,
+        private ClockInterface $clock = new Clock(),
+        ?MessageExecutionStrategyInterface $messageExecutionStrategy = null,
+    ) {
+        $this->metadata = new WorkerMetadata([
+            'transportNames' => array_keys($receivers),
+        ]);
+        $this->keepalives = new \SplObjectStorage();
+        $this->batchReceipts = new \WeakMap();
+        $this->completionCallback = new MessageExecutionCallback($this->preAck(...), $this->enqueueAck(...));
+        $this->messageExecutionStrategy = $messageExecutionStrategy ?? new SyncMessageExecutionStrategy($this->bus, $this->enqueueAck(...));
+    }
+
+    /**
+     * Receive the messages and dispatch them to the bus.
+     *
+     * Valid options are:
+     *  * sleep (default: 1000000): Time in microseconds to sleep after no messages are found
+     *  * time_limit: The time limit in seconds the worker can handle new messages
+     *  * queues: The queue names to consume from, instead of consuming from all queues. When this is used, all receivers must implement the QueueReceiverInterface
+     */
+    public function run(array $options = []): void
+    {
+        $options = array_merge([
+            'sleep' => 1000000,
+            'time_limit' => null,
+        ], $options);
+        $queueNames = $options['queues'] ?? null;
+        $endTime = null !== $options['time_limit'] ? $this->clock->now()->format('U.u') + $options['time_limit'] : null;
+
+        $this->metadata->set(['queueNames' => $queueNames]);
+
+        $this->eventDispatcher?->dispatch(new WorkerStartedEvent($this, null === $endTime ? null : (float) $endTime, $options['sleep']));
+
+        if ($queueNames) {
+            // if queue names are specified, all receivers must implement the QueueReceiverInterface
+            foreach ($this->receivers as $transportName => $receiver) {
+                if (!$receiver instanceof QueueReceiverInterface) {
+                    throw new RuntimeException(\sprintf('Receiver for "%s" does not implement "%s".', $transportName, QueueReceiverInterface::class));
+                }
+            }
+        }
+
+        while (!$this->shouldStop) {
+            if (null !== $endTime && $this->clock->now()->format('U.u') >= $endTime) {
+                $this->logger?->info('Worker stopped due to time limit of {timeLimit}s exceeded', ['timeLimit' => $options['time_limit']]);
+                break;
+            }
+
+            $envelopeHandled = false;
+            $envelopeHandledStart = $this->clock->now();
+            $fetchSize = max(1, $options['fetch_size'] ?? 1);
+
+            foreach ($this->receivers as $transportName => $receiver) {
+                if ($queueNames) {
+                    /** @var QueueReceiverInterface $receiver */
+                    $envelopes = $receiver->getFromQueues($queueNames, $fetchSize);
+                } else {
+                    $envelopes = $receiver->get($fetchSize);
+                }
+
+                foreach ($envelopes as $envelope) {
+                    $envelopeHandled = true;
+                    $receipt = new \stdClass();
+
+                    if ($receiver instanceof KeepaliveReceiverInterface) {
+                        $this->keepalives[$receipt] = [$transportName, $envelope];
+                    }
+
+                    $this->rateLimit($transportName);
+                    $this->handleMessage($envelope, $transportName, $receipt);
+                    $this->eventDispatcher?->dispatch(new WorkerRunningEvent($this, false));
+
+                    if ($this->shouldStop) {
+                        break 2;
+                    }
+                }
+
+                // after handling a single receiver, quit and start the loop again
+                // this should prevent multiple lower priority receivers from
+                // blocking too long before the higher priority are checked
+                if ($envelopeHandled) {
+                    break;
+                }
+            }
+
+            if (!$envelopeHandled && $this->flush(false)) {
+                continue;
+            }
+
+            if (!$this->flush(30.0) && !$envelopeHandled) {
+                $this->eventDispatcher?->dispatch(new WorkerRunningEvent($this, true));
+
+                if ($this->shouldStop) {
+                    continue;
+                }
+
+                if (0 < $sleep = (int) ($options['sleep'] - 1e6 * ($this->clock->now()->format('U.u') - $envelopeHandledStart->format('U.u')))) {
+                    if (null !== $endTime) {
+                        $sleep = min($sleep, (int) ceil(1e6 * ($endTime - $this->clock->now()->format('U.u'))));
+                    }
+
+                    if (0 < $sleep) {
+                        $this->clock->sleep($sleep / 1e6);
+                    }
+                }
+            }
+        }
+
+        $this->flush(true);
+        $this->eventDispatcher?->dispatch(new WorkerStoppedEvent($this));
+    }
+
+    private function handleMessage(Envelope $envelope, string $transportName, object $receipt): void
+    {
+        $event = new WorkerMessageReceivedEvent($envelope, $transportName);
+        $this->eventDispatcher?->dispatch($event);
+        $envelope = $event->getEnvelope();
+
+        if (!$event->shouldHandle()) {
+            unset($this->keepalives[$receipt]);
+
+            return;
+        }
+
+        $onHandled = new MessageExecutionCallback(
+            function (Envelope $envelope, string $transportName, bool &$acked, ?\Throwable $e = null) use ($receipt): void {
+                $this->preAck($envelope, $transportName, $acked, $e, $receipt);
+            },
+            function (string $transportName, Envelope $envelope, ?\Throwable $e = null, ?\Closure $combine = null) use ($receipt): void {
+                $this->acks[] = [$transportName, $envelope, $e, $combine, $receipt];
+            },
+        );
+
+        $this->messageExecutionStrategy->execute(
+            $envelope->with(new ReceivedStamp($transportName), new ConsumedByWorkerStamp()),
+            $transportName,
+            $onHandled,
+        );
+    }
+
+    private function enqueueAck(string $transportName, Envelope $envelope, ?\Throwable $e = null, ?\Closure $combine = null): void
+    {
+        $this->acks[] = [$transportName, $envelope, $e, $combine];
+    }
+
+    private function preAck(Envelope $envelope, string $transportName, bool &$acked, ?\Throwable $e = null, ?object $receipt = null): void
+    {
+        $receipt ??= $this->findReceipt($envelope, $transportName);
+        $noAutoAckStamp = $envelope->last(NoAutoAckStamp::class);
+
+        if (!$acked && !$noAutoAckStamp) {
+            $this->acks[] = [$transportName, $envelope, $e, null, $receipt];
+        } elseif ($noAutoAckStamp) {
+            $this->unacks ??= new DeferredBatchMessageQueue();
+            foreach ($envelope->all(NoAutoAckStamp::class) as $stamp) {
+                $this->batchReceipts[$stamp->getHandlerDescriptor()->getBatchHandler()] = $receipt;
+                $this->unacks->add($stamp->getHandlerDescriptor()->getBatchHandler(), $transportName, $envelope, $acked, (float) $this->clock->now()->format('U.u'));
+            }
+        }
+
+        $this->ack();
+    }
+
+    private function ack(): bool
+    {
+        $acks = $this->acks;
+        $this->acks = [];
+
+        foreach ($acks as $ack) {
+            $receipt = $ack[4] ?? $this->findReceipt($ack[1], $ack[0]);
+            if (isset($ack[3]) && !$ack = $ack[3]([$ack])) {
+                continue;
+            }
+
+            [$transportName, $envelope, $e] = $ack;
+            $receiver = $this->receivers[$transportName];
+
+            if (null !== $e) {
+                if ($rejectFirst = $e instanceof RejectRedeliveredMessageException) {
+                    // redelivered messages are rejected first so that continuous failures in an event listener or while
+                    // publishing for retry does not cause infinite redelivery loops
+                    unset($this->keepalives[$receipt]);
+                    $receiver->reject($envelope);
+                }
+
+                if ($e instanceof EnvelopeAwareExceptionInterface && null !== $e->getEnvelope()) {
+                    $envelope = $e->getEnvelope();
+                }
+
+                if ($e instanceof DelayedMessageHandlingException) {
+                    // a retry must run the handlers again, so that they dispatch the delayed messages that failed again
+                    $envelope = $envelope->withoutAll(HandledStamp::class);
+                }
+
+                $failedEvent = new WorkerMessageFailedEvent($envelope, $transportName, $e);
+
+                $this->eventDispatcher?->dispatch($failedEvent);
+                $envelope = $failedEvent->getEnvelope();
+
+                if (!$rejectFirst) {
+                    unset($this->keepalives[$receipt]);
+
+                    if ($failedEvent->willRetry()) {
+                        $receiver->ack($envelope);
+                    } else {
+                        $receiver->reject($envelope);
+                    }
+                }
+
+                continue;
+            }
+
+            $handledEvent = new WorkerMessageHandledEvent($envelope, $transportName);
+            $this->eventDispatcher?->dispatch($handledEvent);
+            $envelope = $handledEvent->getEnvelope();
+
+            if (null !== $this->logger) {
+                $message = $envelope->getMessage();
+                $context = [
+                    'class' => $message::class,
+                    'message_id' => $envelope->last(TransportMessageIdStamp::class)?->getId(),
+                ];
+                $this->logger->info('{class} was handled successfully (acknowledging to transport).', $context);
+            }
+
+            unset($this->keepalives[$receipt]);
+            $receiver->ack($envelope);
+        }
+
+        return (bool) $acks;
+    }
+
+    private function rateLimit(string $transportName): void
+    {
+        if (!$this->rateLimiters) {
+            return;
+        }
+
+        if (!\array_key_exists($transportName, $this->rateLimiters)) {
+            return;
+        }
+
+        /** @var LimiterInterface $rateLimiter */
+        $rateLimiter = $this->rateLimiters[$transportName]->create();
+        if ($rateLimiter->consume()->isAccepted()) {
+            return;
+        }
+
+        $this->logger?->info('Transport {transport} is being rate limited, waiting for token to become available...', ['transport' => $transportName]);
+
+        $this->eventDispatcher?->dispatch(new WorkerRateLimitedEvent($rateLimiter, $transportName));
+        $rateLimiter->reserve()->wait();
+        $rateLimiter->consume();
+    }
+
+    private function flush(bool|float $force): bool
+    {
+        $flushed = $this->messageExecutionStrategy->flush($this->completionCallback, $force);
+
+        if (!$this->unacks?->hasPending()) {
+            return $flushed;
+        }
+
+        $unacks = $this->unacks->popFlushable($force, (float) $this->clock->now()->format('U.u'));
+
+        if (!$unacks->count()) {
+            return $flushed;
+        }
+
+        foreach ($unacks as $handler) {
+            $deferredMessage = $unacks[$handler];
+            $receipt = $this->batchReceipts[$handler];
+            unset($this->batchReceipts[$handler]);
+
+            if ($deferredMessage->acked) {
+                continue;
+            }
+            $transportName = $deferredMessage->transportName;
+            $envelope = $deferredMessage->envelope;
+            $heldAcks = \count($this->acks);
+            try {
+                $e = null;
+                $this->bus->dispatch($envelope->withoutAll(AckStamp::class)->with(new FlushBatchHandlersStamp(true === $force || !\is_bool($force))));
+            } catch (\Throwable $e) {
+                $this->failHeldAcks($heldAcks);
+
+                if (!$deferredMessage->acked) {
+                    $envelope = $envelope->withoutAll(NoAutoAckStamp::class);
+
+                    if ($e instanceof HandlerFailedException) {
+                        // a retry must run the batch handlers whose flush failed
+                        $failed = $e->getWrappedExceptions();
+                        $envelope = $envelope->withoutAll(HandledStamp::class)->with(...array_filter($envelope->all(HandledStamp::class), static fn (HandledStamp $stamp) => !isset($failed[$stamp->getHandlerName()])));
+                        $e = new HandlerFailedException($envelope, $failed);
+                    }
+
+                    if ($ackStamp = $envelope->last(AckStamp::class)) {
+                        // the acks that the batch sent during the flush come first, and this failure is ignored when they already gave the message its outcome
+                        $ackStamp->ack($envelope, $e);
+                    } else {
+                        $this->acks[] = [$transportName, $envelope, $e, null, $receipt];
+                    }
+                }
+                continue;
+            }
+
+            if ($deferredMessage->acked) {
+                continue;
+            }
+            $noAutoAckStamp = $envelope->last(NoAutoAckStamp::class);
+
+            if (!$noAutoAckStamp) {
+                $this->acks[] = [$transportName, $envelope, $e, null, $receipt];
+            } elseif ($noAutoAckStamp) {
+                $this->unacks ??= new DeferredBatchMessageQueue();
+                $this->batchReceipts[$noAutoAckStamp->getHandlerDescriptor()->getBatchHandler()] = $receipt;
+                $this->unacks->add($noAutoAckStamp->getHandlerDescriptor()->getBatchHandler(), $transportName, $envelope, $deferredMessage->acked, (float) $this->clock->now()->format('U.u'));
+            }
+        }
+
+        return $this->ack() || $flushed;
+    }
+
+    public function stop(): void
+    {
+        $this->logger?->info('Stopping worker.', ['transport_names' => $this->metadata->getTransportNames()]);
+
+        $this->shouldStop = true;
+    }
+
+    public function keepalive(?int $seconds): void
+    {
+        foreach ($this->keepalives as $message) {
+            [$transportName, $envelope] = $this->keepalives[$message];
+            $receiver = $this->receivers[$transportName];
+
+            if (!$receiver instanceof KeepaliveReceiverInterface) {
+                throw new RuntimeException(\sprintf('Receiver for "%s" does not implement "%s".', $transportName, KeepaliveReceiverInterface::class));
+            }
+
+            $context = [
+                'transport' => $transportName,
+                'message_id' => $envelope->last(TransportMessageIdStamp::class)?->getId(),
+            ];
+            $this->logger?->info('Sending keepalive request.', $context);
+
+            try {
+                $receiver->keepalive($envelope, $seconds);
+            } catch (\Throwable $e) {
+                // the alarm is raised at any point of the program, so an error thrown from here
+                // surfaces wherever the worker happened to be: it stops the worker, or it is read
+                // as a failure of the message that was being handled at that moment
+                $this->logger?->warning('Keepalive request failed: {error}', $context + ['error' => $e->getMessage(), 'exception' => $e]);
+            }
+        }
+    }
+
+    public function getMetadata(): WorkerMetadata
+    {
+        return $this->metadata;
+    }
+
+    /**
+     * Turns the acks that messages sent during a failed dispatch into failures.
+     *
+     * Their batch was flushed during that dispatch, so what the batch did for them may have been undone.
+     * The acks held from $offset on are the ones sent during that dispatch.
+     */
+    private function failHeldAcks(int $offset): void
+    {
+        foreach (\array_slice($this->acks, $offset, null, true) as $i => [$transportName, $envelope, $e]) {
+            if (null !== $e || !$stamp = $envelope->last(HandledStamp::class)) {
+                continue;
+            }
+
+            $stamps = $envelope->all(HandledStamp::class);
+            array_pop($stamps);
+            $envelope = $envelope->withoutAll(HandledStamp::class)->with(...$stamps);
+            $e = new RuntimeException(\sprintf('The batch of "%s" was flushed during the dispatch of another message, and that dispatch failed.', $stamp->getHandlerName()));
+            $this->acks[$i] = [$transportName, $envelope, new HandlerFailedException($envelope, [$stamp->getHandlerName() => $e])] + $this->acks[$i];
+        }
+    }
+
+    private function findReceipt(Envelope $envelope, string $transportName): object
+    {
+        foreach ($this->keepalives as $receipt) {
+            [$name, $received] = $this->keepalives[$receipt];
+            if ($name === $transportName && $received->getMessage() === $envelope->getMessage()) {
+                return $receipt;
+            }
+        }
+
+        return new \stdClass();
+    }
+}

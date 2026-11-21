@@ -1025,6 +1025,37 @@ reachable by *any authenticated user*, whatever their role. That is the right
 default for most reads and a common accident on writes. `--strict` exits
 non-zero, which makes it usable as a CI gate. Always registered; no config.
 
+### Guarding the bundle's own routes
+
+API Platform operations take a `security:` expression. The routes the bundle registers itself — media
+upload, the audit trail, issued documents, spreadsheet imports and queued exports — are plain
+controllers, so by default they ask only for the firewall's `ROLE_USER`: any signed-in user can use
+them. Each module has one `security` key that takes a Symfony expression, so the application can say
+who may, with the permissions it already has:
+
+```yaml
+nubit_admin:
+    media:
+        upload_security: "is_granted('catalog.edit') or is_granted('settings.edit')"
+    audit:
+        read_security: "is_granted('catalog.edit')"
+```
+
+| Key | Guards | `subject` holds |
+| --- | --- | --- |
+| `media.upload_security` | `POST /api/media` | — |
+| `audit.read_security` | `GET /api/audit-trail/{resource}/{id}` | `resource`, `id` |
+| `documents.security` | issue, history and download of issued documents | `resource`, `id` or `document` |
+| `imports.security` | start, show, remap and confirm an import | `resource` or `session` |
+| `export.queued_security` | request, list, show and download queued exports | `resource` or `job` |
+
+The expression is evaluated by Symfony's expression voter, so `user`, `is_granted()` and `role_names`
+are available, plus `subject` (an array, e.g. `subject['resource'] == 'product'`). `null` — the
+default — changes nothing, and it stacks with the checks the controllers already make (owner scope,
+`ROLE_ADMIN`, the `authorization` module): the expression only adds a gate in front. A configured
+expression needs `symfony/expression-language`; without it the container refuses to compile instead of
+failing on the first request.
+
 ## Clients
 
 **Web (`@nubitio/core`)** — works out of the box: login stores HttpOnly cookies; `CoreProvider` auto-refreshes via `auth/refresh`.

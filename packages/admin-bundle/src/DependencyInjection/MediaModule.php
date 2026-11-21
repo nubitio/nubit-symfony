@@ -14,6 +14,7 @@ use Nubit\AdminBundle\Media\MediaUrlResolverInterface;
 use Nubit\AdminBundle\Media\RouteMediaUrlResolver;
 use Nubit\AdminBundle\Media\Serializer\MediaNormalizer;
 use Nubit\AdminBundle\Media\State\MediaSoftDeleteProcessor;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Nubit\Platform\Filesystem\FileManager;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -32,10 +33,13 @@ final class MediaModule
      *     purge_retention_days: int,
      *     max_size: int,
      *     allowed_mimes: list<string>,
+     *     upload_security: ?string,
      * } $config
      */
     public static function load(array $config, ContainerConfigurator $container, DefaultsConfigurator $services): void
     {
+        RouteGuard::assertAvailable($config['upload_security'], 'nubit_admin.media.upload_security');
+
         $container->parameters()->set('nubit_admin.media.directory', $config['directory']);
 
         if (null !== $config['storage']['filesystem']) {
@@ -65,7 +69,9 @@ final class MediaModule
         $services->alias(MediaUrlResolverInterface::class, RouteMediaUrlResolver::class);
         $services->set(MediaNormalizer::class);
         $services->set(MediaSoftDeleteProcessor::class);
-        $services->set(MediaUploadController::class)->tag('controller.service_arguments');
+        $services->set(MediaUploadController::class)->arg('$routeSecurity', $config['upload_security'])->tag(
+            'controller.service_arguments',
+        );
         $services->set(MediaFileController::class)->tag('controller.service_arguments');
         $services->set(PurgeMediaCommand::class)->arg('$retentionDays', $config['purge_retention_days']);
     }

@@ -1,0 +1,74 @@
+<?php
+
+/*
+ * This file is part of the API Platform project.
+ *
+ * (c) Kévin Dunglas <dunglas@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace ApiPlatform\Doctrine\Orm\Filter;
+
+use ApiPlatform\Doctrine\Common\Filter\EmptyValueParameterTrait;
+use ApiPlatform\Doctrine\Common\Filter\OpenApiFilterTrait;
+use ApiPlatform\Doctrine\Orm\NestedPropertyHelperTrait;
+use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
+use ApiPlatform\Metadata\BackwardCompatibleFilterDescriptionTrait;
+use ApiPlatform\Metadata\Exception\InvalidArgumentException;
+use ApiPlatform\Metadata\OpenApiParameterFilterInterface;
+use ApiPlatform\Metadata\Operation;
+use Doctrine\ORM\QueryBuilder;
+
+/**
+ * @author Vincent Amstoutz <vincent.amstoutz.dev@gmail.com>
+ */
+final class ExactFilter implements FilterInterface, OpenApiParameterFilterInterface
+{
+    use BackwardCompatibleFilterDescriptionTrait;
+    use EmptyValueParameterTrait;
+    use NestedPropertyHelperTrait;
+    use OpenApiFilterTrait;
+
+    public function apply(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?Operation $operation = null, array $context = []): void
+    {
+        $parameter = $context['parameter'];
+        $value = $parameter->getValue();
+
+        // associative arrays are operator-maps owned by ComparisonFilter/DateFilter, not equality
+        if (\is_array($value) && !array_is_list($value)) {
+            return;
+        }
+
+        if ($this->ignoreEmptyValue($parameter, $value)) {
+            return;
+        }
+
+        if (null === $parameter->getProperty()) {
+            throw new InvalidArgumentException(\sprintf('The filter parameter with key "%s" must specify a property. Please provide the property explicitly.', $parameter->getKey()));
+        }
+
+        $property = $parameter->getProperty();
+        $alias = $queryBuilder->getRootAliases()[0];
+        $parameterName = $queryNameGenerator->generateParameterName($property);
+
+        [$alias, $property] = $this->addNestedParameterJoins($property, $alias, $queryBuilder, $queryNameGenerator, $parameter, $this->joinTypeFor($context));
+
+        if (\is_array($value)) {
+            $queryBuilder
+                ->{$context['whereClause'] ?? 'andWhere'}(\sprintf('%s.%s IN (:%s)', $alias, $property, $parameterName));
+        } else {
+            $operator = $context['operator'] ?? '=';
+            if (!\in_array($operator, ComparisonFilter::ALLOWED_DQL_OPERATORS, true)) {
+                throw new InvalidArgumentException(\sprintf('Unsupported operator "%s".', $operator));
+            }
+            $queryBuilder
+                ->{$context['whereClause'] ?? 'andWhere'}(\sprintf('%s.%s %s :%s', $alias, $property, $operator, $parameterName));
+        }
+
+        $queryBuilder->setParameter($parameterName, $value);
+    }
+}

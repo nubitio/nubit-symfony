@@ -54,6 +54,7 @@ use Nubit\AdminBundle\OpenApi\GridScaleDocumentationNormalizer;
 use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
 use Nubit\AdminBundle\Security\BundleRouteCatalog;
 use Nubit\AdminBundle\Security\PrivilegedAccess;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Nubit\AdminBundle\Session\AppProfile;
 use Nubit\AdminBundle\Session\DefaultMeResponseBuilder;
 use Nubit\AdminBundle\Session\MeResponseBuilderInterface;
@@ -292,6 +293,12 @@ final class NubitAdminBundle extends AbstractBundle
             ->info('nubit:audit:purge removes entries older than this.')
             ->defaultValue(365)
             ->end()
+            ->scalarNode('read_security')
+            ->info(
+                'Symfony expression that must hold to read GET /api/audit-trail/{resource}/{id}, e.g. "is_granted(\'catalog.edit\')". `subject` holds `resource` and `id`. Null keeps the firewall\'s ROLE_USER as the only gate. See RouteGuard.',
+            )
+            ->defaultNull()
+            ->end()
             ->end()
             ->end()
             ->arrayNode('observability')
@@ -382,6 +389,12 @@ final class NubitAdminBundle extends AbstractBundle
             ->integerNode('purge_retention_days')
             ->info('nubit:media:purge removes media soft-deleted longer ago than this.')
             ->defaultValue(30)
+            ->end()
+            ->scalarNode('upload_security')
+            ->info(
+                'Symfony expression that must hold to POST /api/media, e.g. "is_granted(\'catalog.edit\')". Null keeps the firewall\'s ROLE_USER as the only gate. See RouteGuard.',
+            )
+            ->defaultNull()
             ->end()
             ->integerNode('max_size')
             ->info('Maximum upload size in bytes. 0 means no limit.')
@@ -504,6 +517,12 @@ final class NubitAdminBundle extends AbstractBundle
             ->info('Sub-directory inside the storage where issued documents land.')
             ->defaultValue('documents')
             ->end()
+            ->scalarNode('security')
+            ->info(
+                'Symfony expression that must hold to issue, list or download documents. `subject` holds `resource` and `id` (or `document`). Null keeps the firewall\'s ROLE_USER as the only gate. See RouteGuard.',
+            )
+            ->defaultNull()
+            ->end()
             ->scalarNode('weasyprint_binary')
             ->info('Path to the WeasyPrint executable.')
             ->defaultValue('weasyprint')
@@ -538,6 +557,12 @@ final class NubitAdminBundle extends AbstractBundle
                 'Where uploaded files are kept while a session is open. They are the evidence of what was imported — set a retention policy.',
             )
             ->defaultValue('%kernel.project_dir%/var/imports')
+            ->end()
+            ->scalarNode('security')
+            ->info(
+                'Symfony expression that must hold to start, remap or confirm an import. `subject` holds `resource` or `session`. Null keeps the firewall\'s ROLE_USER as the only gate. See RouteGuard.',
+            )
+            ->defaultNull()
             ->end()
             ->scalarNode('default_currency')
             ->info('Currency assumed for money columns whose cells carry no currency code.')
@@ -639,6 +664,12 @@ final class NubitAdminBundle extends AbstractBundle
             ->info('Rows above which an export is queued. Overridden per resource by #[GridScale].')
             ->defaultValue(5000)
             ->end()
+            ->scalarNode('queued_security')
+            ->info(
+                'Symfony expression that must hold to request, list or download queued exports. `subject` holds `resource` or `job`. Null keeps the firewall\'s ROLE_USER as the only gate. See RouteGuard.',
+            )
+            ->defaultNull()
+            ->end()
             ->enumNode('queued_format')
             ->info(
                 'Format for queued exports. "xlsx" streams through openspout/openspout — PhpSpreadsheet cannot, it builds the whole workbook in memory first. "csv" needs no dependency.',
@@ -690,6 +721,7 @@ final class NubitAdminBundle extends AbstractBundle
         $services->set(RowScopeRegistry::class);
         $services->set(RowScopeApplier::class);
         $services->set(ScopedEntityLocator::class);
+        $services->set(RouteGuard::class);
 
         $services->set(GridScaleRegistry::class);
         // '$connection' is bound by ResolveApproximateCounterConnectionPass, once

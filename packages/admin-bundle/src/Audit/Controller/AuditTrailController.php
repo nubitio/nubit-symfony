@@ -10,6 +10,7 @@ use Nubit\AdminBundle\Authorization\PermissionResolver;
 use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
 use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
 use Nubit\AdminBundle\Security\PrivilegedAccess;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -34,10 +35,13 @@ final class AuditTrailController
         private readonly ScopedEntityLocator $locator,
         private readonly ResourceSegmentIndex $segments,
         private readonly ?PermissionResolver $permissions = null,
+        private readonly ?RouteGuard $guard = null,
+        private readonly ?string $routeSecurity = null,
     ) {}
 
     public function __invoke(string $resource, string $id, Request $request): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['resource' => $resource, 'id' => $id]);
         $this->assertCanRead($resource);
 
         // The trail is a read of the subject row: if the row is outside the

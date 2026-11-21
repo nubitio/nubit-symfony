@@ -10,6 +10,7 @@ use Nubit\AdminBundle\Export\ExportFileStorage;
 use Nubit\AdminBundle\Export\ExportRequestService;
 use Nubit\AdminBundle\Export\Writer\QueuedExportWriterInterface;
 use Nubit\AdminBundle\Resource\ResourceSegmentIndex;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,10 +40,14 @@ final readonly class ExportJobController
         private ResourceSegmentIndex $segments,
         private QueuedExportWriterInterface $writer,
         private Security $security,
+        private ?RouteGuard $guard = null,
+        private ?string $routeSecurity = null,
     ) {}
 
     public function request(Request $request, string $resource): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['resource' => $resource]);
+
         $resourceClass = $this->segments->resolve($resource);
         $requestedBy = $this->currentUserIdentifier();
 
@@ -62,6 +67,8 @@ final readonly class ExportJobController
 
     public function list(): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, []);
+
         return new JsonResponse([
             'exports' => array_map(self::describe(...), $this->exports->recentFor($this->currentUserIdentifier())),
         ]);
@@ -69,11 +76,15 @@ final readonly class ExportJobController
 
     public function show(string $id): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['job' => $id]);
+
         return new JsonResponse(self::describe($this->ownedJob($id)));
     }
 
     public function download(string $id): Response
     {
+        $this->guard?->assert($this->routeSecurity, ['job' => $id]);
+
         $job = $this->ownedJob($id);
 
         if (ExportJob::STATUS_FAILED === $job->getStatus()) {
