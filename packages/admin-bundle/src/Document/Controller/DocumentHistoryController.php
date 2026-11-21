@@ -7,6 +7,7 @@ namespace Nubit\AdminBundle\Document\Controller;
 use Nubit\AdminBundle\Document\DocumentIssuer;
 use Nubit\AdminBundle\Document\DocumentPayload;
 use Nubit\AdminBundle\Document\ResourceLocator;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
@@ -22,10 +23,13 @@ final readonly class DocumentHistoryController
     public function __construct(
         private DocumentIssuer $issuer,
         private ResourceLocator $locator,
+        private ?RouteGuard $guard = null,
+        private ?string $routeSecurity = null,
     ) {}
 
     public function __invoke(string $resource, string $id): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['resource' => $resource, 'id' => $id]);
         $subject = $this->locator->locate($resource, $id);
 
         return new JsonResponse(['documents' => DocumentPayload::all($this->issuer->history($subject))]);

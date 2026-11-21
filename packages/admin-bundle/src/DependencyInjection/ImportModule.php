@@ -15,6 +15,7 @@ use Nubit\AdminBundle\Import\Reader\RowReaderInterface;
 use Nubit\AdminBundle\Import\Reader\XlsxRowReader;
 use Nubit\AdminBundle\Import\ValueCoercer;
 use Nubit\AdminBundle\OpenApi\ImportableDocumentationNormalizer;
+use Nubit\AdminBundle\Security\RouteGuard;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\DefaultsConfigurator;
@@ -33,6 +34,7 @@ final class ImportModule
      *     enabled: bool,
      *     directory: string,
      *     default_currency: string,
+     *     security: ?string,
      * } $config
      */
     public static function load(array $config, DefaultsConfigurator $services, ContainerBuilder $builder): void
@@ -55,7 +57,10 @@ final class ImportModule
         $services->set(ImportRunner::class);
         $services->set(ImportService::class)->arg('$readers', tagged_iterator(self::READER_TAG));
 
-        $services->set(ImportController::class)->tag('controller.service_arguments');
+        RouteGuard::assertAvailable($config['security'], 'nubit_admin.imports.security');
+        $services->set(ImportController::class)->arg('$routeSecurity', $config['security'])->tag(
+            'controller.service_arguments',
+        );
 
         $services->set(ImportableDocumentationNormalizer::class)->decorate(
             'api_platform.hydra.normalizer.documentation',

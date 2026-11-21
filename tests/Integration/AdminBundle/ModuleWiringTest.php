@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Nubit\Tests\Integration\AdminBundle;
 
 use Nubit\AdminBundle\Analytics\Entity\AnalyticsOutboxEntry;
+use Nubit\AdminBundle\Audit\Controller\AuditTrailController;
 use Nubit\AdminBundle\Audit\Entity\AuditLog;
 use Nubit\AdminBundle\Entity\RefreshToken;
+use Nubit\AdminBundle\Media\Controller\MediaUploadController;
 use Nubit\AdminBundle\Media\Entity\Media;
 use Nubit\AdminBundle\Notification\EmailNotificationChannel;
 use Nubit\AdminBundle\Notification\Entity\Notification;
 use Nubit\AdminBundle\NubitAdminBundle;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Nubit\Tests\Integration\IntegrationTestCase;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -134,6 +137,56 @@ final class ModuleWiringTest extends IntegrationTestCase
         );
 
         self::assertTrue($this->container()->has(EmailNotificationChannel::class));
+    }
+
+    /**
+     * The bundle's own routes are plain controllers, so an application can only guard them through
+     * the `security` keys: the expression has to reach the controller, and a module without one keeps
+     * its old behaviour.
+     */
+    public function testRouteSecurityExpressionsReachTheControllers(): void
+    {
+        $config = $this->config(['audit' => true, 'media' => true]);
+        $config['media'] = ['enabled' => true, 'upload_security' => "is_granted('catalog.edit')"];
+        $config['audit'] = [
+            'enabled' => true,
+            'read_security' => "is_granted('catalog.edit') and subject['resource'] == 'product'",
+        ];
+
+        $this->boot([NubitAdminBundle::class], ['nubit_admin' => $config], self::fixtureMapping());
+
+        self::assertTrue($this->container()->has(RouteGuard::class));
+        self::assertSame(
+            "is_granted('catalog.edit')",
+            $this->routeSecurityOf($this->container()->get(MediaUploadController::class)),
+        );
+        self::assertSame(
+            "is_granted('catalog.edit') and subject['resource'] == 'product'",
+            $this->routeSecurityOf($this->container()->get(AuditTrailController::class)),
+        );
+    }
+
+    public function testModulesWithoutARouteSecurityKeyKeepTheFirewallAsTheOnlyGate(): void
+    {
+        $this->boot(
+            [NubitAdminBundle::class],
+            ['nubit_admin' => $this->config(['audit' => true, 'media' => true])],
+            self::fixtureMapping(),
+        );
+
+        self::assertNull($this->routeSecurityOf($this->container()->get(MediaUploadController::class)));
+        self::assertNull($this->routeSecurityOf($this->container()->get(AuditTrailController::class)));
+    }
+
+    private function routeSecurityOf(mixed $controller): ?string
+    {
+        self::assertIsObject($controller);
+        $property = new \ReflectionProperty($controller, 'routeSecurity');
+
+        /** @var ?string $value */
+        $value = $property->getValue($controller);
+
+        return $value;
     }
 
     /** Auth is not optional, so its refresh token store must always be present. */

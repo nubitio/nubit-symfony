@@ -7,6 +7,7 @@ namespace Nubit\AdminBundle\Media\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Media\MediaStorage;
 use Nubit\AdminBundle\Media\Serializer\MediaNormalizer;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,10 +27,14 @@ final class MediaUploadController
         private readonly MediaStorage $storage,
         private readonly EntityManagerInterface $entityManager,
         private readonly MediaNormalizer $normalizer,
+        private readonly ?RouteGuard $guard = null,
+        private readonly ?string $routeSecurity = null,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity);
+
         $file = $request->files->get('file');
         if (!$file instanceof UploadedFile) {
             throw new BadRequestHttpException('"file" is required');

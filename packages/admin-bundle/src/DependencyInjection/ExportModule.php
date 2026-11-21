@@ -17,6 +17,7 @@ use Nubit\AdminBundle\Export\Writer\CsvExportWriter;
 use Nubit\AdminBundle\Export\Writer\QueuedExportWriterInterface;
 use Nubit\AdminBundle\Export\Writer\XlsxExportWriter;
 use Nubit\AdminBundle\Export\XlsxEncoder;
+use Nubit\AdminBundle\Security\RouteGuard;
 use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -35,6 +36,7 @@ final class ExportModule
      *     directory: string,
      *     inline_limit: int,
      *     queued_format: string,
+     *     queued_security: ?string,
      * } $config
      */
     public static function load(array $config, DefaultsConfigurator $services): void
@@ -89,7 +91,10 @@ final class ExportModule
         $services->set(QueuedExportRunner::class);
         $services->set(RunExportHandler::class);
         $services->set(ExportRequestService::class)->arg('$defaultInlineLimit', $config['inline_limit']);
-        $services->set(ExportJobController::class)->tag('controller.service_arguments');
+        RouteGuard::assertAvailable($config['queued_security'], 'nubit_admin.export.queued_security');
+        $services->set(ExportJobController::class)->arg('$routeSecurity', $config['queued_security'])->tag(
+            'controller.service_arguments',
+        );
     }
 
     /**

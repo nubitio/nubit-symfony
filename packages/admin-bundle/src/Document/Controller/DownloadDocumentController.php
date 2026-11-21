@@ -11,6 +11,7 @@ use Nubit\AdminBundle\Authorization\ScopedEntityLocator;
 use Nubit\AdminBundle\Document\DocumentIssuer;
 use Nubit\AdminBundle\Document\Entity\IssuedDocument;
 use Nubit\AdminBundle\Security\PrivilegedAccess;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -30,10 +31,14 @@ final readonly class DownloadDocumentController
         private PrivilegedAccess $access,
         private ScopedEntityLocator $locator,
         private ?PermissionResolver $permissions = null,
+        private ?RouteGuard $guard = null,
+        private ?string $routeSecurity = null,
     ) {}
 
     public function __invoke(string $id): Response
     {
+        $this->guard?->assert($this->routeSecurity, ['document' => $id]);
+
         $document = $this->entityManager->find(IssuedDocument::class, $id);
         if (!$document instanceof IssuedDocument) {
             throw new NotFoundHttpException('Document not found.');

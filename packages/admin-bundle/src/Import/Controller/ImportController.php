@@ -9,6 +9,7 @@ use Nubit\AdminBundle\Import\Entity\ImportSession;
 use Nubit\AdminBundle\Import\Exception\ImportException;
 use Nubit\AdminBundle\Import\ImportService;
 use Nubit\AdminBundle\Security\PrivilegedAccess;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,10 +34,14 @@ final readonly class ImportController
         private ImportService $imports,
         private Security $security,
         private PrivilegedAccess $access,
+        private ?RouteGuard $guard = null,
+        private ?string $routeSecurity = null,
     ) {}
 
     public function start(Request $request, string $resource): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['resource' => $resource]);
+
         $file = $request->files->get('file');
         if (!$file instanceof UploadedFile) {
             throw new ImportException('Upload the spreadsheet as a multipart field named "file".');
@@ -58,11 +63,15 @@ final readonly class ImportController
 
     public function show(string $id): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['session' => $id]);
+
         return new JsonResponse(self::payload($this->session($id)));
     }
 
     public function remap(Request $request, string $id): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['session' => $id]);
+
         /** @var array<string, int|string> $mapping */
         $mapping = self::arrayParam($request, 'mapping');
 
@@ -79,6 +88,8 @@ final readonly class ImportController
 
     public function confirm(string $id): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['session' => $id]);
+
         return new JsonResponse(self::payload($this->imports->confirm($this->session($id))));
     }
 

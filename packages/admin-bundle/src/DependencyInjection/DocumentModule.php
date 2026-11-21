@@ -16,6 +16,7 @@ use Nubit\AdminBundle\Document\PrintableRegistry;
 use Nubit\AdminBundle\Document\ResourceLocator;
 use Nubit\AdminBundle\Document\WeasyPrintDocumentRenderer;
 use Nubit\AdminBundle\OpenApi\PrintableDocumentationNormalizer;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Nubit\ApiPlatform\Document\DocumentRendererInterface;
 use Nubit\ApiPlatform\Document\DocumentTemplateInterface;
 use Nubit\Platform\Export\PdfExporter;
@@ -39,6 +40,7 @@ final class DocumentModule
      *     async: bool,
      *     directory: string,
      *     weasyprint_binary: string,
+     *     security: ?string,
      *     storage: array{filesystem: ?string, local_directory: string},
      * } $config
      */
@@ -100,9 +102,16 @@ final class DocumentModule
 
         $services->set(RenderDocumentHandler::class);
 
-        $services->set(IssueDocumentController::class)->tag('controller.service_arguments');
-        $services->set(DownloadDocumentController::class)->tag('controller.service_arguments');
-        $services->set(DocumentHistoryController::class)->tag('controller.service_arguments');
+        RouteGuard::assertAvailable($config['security'], 'nubit_admin.documents.security');
+        foreach ([
+            IssueDocumentController::class,
+            DownloadDocumentController::class,
+            DocumentHistoryController::class,
+        ] as $controller) {
+            $services->set($controller)->arg('$routeSecurity', $config['security'])->tag(
+                'controller.service_arguments',
+            );
+        }
 
         // Publishing the capability is what makes the print button appear
         // without the frontend being told about it separately.

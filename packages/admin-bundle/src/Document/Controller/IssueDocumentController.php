@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nubit\AdminBundle\Document\DocumentIssuer;
 use Nubit\AdminBundle\Document\DocumentPayload;
 use Nubit\AdminBundle\Document\ResourceLocator;
+use Nubit\AdminBundle\Security\RouteGuard;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,10 +28,14 @@ final readonly class IssueDocumentController
         private DocumentIssuer $issuer,
         private ResourceLocator $locator,
         private Security $security,
+        private ?RouteGuard $guard = null,
+        private ?string $routeSecurity = null,
     ) {}
 
     public function __invoke(Request $request, string $resource, string $id): JsonResponse
     {
+        $this->guard?->assert($this->routeSecurity, ['resource' => $resource, 'id' => $id]);
+
         $subject = $this->locator->locate($resource, $id);
         $issuedBy = $this->security->getUser()?->getUserIdentifier();
 
