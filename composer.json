@@ -47,7 +47,7 @@
         "open-telemetry/api": "^1.0",
         "openspout/openspout": "^4.28",
         "phpoffice/phpspreadsheet": "^5.8.1",
-        "phpunit/phpunit": "^11.5 || ^12.0",
+        "phpunit/phpunit": "^13.4.8",
         "pontedilana/php-weasyprint": "^2.2",
         "symfony/cache": "^7.4 || ^8.0",
         "symfony/http-client": "^7.4 || ^8.0",
